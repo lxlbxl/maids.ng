@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agency Dashboard - Maids.ng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+                            400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+                            800: '#92400e', 900: '#78350f'
+                        },
+                        dark: {
+                            50: '#f8f6f3', 100: '#f0ece5', 200: '#e0d7ca',
+                            300: '#c9bba6', 400: '#b09b80', 500: '#1a1614',
+                            600: '#141210', 700: '#0f0d0b', 800: '#0a0908', 900: '#050404'
+                        },
+                        cream: { 50: '#FEFDFB', 100: '#FDF9F3', 200: '#FAF3E8' }
+                    },
+                    fontFamily: {
+                        display: ['Playfair Display', 'serif'],
+                        body: ['DM Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+        .nav-item.active .nav-icon { color: #f59e0b; }
+        .nav-item.active .nav-label { color: #f59e0b; font-weight: 600; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.6); }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:active { transform: scale(0.97); }
+        .btn-primary { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); transition: all 0.3s ease; }
+        .btn-primary:active { transform: scale(0.97); }
+        .skeleton { background: linear-gradient(90deg, #f0ece5 25%, #faf3e8 50%, #f0ece5 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0d7ca; border-radius: 4px; }
+
+        .pb-safe { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+
+        /* Desktop sidebar */
+        @media (min-width: 768px) {
+            .desktop-sidebar { display: flex; }
+            .mobile-bottom-nav { display: none !important; }
+            .main-content { margin-left: 260px; }
+            .mobile-header { display: none !important; }
+        }
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none !important; }
+            .main-content { margin-left: 0; }
+        }
+
+        .sidebar-link { transition: all 0.2s ease; border-radius: 12px; }
+        .sidebar-link.active { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .sidebar-link:not(.active):hover { background: #FDF9F3; color: #d97706; }
+    </style>
+</head>
+
+<body class="bg-cream-50 min-h-screen font-body">
+
+    <div class="flex min-h-screen">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar fixed top-0 left-0 bottom-0 w-[260px] bg-white border-r border-dark-100 flex flex-col z-30">
+            <div class="p-6 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center shadow-sm rotate-3">
+                        <span class="text-white font-display font-bold text-lg -rotate-3">M</span>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-dark-500 text-lg">Maids.ng</h1>
+                        <p class="text-[10px] text-dark-300 uppercase tracking-widest">Agency Portal</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1 overflow-y-auto py-4">
+                <a href="#" class="sidebar-link active flex items-center space-x-3 px-4 py-3 transition-colors" data-page="overview">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    <span class="font-medium text-sm">Overview</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center space-x-3 px-4 py-3 transition-colors text-dark-400" data-page="maids">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span class="font-medium text-sm">My Maids</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center space-x-3 px-4 py-3 transition-colors text-dark-400" data-page="profile">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span class="font-medium text-sm">Profile</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-dark-100">
+                <div class="flex items-center space-x-3 px-3 mb-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-white text-xs font-bold">A</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-dark-500 truncate" id="sidebar-agency-info">Agency</p>
+                        <p class="text-[11px] text-dark-300">Agency Portal</p>
+                    </div>
+                </div>
+                <button id="logout-btn" class="w-full flex items-center space-x-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 flex flex-col overflow-y-auto">
+            <!-- Mobile Header -->
+            <header class="mobile-header bg-white/90 backdrop-blur-xl border-b border-dark-100/50 px-5 py-3.5 flex items-center justify-between sticky top-0 z-10 md:hidden">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center shadow-sm rotate-2">
+                        <span class="text-white font-display font-bold text-base -rotate-2">M</span>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-dark-500 text-base">Maids.ng</h1>
+                        <p class="text-[10px] text-dark-300" id="agency-info">Agency Portal</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Desktop header -->
+            <header class="hidden md:flex bg-white border-b border-dark-100/50 px-8 py-4 items-center justify-between sticky top-0 z-10">
+                <h2 class="text-xl font-display font-bold text-dark-500" id="page-title">Overview</h2>
+                <span class="text-sm text-dark-300" id="desktop-agency-info">Loading...</span>
+            </header>
+
+            <div class="p-5 md:p-8 pb-safe md:pb-8">
+
+                <!-- OVERVIEW PAGE -->
+                <div id="overview-page" class="page active space-y-6">
+                    <div class="md:hidden">
+                        <h2 class="text-2xl font-display font-bold text-dark-500">Overview</h2>
+                        <p class="text-dark-300 text-sm mt-1">Your agency at a glance</p>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                        <div class="glass-card rounded-2xl p-4 md:p-5">
+                            <div class="w-10 h-10 rounded-xl bg-gold-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-bold text-dark-500" id="stat-total-maids">0</p>
+                            <p class="text-xs text-dark-300 mt-1">Total Maids</p>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4 md:p-5">
+                            <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-bold text-green-600" id="stat-active-maids">0</p>
+                            <p class="text-xs text-dark-300 mt-1">Active Maids</p>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4 md:p-5">
+                            <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-bold text-yellow-600" id="stat-verified-maids">0</p>
+                            <p class="text-xs text-dark-300 mt-1">Pending Verify</p>
+                        </div>
+                        <div class="glass-card rounded-2xl p-4 md:p-5">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <p class="text-2xl md:text-3xl font-bold text-blue-600" id="stat-total-jobs">0</p>
+                            <p class="text-xs text-dark-300 mt-1">Total Jobs</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Maids -->
+                    <div class="glass-card rounded-2xl overflow-hidden">
+                        <div class="px-5 py-4 border-b border-dark-100/50 flex justify-between items-center">
+                            <h3 class="font-semibold text-dark-500 text-sm">Recently Added Maids</h3>
+                            <button onclick="showPage('maids')" class="text-sm text-gold-600 font-medium hover:text-gold-700 transition">View All</button>
+                        </div>
+                        <div class="divide-y divide-dark-100/50" id="recent-maids-list">
+                            <div class="p-5">
+                                <div class="skeleton h-12 w-full mb-2"></div>
+                                <div class="skeleton h-12 w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIDS PAGE -->
+                <div id="maids-page" class="page space-y-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="md:hidden">
+                            <h2 class="text-2xl font-display font-bold text-dark-500">My Maids</h2>
+                            <p class="text-dark-300 text-sm mt-1">Manage your maid roster</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <div class="relative flex-1 sm:w-72">
+                                <svg class="w-4 h-4 text-dark-300 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input type="text" placeholder="Search by name..."
+                                    class="w-full pl-11 pr-4 py-3 bg-white border border-dark-100 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm transition">
+                            </div>
+                            <button onclick="showAddMaidModal()"
+                                class="btn-primary text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-gold-500/20 flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>Add Maid</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Card List (shown on mobile) -->
+                    <div id="maids-card-list" class="space-y-2 md:hidden">
+                        <div class="skeleton h-20 w-full mb-2"></div>
+                        <div class="skeleton h-20 w-full"></div>
+                    </div>
+
+                    <!-- Desktop Table (hidden on mobile) -->
+                    <div class="glass-card rounded-2xl overflow-hidden hidden md:block">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-cream-100 text-dark-300 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold">Maid Profile</th>
+                                        <th class="px-6 py-4 font-semibold">Status</th>
+                                        <th class="px-6 py-4 font-semibold">Work Type</th>
+                                        <th class="px-6 py-4 font-semibold">Joined</th>
+                                        <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-dark-100/50" id="maids-table-body">
+                                    <tr><td colspan="5" class="px-6 py-8 text-center text-dark-300 text-sm">Loading maids...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 py-4 border-t border-dark-100/50 flex justify-between items-center bg-cream-50" id="pagination-controls"></div>
+                    </div>
+
+                    <!-- Mobile pagination -->
+                    <div id="mobile-pagination" class="flex justify-center space-x-2 md:hidden"></div>
+                </div>
+
+                <!-- PROFILE PAGE -->
+                <div id="profile-page" class="page space-y-6">
+                    <div class="md:hidden">
+                        <h2 class="text-2xl font-display font-bold text-dark-500">Profile</h2>
+                        <p class="text-dark-300 text-sm mt-1">Manage your agency settings</p>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-6 max-w-2xl">
+                        <h3 class="text-lg font-display font-bold text-dark-500 mb-6">Agency Profile</h3>
+                        <form id="profile-form" class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Registered Phone Number</label>
+                                <input type="tel" id="profile-phone" disabled
+                                    class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl text-dark-400 text-sm">
+                                <p class="text-[11px] text-dark-300 mt-1.5">Contact support to change your registered phone number.</p>
+                            </div>
+
+                            <div class="pt-4 border-t border-dark-100/50">
+                                <h4 class="text-sm font-semibold text-dark-500 mb-4">Security</h4>
+                                <div>
+                                    <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Change PIN</label>
+                                    <input type="password" name="pin" placeholder="Enter new 4-6 digit PIN"
+                                        class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                                </div>
+                            </div>
+
+                            <div class="pt-4 flex justify-end">
+                                <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl text-sm font-semibold shadow-lg shadow-gold-500/20">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-dark-100/30 z-50 md:hidden" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+        <div class="flex justify-around items-center py-2">
+            <button onclick="showPage('overview')" class="nav-item active flex flex-col items-center py-1.5 px-5" data-page="overview">
+                <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <span class="nav-label text-[10px] mt-0.5 text-dark-300">Home</span>
+            </button>
+            <button onclick="showPage('maids')" class="nav-item flex flex-col items-center py-1.5 px-5" data-page="maids">
+                <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span class="nav-label text-[10px] mt-0.5 text-dark-300">Maids</span>
+            </button>
+            <button onclick="showPage('profile')" class="nav-item flex flex-col items-center py-1.5 px-5" data-page="profile">
+                <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span class="nav-label text-[10px] mt-0.5 text-dark-300">Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Add Maid Modal -->
+    <div id="add-maid-modal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-dark-500/60 backdrop-blur-sm transition-opacity" onclick="hideAddMaidModal()"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl transform transition-all">
+                <div class="p-6 border-b border-dark-100/50 flex justify-between items-center">
+                    <h3 class="text-lg font-display font-bold text-dark-500">Add New Maid</h3>
+                    <button onclick="hideAddMaidModal()" class="p-2 text-dark-300 hover:text-dark-500 rounded-xl hover:bg-cream-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form id="add-maid-form" class="p-6 space-y-5">
+                    <input type="hidden" name="id" id="maid-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Full Name</label>
+                                <input type="text" name="full_name" required class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Work Type</label>
+                                <select name="work_type" class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 text-sm">
+                                    <option value="FullTime">Full-Time (Live-in)</option>
+                                    <option value="FullTime (Live-out)">Full-Time (Live-out)</option>
+                                    <option value="PartTime">Part-Time</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Location (State)</label>
+                                <input type="text" name="location" required placeholder="e.g. Lagos" class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Accommodation</label>
+                                <select name="accommodation" class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 text-sm">
+                                    <option value="Live-in">Live-in</option>
+                                    <option value="Live-out">Live-out</option>
+                                    <option value="Either">Either</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Expected Salary (NGN)</label>
+                                <div class="flex space-x-2">
+                                    <input type="number" name="salary_min" placeholder="Min" class="w-1/2 px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                                    <input type="number" name="salary_max" placeholder="Max" class="w-1/2 px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Years of Experience</label>
+                                <input type="number" name="experience_years" required min="0" class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Date of Birth</label>
+                                <input type="date" name="date_of_birth" required class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Gender</label>
+                                <select name="gender" class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 text-sm">
+                                    <option value="Female">Female</option>
+                                    <option value="Male">Male</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Profile Photo (Base64)</label>
+                                <input type="text" name="profile_photo_base64" placeholder="Paste Base64 string (optional)"
+                                    class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition text-xs font-mono">
+                                <p class="text-[11px] text-dark-300 mt-1">In production, this will be a file uploader</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-dark-100/50 flex justify-end space-x-3">
+                        <button type="button" onclick="hideAddMaidModal()" class="px-5 py-3 bg-cream-200 text-dark-500 rounded-xl text-sm font-semibold hover:bg-dark-100 transition">Cancel</button>
+                        <button type="submit" class="px-5 py-3 btn-primary text-white rounded-xl text-sm font-semibold shadow-lg shadow-gold-500/20">Add Maid</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

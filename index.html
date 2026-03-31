@@ -1,0 +1,3148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://maids.ng/favicon.png">
+    <link rel="apple-touch-icon" href="https://maids.ng/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://maids.ng/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://maids.ng/favicon.png">
+
+    <!-- SEO Meta Tags -->
+    <title>Maids.ng - Find Trusted Domestic Workers & Maid Services in Nigeria</title>
+    <meta name="description"
+        content="Find verified domestic workers, maids, cleaners, cooks and nannies in Nigeria. AI-powered matching for trusted household help in Lagos, Abuja and across Nigeria. Monthly payouts for workers.">
+    <meta name="keywords"
+        content="maid services Nigeria, domestic workers Lagos, house cleaning services, nanny services Nigeria, cook services, household help Nigeria, verified maids, domestic staff Nigeria">
+    <meta name="author" content="Maids.ng">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://maids.ng/">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Maids.ng - Find Trusted Domestic Workers & Maid Services in Nigeria">
+    <meta property="og:description"
+        content="Find verified domestic workers, maids, cleaners, cooks and nannies in Nigeria. AI-powered matching for trusted household help.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://maids.ng/">
+    <meta property="og:image" content="https://maids.ng/images/og-image.jpg">
+    <meta property="og:site_name" content="Maids.ng">
+    <meta property="og:locale" content="en_NG">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Maids.ng - Find Trusted Domestic Workers & Maid Services in Nigeria">
+    <meta name="twitter:description"
+        content="Find verified domestic workers, maids, cleaners, cooks and nannies in Nigeria. AI-powered matching for trusted household help.">
+    <meta name="twitter:image" content="https://maids.ng/images/twitter-card.jpg">
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="geo.region" content="NG">
+    <meta name="geo.placename" content="Nigeria">
+    <meta name="geo.position" content="9.0820;8.6753">
+    <meta name="ICBM" content="9.0820, 8.6753">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Maids.ng",
+      "description": "AI-powered platform connecting households with verified domestic workers, maids, cleaners, cooks and nannies across Nigeria",
+      "url": "https://maids.ng",
+      "logo": "https://maids.ng/images/logo.png",
+      "image": "https://maids.ng/images/og-image.jpg",
+      "telephone": "+234-XXX-XXX-XXXX",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "NG",
+        "addressRegion": "Lagos",
+        "addressLocality": "Lagos"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "6.5244",
+        "longitude": "3.3792"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Nigeria"
+      },
+      "serviceType": ["Domestic Worker Placement", "Maid Services", "House Cleaning", "Nanny Services", "Cook Services"],
+      "priceRange": "₦₦",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "reviewCount": "2500"
+      }
+    }
+    </script>
+    <!-- Flutterwave Payment Script -->
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <!-- Enhanced Webhook Integration Architecture -->
+    <script src="js/api-service.js"></script>
+
+    <!-- Tailwind CSS Configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f'
+                        },
+                        lemon: {
+                            50: '#fcfdf4',
+                            100: '#f7fce7',
+                            200: '#ecf7ce',
+                            300: '#dceda6',
+                            400: '#c7de75',
+                            500: '#a8c850',
+                            600: '#84a63a',
+                            700: '#65812e',
+                            800: '#516529',
+                            900: '#445526'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-slide-in {
+            animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .pulse-bg {
+            background: linear-gradient(45deg, #f59e0b, #a8c850);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* Profile Photo Modal Styles */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .photo-modal.active {
+            display: flex;
+        }
+
+        .photo-modal-content {
+            position: relative;
+            max-width: 80%;
+            max-height: 80%;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .photo-modal-image {
+            width: 100%;
+            height: auto;
+            max-width: 500px;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .photo-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .photo-modal-close:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .helper-image {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .helper-image:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-gold-50 via-white to-lemon-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gold-200">
+        <div class="max-w-md mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center group">
+                    <img src="https://maids.ng/logo.png" alt="Maids.ng Logo"
+                        class="h-16 w-auto object-contain drop-shadow-lg hover:drop-shadow-xl transition-all duration-300 group-hover:scale-105">
+                </a>
+                <button id="mobile-menu-btn" class="p-2 text-gray-600 hover:text-gold-600 transition-colors">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden bg-white border-t border-gold-100">
+            <div class="max-w-md mx-auto px-4 py-3 space-y-1">
+                <a href="how-it-works.html"
+                    class="block px-3 py-2 text-gray-600 hover:text-gold-600 hover:bg-gold-50 rounded-lg transition-colors">How
+                    It Works</a>
+                <a href="contact.html"
+                    class="block px-3 py-2 text-gray-600 hover:text-gold-600 hover:bg-gold-50 rounded-lg transition-colors">Contact</a>
+                <a href="login.html"
+                    class="block px-3 py-2 text-gray-600 hover:text-gold-600 hover:bg-gold-50 rounded-lg transition-colors">Login</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-md mx-auto px-4 py-6" id="app">
+        <!-- Landing Cards View -->
+        <div id="landing-view" class="space-y-6">
+            <!-- Welcome Section -->
+            <div class="text-center mb-8">
+                <div class="pulse-bg w-28 h-28 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-3">Find Your Perfect Maid</h2>
+                <p class="text-lg text-gray-600">AI-powered matching for trusted household help</p>
+            </div>
+
+            <!-- Main Choice Cards -->
+            <div class="space-y-4">
+                <!-- Need a Maid Card -->
+                <div class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6 card-hover cursor-pointer"
+                    onclick="startHouseholdFlow()">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-r from-gold-400 to-gold-500 rounded-xl flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 15v-4a2 2 0 012-2h4a2 2 0 012 2v4" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-1">I need a Maid</h3>
+                            <p class="text-gray-600 text-sm">Find trusted household help</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-xs text-gold-600 bg-gold-100 px-2 py-1 rounded-full">Verified
+                                    maids</span>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Need a Job Card -->
+                <div class="bg-white rounded-2xl shadow-lg border border-lemon-100 p-6 card-hover cursor-pointer"
+                    onclick="window.location.href='job.html'">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="w-16 h-16 bg-gradient-to-r from-lemon-400 to-lemon-500 rounded-xl flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 002 2M8 6v2a2 2 0 002 2h4a2 2 0 002-2V8M8 6H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-2" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-1">I need a Maid Job</h3>
+                            <p class="text-gray-600 text-sm">Find employment opportunities</p>
+                            <div class="flex items-center mt-2">
+                                <span class="text-xs text-lemon-600 bg-lemon-100 px-2 py-1 rounded-full">Monthly
+                                    payouts</span>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Indicators -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mt-6">
+                <div class="flex items-center justify-around text-center">
+                    <div>
+                        <div class="text-xl font-bold text-gold-600">2,500+</div>
+                        <div class="text-xs text-gray-600">Verified Maids</div>
+                    </div>
+                    <div class="w-px h-10 bg-gray-200"></div>
+                    <div>
+                        <div class="text-xl font-bold text-lemon-600">95%</div>
+                        <div class="text-xs text-gray-600">Match Success</div>
+                    </div>
+                    <div class="w-px h-10 bg-gray-200"></div>
+                    <div>
+                        <div class="text-xl font-bold text-gold-600">4.8★</div>
+                        <div class="text-xs text-gray-600">Average Rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Card View (Hidden by default) -->
+        <div id="question-view" class="hidden">
+            <div class="card-slide-in bg-white rounded-2xl shadow-xl border border-gold-200 p-6">
+                <!-- Progress -->
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="goBack()" class="p-2 text-gray-600 hover:text-gold-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div class="flex-1 mx-4">
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div id="progress-bar"
+                                class="bg-gradient-to-r from-gold-400 to-lemon-400 h-2 rounded-full transition-all duration-500"
+                                style="width: 25%"></div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 text-center" id="progress-text">Step 2 of 4</div>
+                    </div>
+                    <button class="p-2 text-gray-400 hover:text-gold-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Question Header -->
+                <div class="text-center mb-6">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-r from-gold-400 to-lemon-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 id="question-title" class="text-xl font-semibold text-gray-800 mb-2">What kind of help do you
+                        need?</h3>
+                    <!-- Audio Accessibility Button -->
+                    <button id="audio-help-btn" onclick="playQuestionAudio()"
+                        class="inline-flex items-center space-x-2 mt-2 px-4 py-2 bg-lemon-100 hover:bg-lemon-200 text-lemon-700 rounded-full text-sm transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                        <span id="audio-btn-text">Listen</span>
+                    </button>
+                </div>
+
+                <!-- Loading Indicator (Hidden by default) -->
+                <div id="question-loading" class="hidden text-center py-8">
+                    <div
+                        class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500 mb-4">
+                    </div>
+                    <p class="text-gray-600">Loading next question...</p>
+                </div>
+
+                <!-- Answer Options -->
+                <div id="answer-options" class="space-y-3 mb-6">
+                    <button
+                        class="w-full p-4 text-left bg-gray-50 hover:bg-gold-50 border border-gray-200 hover:border-gold-200 rounded-xl transition-all">
+                        <div class="font-medium text-gray-800">Nanny / Childcare</div>
+                        <div class="text-sm text-gray-600">Looking after children</div>
+                    </button>
+                    <button
+                        class="w-full p-4 text-left bg-gray-50 hover:bg-gold-50 border border-gray-200 hover:border-gold-200 rounded-xl transition-all">
+                        <div class="font-medium text-gray-800">House Cleaning</div>
+                        <div class="text-sm text-gray-600">General house maintenance</div>
+                    </button>
+                    <button
+                        class="w-full p-4 text-left bg-gray-50 hover:bg-gold-50 border border-gray-200 hover:border-gold-200 rounded-xl transition-all">
+                        <div class="font-medium text-gray-800">Cook</div>
+                        <div class="text-sm text-gray-600">Meal preparation</div>
+                    </button>
+                </div>
+
+                <!-- Other Option -->
+                <div class="border-t border-gray-200 pt-4 hidden">
+                    <div class="flex space-x-3">
+                        <input type="text" placeholder="Type something else..."
+                            class="flex-1 p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100">
+                        <button
+                            class="px-6 py-3 bg-gradient-to-r from-gold-400 to-lemon-400 text-white rounded-xl hover:shadow-lg transition-all font-medium">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Household Summary View (Hidden by default) -->
+        <div id="household-summary-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Request Summary</h3>
+                <p class="text-gray-600">Review your request before finding a maid</p>
+            </div>
+
+            <!-- Summary Card -->
+            <div id="summary-card" class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="text-gray-600">Help Type</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-help-type" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(0)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="text-gray-600">Accommodation</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-accommodation" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(1)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="text-gray-600">Location</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-location" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(2)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="text-gray-600">Start Date</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-start-date" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(3)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <div class="text-gray-600">Budget</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-budget" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(4)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="text-gray-600">Preferences</div>
+                        <div class="flex items-center space-x-2">
+                            <span id="summary-preferences" class="font-medium text-gray-800">-</span>
+                            <button onclick="editSummaryField(5)"
+                                class="text-gold-500 hover:text-gold-600 text-sm underline">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading indicator for summary view -->
+            <div id="summary-loading" class="hidden text-center py-8">
+                <div
+                    class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500 mb-4">
+                </div>
+                <p class="text-gray-600">Finding Your Maid...</p>
+            </div>
+
+            <!-- Find Maid Button -->
+            <button id="find-maid-btn"
+                class="w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all">
+                Find Me A Maid
+            </button>
+        </div>
+
+        <!-- Matched Maids View (Hidden by default) -->
+        <div id="matched-helpers-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Matched Maids</h3>
+                <p class="text-gray-600">Based on your requirements</p>
+            </div>
+
+            <!-- Matched maids will be dynamically inserted here -->
+            <div id="matched-helpers-container"></div>
+
+            <!-- Service Cost Footnote -->
+            <div class="text-center py-4 px-6 bg-gray-50 rounded-xl border border-gray-200">
+                <p class="text-sm text-gray-600">
+                    <span class="font-medium text-gray-800">Service cost: <span
+                            id="service-cost-amount">₦10,000</span>.</span>
+                    Free replacement within 10 days if not satisfied.
+                </p>
+            </div>
+
+            <button id="back-to-summary"
+                class="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                Back to Summary
+            </button>
+        </div>
+
+        <!-- No Matches Found View (Hidden by default) -->
+        <div id="no-matches-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">No Matches Found</h3>
+                <p class="text-gray-600">We'll continue searching and notify you via WhatsApp when we find a match</p>
+            </div>
+
+            <!-- Contact Form Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="user-name">
+                            Name
+                        </label>
+                        <input id="user-name" type="text"
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100"
+                            placeholder="Enter your name">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="user-whatsapp">
+                            WhatsApp Number
+                        </label>
+                        <input id="user-whatsapp" type="tel"
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100"
+                            placeholder="Enter your WhatsApp number">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="user-email">
+                            Email (Optional)
+                        </label>
+                        <input id="user-email" type="email"
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100"
+                            placeholder="Enter your email (optional)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button id="submit-contact-btn"
+                class="w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all">
+                Submit Request
+            </button>
+        </div>
+
+        <!-- Thank You View (Hidden by default) -->
+        <div id="thank-you-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <div
+                    class="w-20 h-20 bg-gradient-to-r from-gold-400 to-lemon-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Thank You!</h3>
+                <p class="text-gray-600">Your request has been submitted successfully</p>
+            </div>
+
+            <!-- Thank You Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6">
+                <div class="text-center space-y-4">
+                    <div class="text-gray-800">
+                        <p class="font-medium mb-2">We will continue searching and notify you via WhatsApp when we find
+                            a match.</p>
+                        <p class="text-sm text-gray-600">Help us grow by sharing Maids.ng with your friends and family!
+                        </p>
+                    </div>
+
+                    <!-- Share Button -->
+                    <button id="share-btn"
+                        class="w-full bg-gradient-to-r from-lemon-400 to-lemon-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                        <span>Share Maids.ng</span>
+                    </button>
+
+                    <!-- Referral Benefits -->
+                    <div class="bg-gold-50 rounded-xl p-4 mt-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gold-400 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gold-800">Earn Rewards</div>
+                                <div class="text-sm text-gold-600">Get ₦1,000 credit for each successful referral</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Home Button -->
+            <button id="back-to-home-btn"
+                class="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                Back to Home
+            </button>
+        </div>
+
+        <!-- Maid Summary View (Hidden by default) -->
+        <div id="helper-summary-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Maid Profile Preview</h3>
+                <p class="text-gray-600">Review your profile before publishing</p>
+            </div>
+
+            <!-- Maid Profile Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-lemon-100 p-6">
+                <div class="flex items-start space-x-4">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-r from-lemon-400 to-lemon-500 rounded-xl flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold" id="user-initial">U</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <h4 class="font-semibold text-gray-800" id="user-profile-name">User Profile</h4>
+                            <span class="text-xs text-gold-600 bg-gold-100 px-2 py-1 rounded-full">Bronze</span>
+                        </div>
+                        <div class="space-y-1 text-sm text-gray-600 mb-3">
+                            <div>• Ready to work immediately</div>
+                            <div>• Verified ID document</div>
+                            <div>• Available in Lagos Mainland</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-lemon-600">₦30,000/month</span>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-yellow-500">★</span>
+                                <span class="text-sm font-medium">New</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="text-sm text-gray-600 mb-2">Skills:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-lemon-100 text-lemon-800 px-2 py-1 rounded-full">Cleaning</span>
+                        <span class="text-xs bg-lemon-100 text-lemon-800 px-2 py-1 rounded-full">Cooking</span>
+                        <span class="text-xs bg-lemon-100 text-lemon-800 px-2 py-1 rounded-full">Childcare</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Publish Button -->
+            <button id="publish-profile-btn"
+                class="w-full bg-gradient-to-r from-lemon-400 to-lemon-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all">
+                Publish Profile
+            </button>
+        </div>
+
+        <!-- Payment View (Hidden by default) -->
+        <div id="payment-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Complete Payment</h3>
+                <p class="text-gray-600">Secure payment to hire your selected maid</p>
+            </div>
+
+            <!-- Selected Maid Card -->
+            <div id="selected-maid-card" class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6">
+                <!-- Maid details will be populated here -->
+            </div>
+
+            <!-- Payment Form Container -->
+            <div id="payment-form-container" class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6">
+                <div class="text-center mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">Payment Details</h4>
+                    <p class="text-sm text-gray-600">Service cost: <span id="payment-amount"
+                            class="font-semibold text-gold-600">₦10,000</span></p>
+                    <p class="text-xs text-gray-500 mt-1">Free replacement within 10 days if not satisfied</p>
+                </div>
+
+                <!-- Initialize Payment Button -->
+                <button id="init-payment-btn"
+                    class="w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all mb-4">
+                    Proceed to Payment
+                </button>
+
+                <!-- Flutterwave payment form will be embedded here -->
+                <div id="flutterwave-payment-form"></div>
+
+                <!-- Loading state -->
+                <div id="payment-loading" class="hidden text-center py-8">
+                    <div
+                        class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gold-500 mb-4">
+                    </div>
+                    <p class="text-gray-600">Processing payment...</p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <button id="back-to-maids-btn"
+                class="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                Back to Maids
+            </button>
+        </div>
+
+        <!-- Payment Success View (Hidden by default) -->
+        <div id="payment-success-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <div
+                    class="w-20 h-20 bg-gradient-to-r from-green-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Payment Successful!</h3>
+                <p class="text-gray-600">Your maid has been successfully hired</p>
+            </div>
+
+            <!-- Success Message Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-green-100 p-6">
+                <div class="text-center space-y-4">
+                    <div class="text-gray-800">
+                        <p class="font-medium mb-2">We will forward the Maid BioData, Verification Status and Contact
+                            Details.</p>
+                        <p class="text-sm text-gray-600">You will receive all information via WhatsApp within 24 hours.
+                        </p>
+                    </div>
+
+                    <!-- Transaction Details -->
+                    <div id="success-details" class="bg-gray-50 rounded-xl p-4 text-left">
+                        <h4 class="font-semibold text-gray-800 mb-2">Transaction Details</h4>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <!-- Details will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Home Button -->
+            <button id="back-to-home-success-btn"
+                class="w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all">
+                Back to Home
+            </button>
+        </div>
+
+        <!-- Payment Failure View (Hidden by default) -->
+        <div id="payment-failure-view" class="hidden space-y-4">
+            <div class="text-center mb-6">
+                <div
+                    class="w-20 h-20 bg-gradient-to-r from-red-400 to-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Payment Failed</h3>
+                <p class="text-gray-600">There was an issue processing your payment</p>
+            </div>
+
+            <!-- Failure Message Card -->
+            <div class="bg-white rounded-2xl shadow-lg border border-red-100 p-6">
+                <div class="text-center space-y-4">
+                    <div class="text-gray-800">
+                        <p class="font-medium mb-2">Your payment could not be processed.</p>
+                        <p class="text-sm text-gray-600">Please check your payment details and try again.</p>
+                    </div>
+
+                    <!-- Error Details -->
+                    <div id="error-details" class="bg-red-50 rounded-xl p-4 text-left">
+                        <h4 class="font-semibold text-red-800 mb-2">Error Details</h4>
+                        <div class="text-sm text-red-600">
+                            <div id="error-message">Payment was declined. Please try again.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retry and Back Buttons -->
+            <div class="space-y-3">
+                <button id="retry-payment-btn"
+                    class="w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white py-4 rounded-2xl font-semibold text-lg hover:shadow-lg transition-all">
+                    Try Again
+                </button>
+                <button id="back-to-maids-btn"
+                    class="w-full bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                    Back to Maids
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Flow data
+        const householdFlow = [
+            {
+                title: "What kind of help do you need?",
+                options: [
+                    { text: "Fulltime Maid", desc: "Complete household management" },
+                    { text: "Cleaner", desc: "Regular cleaning services" },
+                    { text: "Cook", desc: "Meal preparation" },
+                    { text: "Nanny", desc: "Childcare services" }
+                ],
+                other: true
+            },
+            {
+                title: "Live-in or Live-out?",
+                options: [
+                    { text: "Live-in", desc: "Maid stays at your home" },
+                    { text: "Live-out", desc: "Maid commutes daily" },
+                    { text: "Either", desc: "No preference" }
+                ]
+            },
+            {
+                title: "Location (City / Area)?",
+                options: [
+                    { text: "Lagos Mainland", desc: "Frequently requested" },
+                    { text: "Ikeja", desc: "Frequently requested" },
+                    { text: "Victoria Island", desc: "Frequently requested" }
+                ],
+                other: true,
+                location: true
+            },
+            {
+                title: "When do you need them?",
+                options: [
+                    { text: "Immediately", desc: "As soon as possible" },
+                    { text: "Within a week", desc: "1-7 days from now" },
+                    { text: "From date", desc: "Select specific date" }
+                ],
+                date: true
+            },
+            {
+                title: "Budget / Monthly Rate?",
+                options: [
+                    { text: "₦30,000 - ₦50,000", desc: "Standard rate" },
+                    { text: "₦50,000 - ₦80,000", desc: "Experienced helpers" },
+                    { text: "₦80,000+", desc: "Specialized services" }
+                ],
+                other: true
+            },
+            {
+                title: "Any special preferences?",
+                options: [
+                    { text: "English speaking", desc: "Fluent in English" },
+                    { text: "Experienced (3+ years)", desc: "Proven track record" },
+                    { text: "No preference", desc: "Open to all helpers" }
+                ],
+                other: true,
+                multiSelect: true,
+                specialNeeds: true
+            }
+        ];
+
+        const helperFlow = [
+            {
+                title: "What is your full name?",
+                options: [],
+                nameOnly: true,
+                required: true
+            },
+            {
+                title: "What work are you looking for?",
+                options: [
+                    { text: "Fulltime Maid", desc: "Complete household management" },
+                    { text: "Cleaner", desc: "Regular cleaning services" },
+                    { text: "Cook", desc: "Meal preparation" },
+                    { text: "Nanny", desc: "Childcare services" }
+                ],
+                other: true
+            },
+            {
+                title: "Are you available now?",
+                options: [
+                    { text: "Yes", desc: "I can start immediately" },
+                    { text: "From date", desc: "Select available date" }
+                ],
+                date: true
+            },
+            {
+                title: "What is your expected salary?",
+                options: [
+                    { text: "₦30,000", desc: "Monthly salary" },
+                    { text: "₦40,000", desc: "Monthly salary" },
+                    { text: "₦50,000", desc: "Monthly salary" }
+                ],
+                other: true,
+                salaryStep: true
+            },
+            {
+                title: "Upload Profile Photo",
+                options: [
+                    { text: "Take photo", desc: "Use camera to capture photo" },
+                    { text: "Upload photo", desc: "From your gallery" }
+                ],
+                upload: true,
+                profilePhoto: true
+            },
+            {
+                title: "Upload NIN Card",
+                options: [
+                    { text: "Take photo", desc: "Use camera to capture NIN card" },
+                    { text: "Upload photo", desc: "From your gallery" }
+                ],
+                upload: true,
+                ninCard: true
+            },
+            {
+                title: "Preferred location / commute",
+                options: [
+                    { text: "Lagos Mainland", desc: "Frequently requested" },
+                    { text: "Ikeja", desc: "Frequently requested" },
+                    { text: "Victoria Island", desc: "Frequently requested" }
+                ],
+                other: true
+            }
+        ];
+
+        let currentStep = 0;
+        let currentFlow = '';
+        let userAnswers = {};
+        let siteConfig = null; // Store site configuration
+
+        // Site configuration initialization
+        async function initializeSiteConfig() {
+            try {
+                console.log('Initializing site configuration...');
+                siteConfig = await apiService.get('/config/site');
+
+                // Update service cost elements
+                const serviceFees = siteConfig.serviceFees || { amount: 10000, currency: '₦' };
+                const formattedFee = apiService.formatServiceFee(serviceFees);
+
+                // Update service cost in matched helpers footnote
+                const serviceCostElement = document.getElementById('service-cost-amount');
+                if (serviceCostElement) {
+                    serviceCostElement.textContent = formattedFee;
+                }
+
+                // Update payment amount
+                const paymentAmountElement = document.getElementById('payment-amount');
+                if (paymentAmountElement) {
+                    paymentAmountElement.textContent = formattedFee;
+                }
+
+                console.log('Site configuration initialized successfully');
+                return siteConfig;
+
+            } catch (error) {
+                console.error('Error initializing site configuration:', error);
+                // Keep default values if configuration fails
+                return null;
+            }
+        }
+
+        const apiService = new ApiService('http://localhost:8000/api');
+
+        function startHouseholdFlow() {
+            currentFlow = 'household';
+            userAnswers = {};
+            showQuestionView();
+            loadQuestion(0);
+        }
+
+        function startHelperFlow() {
+            currentFlow = 'helper';
+            userAnswers = {};
+            showQuestionView();
+            loadQuestion(0);
+        }
+
+        function showQuestionView() {
+            document.getElementById('landing-view').classList.add('hidden');
+            document.getElementById('question-view').classList.remove('hidden');
+            document.getElementById('household-summary-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('matched-helpers-view').classList.add('hidden');
+            document.getElementById('no-matches-view').classList.add('hidden');
+            currentStep = 0;
+            updateProgress();
+        }
+
+        function showHouseholdSummaryView() {
+            // Populate summary card with collected data
+            document.getElementById('summary-help-type').textContent = userAnswers[0] || '-';
+            document.getElementById('summary-accommodation').textContent = userAnswers[1] || '-';
+            document.getElementById('summary-location').textContent = userAnswers[2] || '-';
+            document.getElementById('summary-start-date').textContent = userAnswers[3] || '-';
+            document.getElementById('summary-budget').textContent = userAnswers[4] || '-';
+            document.getElementById('summary-preferences').textContent = userAnswers[5] || 'No preference';
+
+            // Show household summary view
+            document.getElementById('landing-view').classList.add('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('household-summary-view').classList.remove('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('matched-helpers-view').classList.add('hidden');
+            document.getElementById('no-matches-view').classList.add('hidden');
+        }
+
+        // Function to edit a specific summary field
+        function editSummaryField(stepIndex) {
+            currentStep = stepIndex;
+            document.getElementById('household-summary-view').classList.add('hidden');
+            document.getElementById('question-view').classList.remove('hidden');
+            updateProgress();
+            loadQuestion(stepIndex);
+        }
+
+        function showHelperSummaryView() {
+            document.getElementById('landing-view').classList.add('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('household-summary-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.remove('hidden');
+            document.getElementById('matched-helpers-view').classList.add('hidden');
+            document.getElementById('no-matches-view').classList.add('hidden');
+
+            // Update user profile with entered name
+            if (userAnswers[0]) {
+                const userName = userAnswers[0];
+                const userInitial = userName.charAt(0).toUpperCase();
+
+                // Update profile name and initial
+                const profileNameElement = document.getElementById('user-profile-name');
+                const userInitialElement = document.getElementById('user-initial');
+
+                if (profileNameElement) {
+                    profileNameElement.textContent = userName;
+                }
+                if (userInitialElement) {
+                    userInitialElement.textContent = userInitial;
+                }
+            }
+        }
+
+        function showLandingView() {
+            document.getElementById('landing-view').classList.remove('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('household-summary-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('matched-helpers-view').classList.add('hidden');
+            document.getElementById('no-matches-view').classList.add('hidden');
+            currentStep = 0;
+        }
+
+        function showMatchedHelpersView() {
+            hideAllViews();
+            document.getElementById('matched-helpers-view').classList.remove('hidden');
+        }
+
+        function showNoMatchesView() {
+            hideAllViews();
+            document.getElementById('no-matches-view').classList.remove('hidden');
+        }
+
+        function hideAllViews() {
+            document.getElementById('landing-view').classList.add('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('household-summary-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('matched-helpers-view').classList.add('hidden');
+            document.getElementById('no-matches-view').classList.add('hidden');
+            document.getElementById('thank-you-view').classList.add('hidden');
+            document.getElementById('payment-view').classList.add('hidden');
+            document.getElementById('payment-success-view').classList.add('hidden');
+            document.getElementById('payment-failure-view').classList.add('hidden');
+        }
+
+        function showThankYouView() {
+            hideAllViews();
+            document.getElementById('thank-you-view').classList.remove('hidden');
+        }
+
+        function goBack() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateProgress();
+                loadQuestion(currentStep);
+            } else {
+                showLandingView();
+            }
+        }
+
+        function loadQuestion(step) {
+            const flow = currentFlow === 'household' ? householdFlow : helperFlow;
+            if (step < flow.length) {
+                const question = flow[step];
+                document.getElementById('question-title').textContent = question.title;
+
+                // Clear previous options
+                const optionsContainer = document.getElementById('answer-options');
+                optionsContainer.innerHTML = '';
+
+                // Add new options
+                question.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'w-full p-4 text-left bg-gray-50 hover:bg-gold-50 border border-gray-200 hover:border-gold-200 rounded-xl transition-all';
+                    button.innerHTML = `
+                        <div class="font-medium text-gray-800">${option.text}</div>
+                        <div class="text-sm text-gray-600">${option.desc}</div>
+                    `;
+                    button.addEventListener('click', () => selectAnswer(option.text, step));
+                    optionsContainer.appendChild(button);
+                });
+
+                // Handle special fields
+                const otherContainer = document.querySelector('#question-view .border-t');
+                if (question.nameOnly) {
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const voiceButton = otherContainer.querySelector('button');
+
+                    input.classList.remove('hidden');
+                    voiceButton.classList.add('hidden');
+                    input.type = 'text';
+                    input.placeholder = "Enter your full name...";
+
+                    // Display previously entered name if available
+                    if (userAnswers[0]) {
+                        input.value = userAnswers[0];
+                    }
+
+                    // Add Next button for name step
+                    let nextBtn = document.getElementById('name-next-btn');
+                    if (!nextBtn) {
+                        nextBtn = document.createElement('button');
+                        nextBtn.id = 'name-next-btn';
+                        nextBtn.className = 'w-full mt-4 bg-gradient-to-r from-gold-400 to-gold-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all';
+                        nextBtn.textContent = 'Next';
+                        nextBtn.addEventListener('click', () => {
+                            const nameInput = otherContainer.querySelector('input');
+                            if (nameInput && nameInput.value.trim()) {
+                                selectAnswer(nameInput.value.trim(), step);
+                            } else {
+                                alert('Please enter your full name to continue.');
+                            }
+                        });
+                        otherContainer.appendChild(nextBtn);
+                    } else {
+                        nextBtn.classList.remove('hidden');
+                    }
+                } else if (question.salaryStep) {
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const nextButton = otherContainer.querySelector('button');
+
+                    input.classList.remove('hidden');
+                    nextButton.classList.remove('hidden');
+                    input.type = 'text';
+                    input.placeholder = "Enter custom amount (e.g., ₦35,000)...";
+
+                    // Update button functionality for salary input
+                    nextButton.onclick = () => {
+                        const inputValue = input.value.trim();
+                        if (inputValue) {
+                            selectAnswer(inputValue, currentStep);
+                        } else {
+                            alert('Please enter a salary amount.');
+                        }
+                    };
+                } else if (question.other) {
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const nextButton = otherContainer.querySelector('button');
+
+                    input.classList.remove('hidden');
+                    nextButton.classList.remove('hidden');
+                    input.type = 'text';
+                    input.placeholder = "Type something else...";
+
+                    // Update button functionality for other input
+                    nextButton.onclick = () => {
+                        const inputValue = input.value.trim();
+                        if (inputValue) {
+                            selectAnswer(inputValue, currentStep);
+                        } else {
+                            alert('Please enter your response.');
+                        }
+                    };
+
+                    // Allow Enter key to submit
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            nextButton.click();
+                        }
+                    });
+                } else if (question.upload && (question.profilePhoto || question.ninCard)) {
+                    // Show upload buttons for Profile Photo and NIN Card upload steps
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const voiceButton = otherContainer.querySelector('button');
+
+                    input.classList.add('hidden');
+                    voiceButton.classList.remove('hidden');
+
+                    const stepType = question.profilePhoto ? 'profile' : 'nin';
+                    const stepLabel = question.profilePhoto ? 'Profile Photo' : 'NIN Card';
+
+                    voiceButton.innerHTML = `
+                        <div class="space-y-2">
+                            <button id="camera-capture-btn-${stepType}" class="w-full bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>Take Photo</span>
+                            </button>
+                            <button id="file-upload-btn-${stepType}" class="w-full bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <span>Upload Photo</span>
+                            </button>
+                            <input type="file" id="file-input-${stepType}" accept="image/*" class="hidden">
+                            <video id="camera-video-${stepType}" class="hidden w-full max-w-sm mx-auto rounded-xl" autoplay></video>
+                            <canvas id="camera-canvas-${stepType}" class="hidden"></canvas>
+                            <div id="camera-controls-${stepType}" class="hidden space-x-2 text-center">
+                                <button id="capture-btn-${stepType}" class="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600">
+                                    📸 Capture
+                                </button>
+                                <button id="close-camera-btn-${stepType}" class="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-gray-600">
+                                    ❌ Close
+                                </button>
+                            </div>
+                            <div id="upload-preview-${stepType}" class="hidden text-center">
+                                <img id="preview-image-${stepType}" class="w-32 h-32 object-cover mx-auto rounded-xl mb-2" alt="Preview">
+                                <span class="text-green-600">✓ ${stepLabel} Selected</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // Add event listeners for upload buttons
+                    setTimeout(() => {
+                        const cameraBtn = document.getElementById(`camera-capture-btn-${stepType}`);
+                        const fileBtn = document.getElementById(`file-upload-btn-${stepType}`);
+                        const fileInput = document.getElementById(`file-input-${stepType}`);
+                        const captureBtn = document.getElementById(`capture-btn-${stepType}`);
+                        const closeCameraBtn = document.getElementById(`close-camera-btn-${stepType}`);
+
+                        if (cameraBtn) cameraBtn.addEventListener('click', () => openCameraForCapture(stepType));
+                        if (fileBtn) fileBtn.addEventListener('click', () => fileInput?.click());
+                        if (fileInput) fileInput.addEventListener('change', (e) => handleFileSelection(e, stepType));
+                        if (captureBtn) captureBtn.addEventListener('click', () => capturePhotoFromCamera(stepType));
+                        if (closeCameraBtn) closeCameraBtn.addEventListener('click', () => closeCameraView(stepType));
+                    }, 100);
+                } else if (question.date) {
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const nextButton = otherContainer.querySelector('button');
+
+                    input.classList.remove('hidden');
+                    input.type = 'date';
+                    input.placeholder = "";
+
+                    // Show Next button for date selection
+                    nextButton.classList.remove('hidden');
+                    nextButton.textContent = 'Next';
+                    nextButton.onclick = () => {
+                        const dateValue = input.value;
+                        if (dateValue) {
+                            // Format date for display
+                            const formattedDate = new Date(dateValue).toLocaleDateString('en-NG', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            });
+                            selectAnswer(formattedDate, currentStep);
+                        } else {
+                            alert('Please select a date to continue.');
+                        }
+                    };
+                } else if (question.multiSelect) {
+                    // Handle multi-select for special needs step
+                    otherContainer.classList.remove('hidden');
+                    const input = otherContainer.querySelector('input');
+                    const nextButton = otherContainer.querySelector('button');
+
+                    input.classList.remove('hidden');
+                    input.type = 'text';
+                    input.placeholder = "Or type other preferences...";
+                    nextButton.classList.remove('hidden');
+                    nextButton.textContent = 'Next';
+
+                    // Track selected options for multi-select
+                    let selectedOptions = [];
+
+                    // Re-render options with checkboxes for multi-select
+                    const optionsContainer = document.getElementById('answer-options');
+                    optionsContainer.innerHTML = '';
+                    question.options.forEach((option, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'w-full p-4 text-left bg-gray-50 hover:bg-gold-50 border border-gray-200 hover:border-gold-200 rounded-xl transition-all flex items-center space-x-3';
+                        button.innerHTML = `
+                            <div class="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center multi-check">
+                                <svg class="w-3 h-3 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800">${option.text}</div>
+                                <div class="text-sm text-gray-600">${option.desc}</div>
+                            </div>
+                        `;
+                        button.addEventListener('click', () => {
+                            const checkDiv = button.querySelector('.multi-check');
+                            const checkIcon = checkDiv.querySelector('svg');
+                            const isSelected = selectedOptions.includes(option.text);
+
+                            if (isSelected) {
+                                selectedOptions = selectedOptions.filter(o => o !== option.text);
+                                checkDiv.classList.remove('bg-gold-500', 'border-gold-500');
+                                checkDiv.classList.add('border-gray-300');
+                                checkIcon.classList.add('hidden');
+                            } else {
+                                selectedOptions.push(option.text);
+                                checkDiv.classList.add('bg-gold-500', 'border-gold-500');
+                                checkDiv.classList.remove('border-gray-300');
+                                checkIcon.classList.remove('hidden');
+                            }
+                        });
+                        optionsContainer.appendChild(button);
+                    });
+
+                    nextButton.onclick = () => {
+                        const customInput = input.value.trim();
+                        if (customInput) {
+                            selectedOptions.push(customInput);
+                        }
+                        const answer = selectedOptions.length > 0 ? selectedOptions.join(', ') : 'No preference';
+                        selectAnswer(answer, currentStep);
+                    };
+                } else {
+                    otherContainer.classList.add('hidden');
+                    // Hide any step-specific buttons when not needed
+                    const nameNextBtn = document.getElementById('name-next-btn');
+                    if (nameNextBtn) nameNextBtn.classList.add('hidden');
+                }
+            } else {
+                // Show results or summary when all questions are answered
+                if (currentFlow === 'helper') {
+                    showHelperSummaryView();
+                } else {
+                    showHouseholdSummaryView();
+                }
+            }
+        }
+
+        function selectAnswer(answer, step) {
+            userAnswers[step] = answer;
+
+            // Visual feedback
+            const buttons = document.querySelectorAll('#answer-options button');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-gold-100', 'border-gold-300');
+                if (btn.textContent.includes(answer)) {
+                    btn.classList.add('bg-gold-100', 'border-gold-300');
+                }
+            });
+
+            // Move to next step after a short delay
+            setTimeout(() => {
+                currentStep++;
+                updateProgress();
+                loadQuestion(currentStep);
+            }, 500);
+        }
+
+        function updateProgress() {
+            const flow = currentFlow === 'household' ? householdFlow : helperFlow;
+            const totalSteps = flow.length;
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const percentage = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
+
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = `Step ${currentStep + 1} of ${totalSteps}`;
+        }
+
+        // Audio/TTS playback for accessibility
+        let currentAudio = null;
+        let isSpeaking = false;
+
+        function playQuestionAudio() {
+            const questionTitle = document.getElementById('question-title').textContent;
+            const audioBtn = document.getElementById('audio-help-btn');
+            const audioBtnText = document.getElementById('audio-btn-text');
+
+            // If already speaking, stop
+            if (isSpeaking) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                isSpeaking = false;
+                audioBtnText.textContent = 'Listen';
+                audioBtn.classList.remove('bg-gold-200');
+                audioBtn.classList.add('bg-lemon-100');
+                return;
+            }
+
+            // Check if browser supports speech synthesis
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(questionTitle);
+
+                // Try to use a Nigerian English voice if available
+                const voices = window.speechSynthesis.getVoices();
+                const nigerianVoice = voices.find(v => v.lang.includes('en-NG') || v.lang.includes('en-GB') || v.lang.includes('en'));
+                if (nigerianVoice) {
+                    utterance.voice = nigerianVoice;
+                }
+
+                utterance.rate = 0.9; // Slightly slower for clarity
+                utterance.pitch = 1;
+
+                utterance.onstart = () => {
+                    isSpeaking = true;
+                    audioBtnText.textContent = 'Stop';
+                    audioBtn.classList.add('bg-gold-200');
+                    audioBtn.classList.remove('bg-lemon-100');
+                };
+
+                utterance.onend = () => {
+                    isSpeaking = false;
+                    audioBtnText.textContent = 'Listen';
+                    audioBtn.classList.remove('bg-gold-200');
+                    audioBtn.classList.add('bg-lemon-100');
+                };
+
+                utterance.onerror = () => {
+                    isSpeaking = false;
+                    audioBtnText.textContent = 'Listen';
+                    audioBtn.classList.remove('bg-gold-200');
+                    audioBtn.classList.add('bg-lemon-100');
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Sorry, audio playback is not supported in your browser.');
+            }
+        }
+
+        // Load voices when they become available
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        function showSummaryLoading() {
+            document.getElementById('summary-card').classList.add('hidden');
+            document.getElementById('find-maid-btn').classList.add('hidden');
+            document.getElementById('summary-loading').classList.remove('hidden');
+        }
+
+        function hideSummaryLoading() {
+            document.getElementById('summary-card').classList.remove('hidden');
+            document.getElementById('find-maid-btn').classList.remove('hidden');
+            document.getElementById('summary-loading').classList.add('hidden');
+        }
+
+        // Process user answers for webhook submission
+        async function processUserAnswersForSubmission() {
+            const processedAnswers = {};
+
+            for (const [key, value] of Object.entries(userAnswers)) {
+                if (value && typeof value === 'object') {
+                    if (value.type === 'image') {
+                        // Use the dataUrl for image transmission
+                        processedAnswers[key] = {
+                            type: 'image',
+                            data: value.dataUrl,
+                            format: 'image/jpeg'
+                        };
+                    } else {
+                        // Handle other object types
+                        processedAnswers[key] = value;
+                    }
+                } else {
+                    // Handle primitive values (strings, numbers, etc.)
+                    processedAnswers[key] = value;
+                }
+            }
+
+            return processedAnswers;
+        }
+
+        async function sendAllDataToWebhook() {
+            const data = {
+                // Request Details
+                requestDetails: {
+                    helpType: userAnswers[0] || null,
+                    accommodation: userAnswers[1] || null,
+                    location: userAnswers[2] || null,
+                    startDate: userAnswers[3] || null,
+                    budget: userAnswers[4] || null
+                },
+                // Complete user answers array (excluding binary data)
+                userAnswers: await processUserAnswersForSubmission(),
+                // Flow type and request type
+                flowType: currentFlow,
+                requestType: currentFlow === 'helper' ? 'helper_profile_submission' : 'maid_search_request',
+                // Timestamp
+                timestamp: new Date().toISOString(),
+                // Status
+                status: currentFlow === 'helper' ? 'profile_submitted' : 'searching_for_maids'
+            };
+
+            try {
+                console.log('Sending search request data to webhook:', data);
+
+                const response = await apiService.post('/maid-post', data);
+                console.log('Search request data sent to webhook successfully:', response);
+
+            } catch (error) {
+                console.error('Error sending search request data to webhook:', error);
+            }
+        }
+
+
+
+        async function getMatchedHelpersFromWebhook() {
+            try {
+                console.log('=== FETCHING MATCHED HELPERS FROM WEBHOOK ===');
+                console.log('Current user answers:', userAnswers);
+
+                // Build parameters object for webhook manager
+                const params = {};
+
+                // Add flow type
+                if (currentFlow) {
+                    params.flowType = currentFlow;
+                }
+
+                // Add user answers with descriptive parameter names
+                if (userAnswers && Object.keys(userAnswers).length > 0) {
+                    Object.keys(userAnswers).forEach((key) => {
+                        const answer = userAnswers[key];
+                        if (answer && typeof answer === 'string') {
+                            params[`answer_${key}`] = answer;
+                        }
+                    });
+
+                    // Add specific named parameters for common search criteria
+                    if (userAnswers[0]) params.helpType = userAnswers[0];
+                    if (userAnswers[1]) params.accommodation = userAnswers[1];
+                    if (userAnswers[2]) params.location = userAnswers[2];
+                    if (userAnswers[3]) params.startDate = userAnswers[3];
+                    if (userAnswers[4]) params.budget = userAnswers[4];
+                }
+
+                console.log('Webhook GET params:', JSON.stringify(params, null, 2));
+                console.log('Making webhook GET request to endpoint: get');
+
+                const responseData = await apiService.get('/maid-get', params);
+                console.log('=== RAW WEBHOOK RESPONSE ===');
+                console.log('Response type:', typeof responseData);
+                console.log('Response data:', JSON.stringify(responseData, null, 2));
+
+                // Handle different response structures with detailed logging
+                let matchedHelpers = null;
+
+                if (Array.isArray(responseData)) {
+                    console.log('Response is an array with length:', responseData.length);
+
+                    // Check for the actual response format: [{ "maids": [...] }]
+                    if (responseData.length > 0 && responseData[0] && responseData[0].maids) {
+                        console.log('✓ Found maids in responseData[0].maids structure (actual format)');
+                        matchedHelpers = responseData[0].maids;
+                    }
+                    // Check if array contains objects with output.maids structure (test format)
+                    else if (responseData.length > 0 && responseData[0] && responseData[0].output && responseData[0].output.maids) {
+                        console.log('✓ Found maids in responseData[0].output.maids structure (test format)');
+                        matchedHelpers = responseData[0].output.maids;
+                    } else if (responseData.length > 0 && responseData[0] && typeof responseData[0] === 'object') {
+                        // Check if the response is an array of maid objects directly
+                        const firstItem = responseData[0];
+                        if (firstItem['First Name'] || firstItem.first_name || firstItem.name || firstItem.Name) {
+                            console.log('✓ Response appears to be direct array of maids');
+                            matchedHelpers = responseData;
+                        } else {
+                            console.log('Array item structure:', Object.keys(firstItem));
+                            // Response is directly an array of helpers
+                            matchedHelpers = responseData;
+                        }
+                    } else {
+                        console.log('Response is array but unknown structure');
+                        matchedHelpers = responseData;
+                    }
+                } else if (responseData && typeof responseData === 'object') {
+                    console.log('Response is an object with keys:', Object.keys(responseData));
+
+                    // Check for direct maids property
+                    if (responseData.maids) {
+                        console.log('✓ Found maids in responseData.maids structure');
+                        matchedHelpers = responseData.maids;
+                    }
+                    // Check for nested output.maids structure (test format)
+                    else if (responseData.output && responseData.output.maids) {
+                        console.log('✓ Found maids in responseData.output.maids structure');
+                        matchedHelpers = responseData.output.maids;
+                    } else {
+                        // Response is an object, check common property names
+                        matchedHelpers = responseData.helpers ||
+                            responseData.data ||
+                            responseData.results ||
+                            responseData.profiles ||
+                            responseData.matches;
+
+                        console.log('Checked common properties, found:', matchedHelpers ? 'data' : 'nothing');
+
+                        // If none of the common properties exist, check if there's an array property
+                        if (!matchedHelpers) {
+                            const keys = Object.keys(responseData);
+                            for (const key of keys) {
+                                if (Array.isArray(responseData[key])) {
+                                    matchedHelpers = responseData[key];
+                                    console.log(`✓ Found helpers array in property: ${key}`);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                console.log('=== PROCESSED HELPERS ===');
+                console.log('Matched helpers type:', typeof matchedHelpers);
+                console.log('Matched helpers length:', Array.isArray(matchedHelpers) ? matchedHelpers.length : 'N/A');
+                console.log('Matched helpers data:', matchedHelpers);
+
+                // Check if response indicates "No Match Found"
+                if (typeof responseData === 'string') {
+                    const lowerResponse = responseData.toLowerCase();
+                    if (lowerResponse.includes('no match found') ||
+                        lowerResponse.includes('no matches found') ||
+                        lowerResponse.includes('no results')) {
+                        console.log('✓ Webhook returned "No Match Found" string message');
+                        return 'NO_MATCH_FOUND';
+                    }
+                }
+
+                // Check for specific webhook format: [{ "response": "No Match Found" }]
+                if (Array.isArray(responseData) && responseData.length === 1 &&
+                    responseData[0] && typeof responseData[0] === 'object' &&
+                    responseData[0].response &&
+                    responseData[0].response.toLowerCase().includes('no match found')) {
+                    console.log('✓ Webhook returned "No Match Found" in array format');
+                    return 'NO_MATCH_FOUND';
+                }
+
+                // Check if response object has a message indicating no matches
+                if (responseData && typeof responseData === 'object' && responseData.message) {
+                    const message = responseData.message.toLowerCase();
+                    if (message.includes('no match found') ||
+                        message.includes('no matches found') ||
+                        message.includes('no results')) {
+                        console.log('✓ Webhook returned "No Match Found" in message field');
+                        return 'NO_MATCH_FOUND';
+                    }
+                }
+
+                if (Array.isArray(matchedHelpers) && matchedHelpers.length > 0) {
+                    console.log(`✓ Returning ${matchedHelpers.length} matched helpers`);
+                    return matchedHelpers;
+                } else {
+                    console.log('❌ No helpers found in response or empty array');
+                    console.log('Final matchedHelpers value:', matchedHelpers);
+                    return [];
+                }
+            } catch (error) {
+                console.error('=== ERROR GETTING MATCHED HELPERS ===');
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                return null;
+            }
+        }
+
+        function displayMatchedHelpers(helpers) {
+            console.log('=== DISPLAYING MATCHED HELPERS ===');
+            console.log('Helpers to display:', helpers);
+            console.log('Helpers count:', helpers ? helpers.length : 'null/undefined');
+
+            const container = document.getElementById('matched-helpers-container');
+            if (!container) {
+                console.error('Container element "matched-helpers-container" not found!');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (!helpers || !Array.isArray(helpers) || helpers.length === 0) {
+                console.log('No helpers to display or invalid helpers data');
+                container.innerHTML = '<div class="text-center py-8 text-gray-600">No helpers data to display</div>';
+                return;
+            }
+
+            helpers.forEach((helper, index) => {
+                console.log(`Processing helper ${index + 1}:`, helper);
+
+                // Map webhook response properties to expected format
+                // Handle the actual webhook response format and test format
+                const mappedHelper = {
+                    // Handle actual webhook format: "First Name", "Salary Expectation", etc.
+                    name: helper['First Name'] || helper.first_name || helper.Name || helper.name || 'Unknown Name',
+                    experience: helper.experience || helper.Experience || helper['Years of Experience'] || 'Experienced helper',
+                    languages: helper.Laguages || helper.languages || helper.Language || helper.Languages || 'English',
+                    availability: helper.Availability || helper.availability || 'Available now',
+                    // Handle both "Salary Expectation" (actual) and "salary" (test)
+                    rate: helper['Salary Expectation'] || helper.salary || helper.Salary || helper.rate || '₦30,000/month',
+                    reviews: helper.Reviews || helper.reviews || '(12 reviews)',
+                    rating: helper.Rating || helper.rating || '4.5',
+                    verification: helper.Verification || helper.verification || 'Verified',
+                    level: helper.Level || helper.level || 'Bronze',
+                    image: (helper['profile photo'] || helper.Image || helper.image || '/images/default-avatar.svg').toString().trim().replace(/`/g, ''),
+                    // Handle both "Address" (actual) and "location" (test)
+                    location: helper.Address || helper.location || helper.Location || 'Lagos',
+                    row: helper.row || helper.Row || '',
+                    age: helper.Age || helper.age || 'N/A',
+                    // Additional fields for enhanced display
+                    skills: helper.Skills || helper.skills || helper['Job Type'] || helper.jobType || 'General Housekeeping',
+                    phone: helper.Phone || helper.phone || helper['Phone Number'] || helper.whatsapp || ''
+                };
+
+                console.log(`Mapped helper ${index + 1}:`, mappedHelper);
+
+                const helperCard = document.createElement('div');
+                helperCard.className = 'bg-white rounded-2xl shadow-lg border border-gold-100 p-6 card-hover mb-4';
+                helperCard.innerHTML = `
+                    <div class="flex items-start space-x-4">
+                        <img src="${mappedHelper.image}" alt="Helper" class="w-16 h-16 rounded-xl object-cover helper-image cursor-pointer hover:opacity-80 transition-opacity" onerror="this.src='/images/default-avatar.svg'" onclick="openPhotoModal('${mappedHelper.image}')">
+                        <div class="flex-1">
+                            <div class="flex items-center flex-wrap gap-1 mb-2">
+                                <h4 class="font-semibold text-gray-800">${mappedHelper.name}</h4>
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span class="text-xs text-gold-600 bg-gold-100 px-2 py-1 rounded-full">${mappedHelper.verification}</span>
+                                <span class="text-xs text-lemon-600 bg-lemon-100 px-2 py-1 rounded-full">${mappedHelper.level}</span>
+                            </div>
+                            <div class="space-y-1 text-sm text-gray-600 mb-3">
+                                <div>• Available ${mappedHelper.availability}</div>
+                                ${mappedHelper.location !== 'Unknown' ? `<div>• Location: ${mappedHelper.location}</div>` : ''}
+                                ${mappedHelper.age !== 'N/A' ? `<div>• Age: ${mappedHelper.age} years</div>` : ''}
+                                <div>• Languages: ${mappedHelper.languages}</div>
+                                ${mappedHelper.row ? `<div>• Reference: ${mappedHelper.row}</div>` : ''}
+                            </div>
+                            <!-- Skills/Services Tags -->
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                ${mappedHelper.skills.split(',').map(skill =>
+                    `<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">${skill.trim()}</span>`
+                ).join('')}
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-gold-600">${mappedHelper.rate}</span>
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-yellow-500">★</span>
+                                    <span class="text-sm font-medium">${mappedHelper.rating}</span>
+                                    <span class="text-xs text-gray-500">${mappedHelper.reviews}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3 mt-4 pt-4 border-t border-gray-100">
+                        <button class="hire-maid-btn flex-1 bg-gradient-to-r from-gold-400 to-gold-500 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all" data-helper='${JSON.stringify(mappedHelper)}'>
+                            Hire this Maid
+                        </button>
+                        <button class="message-helper-btn px-4 py-3 border border-green-500 bg-green-50 rounded-xl text-green-700 hover:bg-green-100 transition-colors" data-helper='${JSON.stringify(mappedHelper)}' title="Message on WhatsApp">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.687"/>
+                            </svg>
+                        </button>
+                        <button class="share-helper-btn px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors" data-helper='${JSON.stringify(mappedHelper)}' title="Share this helper">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(helperCard);
+
+                console.log(`Helper card ${index + 1} added to container`);
+            });
+
+            console.log(`Successfully displayed ${helpers.length} helper cards`);
+        }
+
+        // Profile photo modal functionality
+        function openPhotoModal(imageSrc) {
+            const modal = document.getElementById('photo-modal');
+            const modalImage = document.getElementById('modal-image');
+
+            if (modal && modalImage) {
+                modalImage.src = imageSrc;
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            }
+        }
+
+        function closePhotoModal() {
+            const modal = document.getElementById('photo-modal');
+
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Restore scrolling
+            }
+        }
+
+        // Close modal when clicking outside the image
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('photo-modal');
+
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target === modal) {
+                        closePhotoModal();
+                    }
+                });
+            }
+        });
+
+        // Payment configuration variables
+        let paymentConfig = null;
+
+        // Function to fetch payment configuration from webhook
+        // Expected webhook response format for /maid-get-keys endpoint:
+        // {
+        //   "public-key": "pk_test_your_public_key_here",
+        //   "secret-key": "sk_test_your_secret_key_here", 
+        //   "amount": 10000,
+        //   "currency": "NGN"
+        // }
+        // OR as an array: [{ "public-key": "...", "secret-key": "...", ... }]
+        async function fetchPaymentConfig() {
+            try {
+                console.log('=== FETCHING PAYMENT CONFIGURATION ===');
+                console.log('Attempting to fetch from keys endpoint: /maid-get-keys');
+
+                const config = await apiService.get('/maid-get-keys');
+
+                console.log('=== RAW PAYMENT CONFIG RESPONSE ===');
+                console.log('Config response type:', typeof config);
+                console.log('Config response data:', JSON.stringify(config, null, 2));
+
+                let processedConfig = null;
+
+                // Handle array response format
+                if (Array.isArray(config) && config.length > 0) {
+                    console.log('✓ Payment config is array, using first item');
+                    processedConfig = config[0];
+                } else if (config && typeof config === 'object') {
+                    console.log('✓ Payment config is object, using directly');
+                    processedConfig = config;
+                } else {
+                    console.log('✗ Invalid payment config format, using fallback');
+                    throw new Error('Invalid payment configuration format received');
+                }
+
+                // Validate required payment config fields
+                const requiredFields = ['public-key', 'secret-key', 'amount', 'currency'];
+                const missingFields = [];
+
+                for (const field of requiredFields) {
+                    if (!processedConfig[field] && !processedConfig[field.replace('-', '_')]) {
+                        missingFields.push(field);
+                    }
+                }
+
+                if (missingFields.length > 0) {
+                    console.log('✗ Missing required payment config fields:', missingFields);
+                    throw new Error(`Missing required payment configuration fields: ${missingFields.join(', ')}`);
+                }
+
+                paymentConfig = processedConfig;
+                console.log('✓ Payment configuration loaded successfully');
+                console.log('Payment config fields:', Object.keys(paymentConfig));
+
+                return paymentConfig;
+
+            } catch (error) {
+                console.error('=== PAYMENT CONFIG FETCH ERROR ===');
+                console.error('Error type:', error.constructor.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+
+                // Use fallback payment configuration
+                console.log('Using fallback payment configuration...');
+                const fallbackConfig = {
+                    'public-key': 'FLWPUBK_TEST-SANDBOXDEMOKEY-X', // Flutterwave test public key format
+                    'secret-key': 'FLWSECK_TEST-SANDBOXDEMOKEY-X', // Flutterwave test secret key format
+                    'amount': 10000, // Default amount in kobo (₦100)
+                    'currency': 'NGN',
+                    'description': 'Maid Service Payment',
+                    'callback_url': window.location.origin + '/payment-success',
+                    'cancel_url': window.location.origin + '/payment-cancel'
+                };
+
+                paymentConfig = fallbackConfig;
+                console.log('✓ Fallback payment configuration loaded');
+                console.log('Fallback config fields:', Object.keys(paymentConfig));
+
+                // Show warning to user about using fallback config
+                console.warn('⚠️ Using fallback payment configuration. Please contact support if payment issues persist.');
+
+                return paymentConfig;
+            }
+        }
+
+        async function submitContactInfo() {
+            console.log('=== submitContactInfo function called ===');
+
+            const name = document.getElementById('user-name').value;
+            const whatsapp = document.getElementById('user-whatsapp').value;
+            const email = document.getElementById('user-email').value;
+
+            console.log('Form field values:', { name, whatsapp, email });
+            console.log('Current userAnswers:', userAnswers);
+            console.log('Current flow:', currentFlow);
+
+            if (!name || !whatsapp) {
+                console.log('Validation failed: missing required fields');
+                alert('Please fill in all required fields (Name and WhatsApp Number)');
+                return;
+            }
+
+            console.log('Validation passed, preparing data...');
+
+            // Prepare comprehensive data including all request details and contact info
+            const data = {
+                // Contact Information
+                contactInfo: {
+                    name: name,
+                    whatsapp: whatsapp,
+                    email: email || null
+                },
+                // Request Details
+                requestDetails: {
+                    helpType: userAnswers[0] || null,
+                    accommodation: userAnswers[1] || null,
+                    location: userAnswers[2] || null,
+                    startDate: userAnswers[3] || null,
+                    budget: userAnswers[4] || null
+                },
+                // Complete user answers array
+                userAnswers: userAnswers,
+                // Flow type and request type
+                flowType: currentFlow,
+                requestType: 'maid_request_with_contact',
+                // Timestamp
+                timestamp: new Date().toISOString(),
+                // Status
+                status: 'contact_submitted_no_matches' // Renamed status to be more semantic
+            };
+
+            try {
+                console.log('=== Sending data to webhook ===');
+                console.log('Data being sent:', JSON.stringify(data, null, 2));
+
+                const response = await apiService.post('/maid-post', data);
+                console.log('Webhook response:', response);
+                console.log('Contact information and request details sent to webhook successfully');
+                showThankYouView();
+
+            } catch (error) {
+                console.error('=== Error sending contact information to webhook ===');
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('There was an error submitting your information. Please try again.');
+                // Reset button state on error
+                const submitBtn = document.getElementById('submit-contact-btn');
+                if (submitBtn) {
+                    submitBtn.textContent = 'Submit Request';
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Payment functions
+        let selectedMaid = null;
+
+        // Helper sharing functionality
+        async function shareHelperCard(helperData) {
+            try {
+                console.log('Sharing helper card for:', helperData.name);
+
+                // Create formatted text content for sharing
+                const shareText = `🏠 Found an Amazing Maid on Maids.ng! 🏠
+
+👤 Name: ${helperData.name}
+📍 Location: ${helperData.location !== 'Unknown' ? helperData.location : 'Available'}
+💰 Rate: ${helperData.rate}
+⏰ Availability: ${helperData.availability}
+⭐ Rating: ${helperData.rating} stars
+✅ Status: ${helperData.verification}
+
+🔍 Find more trusted maids at Maids.ng
+🌐 Visit: ${window.location.origin}
+
+#Maids #HouseholdHelp #Nigeria #TrustedHelpers`;
+
+                // Try to use native Web Share API if available (works on mobile and some desktop browsers)
+                if (navigator.share) {
+                    const shareData = {
+                        title: `${helperData.name} - Trusted Maid on Maids.ng`,
+                        text: shareText,
+                        url: window.location.href
+                    };
+
+                    // Add image if available (note: not all browsers support sharing images)
+                    if (helperData.image && typeof navigator.canShare === 'function') {
+                        try {
+                            // Try to fetch and convert image to blob for sharing
+                            const response = await fetch(helperData.image);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const imageFile = new File([blob], `${helperData.name.replace(/\s+/g, '_')}_profile.jpg`, { type: 'image/jpeg' });
+                                shareData.files = [imageFile];
+
+                                // Check if sharing with files is supported
+                                if (navigator.canShare(shareData)) {
+                                    await navigator.share(shareData);
+                                    return;
+                                }
+                            }
+                        } catch (imageError) {
+                            console.log('Could not include image in share, sharing text only:', imageError);
+                        }
+                    }
+
+                    // Share without image if image sharing failed or is not supported
+                    await navigator.share({
+                        title: shareData.title,
+                        text: shareData.text,
+                        url: shareData.url
+                    });
+
+                } else {
+                    // Fallback for browsers that don't support Web Share API
+                    await handleFallbackShare(shareText, helperData);
+                }
+
+            } catch (error) {
+                console.error('Error sharing helper card:', error);
+
+                // If native sharing fails, use fallback
+                const shareText = `🏠 Found an Amazing Maid on Maids.ng! 🏠\n\n👤 Name: ${helperData.name}\n📍 Location: ${helperData.location !== 'Unknown' ? helperData.location : 'Available'}\n💰 Rate: ${helperData.rate}\n⏰ Availability: ${helperData.availability}\n⭐ Rating: ${helperData.rating} stars\n✅ Status: ${helperData.verification}\n\n🔍 Find more trusted maids at Maids.ng\n🌐 Visit: ${window.location.origin}`;
+                await handleFallbackShare(shareText, helperData);
+            }
+        }
+
+        // Fallback share function for browsers without native Web Share API
+        async function handleFallbackShare(shareText, helperData) {
+            // Create a modal with sharing options
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 max-w-md w-full max-h-96 overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Share Maid</h3>
+                        <button id="close-share-modal" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Maid Preview Card -->
+                    <div class="bg-gradient-to-r from-gold-50 to-lemon-50 rounded-xl p-4 mb-4">
+                        <div class="flex items-center space-x-3">
+                            <img src="${helperData.image}" alt="${helperData.name}" class="w-12 h-12 rounded-full object-cover">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-800">${helperData.name}</div>
+                                <div class="text-sm text-gray-600">${helperData.location} • ${helperData.rate}</div>
+                                <div class="text-xs text-gold-600">${helperData.rating} ⭐ • ${helperData.verification}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Share Options -->
+                    <div class="space-y-3">
+                        <!-- Copy to Clipboard -->
+                        <button id="copy-share-text" class="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Copy to Clipboard</span>
+                        </button>
+                        
+                        <!-- WhatsApp Share -->
+                        <a id="whatsapp-share" href="#" class="w-full flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.687"/>
+                            </svg>
+                            <span>Share on WhatsApp</span>
+                        </a>
+                        
+                        <!-- Twitter Share -->
+                        <a id="twitter-share" href="#" class="w-full flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-xl transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                            <span>Share on Twitter</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Share Text Preview -->
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <div class="text-xs text-gray-600 mb-2">Share Preview:</div>
+                        <div class="text-sm text-gray-800 whitespace-pre-wrap max-h-24 overflow-y-auto">${shareText}</div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Set up event listeners for the modal
+            const closeBtn = modal.querySelector('#close-share-modal');
+            const copyBtn = modal.querySelector('#copy-share-text');
+            const whatsappLink = modal.querySelector('#whatsapp-share');
+            const twitterLink = modal.querySelector('#twitter-share');
+
+            // Close modal function
+            const closeModal = () => {
+                document.body.removeChild(modal);
+            };
+
+            // Close modal on close button click or outside click
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // Copy to clipboard
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(shareText);
+                    copyBtn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Copied!</span>
+                    `;
+                    copyBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+                    copyBtn.classList.add('bg-green-100', 'text-green-800');
+
+                    setTimeout(() => {
+                        copyBtn.innerHTML = `
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Copy to Clipboard</span>
+                        `;
+                        copyBtn.classList.remove('bg-green-100', 'text-green-800');
+                        copyBtn.classList.add('bg-gray-100', 'hover:bg-gray-200');
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Failed to copy to clipboard:', error);
+                    alert('Failed to copy to clipboard. Please try selecting and copying the text manually.');
+                }
+            });
+
+            // WhatsApp share
+            const whatsappText = encodeURIComponent(shareText);
+            whatsappLink.href = `https://wa.me/?text=${whatsappText}`;
+            whatsappLink.target = '_blank';
+
+            // Twitter share
+            const twitterText = encodeURIComponent(`🏠 Found ${helperData.name} - a trusted maid on @MaidsNG! ${helperData.rate} • ${helperData.location} • ${helperData.rating}⭐ #Maids #Nigeria`);
+            const twitterUrl = encodeURIComponent(window.location.href);
+            twitterLink.href = `https://twitter.com/intent/tweet?text=${twitterText}&url=${twitterUrl}`;
+            twitterLink.target = '_blank';
+        }
+
+        // Function to show payment view
+        function showPaymentView(maidData) {
+            selectedMaid = maidData;
+
+            // Update selected maid card in payment view
+            const selectedMaidCard = document.getElementById('selected-maid-card');
+            if (selectedMaidCard && maidData) {
+                selectedMaidCard.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <img src="${maidData.image || 'https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20african%20woman%20maid%20uniform%20smiling%20portrait&image_size=square'}" 
+                             alt="${maidData.name}" class="w-16 h-16 rounded-full object-cover">
+                        <div>
+                            <h3 class="font-semibold text-lg">${maidData.name}</h3>
+                            <p class="text-gray-600">${maidData.experience}</p>
+                            <p class="text-gold-600 font-semibold">${maidData.rate || '₦30,000/month'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            hideAllViews();
+            document.getElementById('payment-view').classList.remove('hidden');
+        }
+
+        // Function to initialize Flutterwave payment
+        async function initializePayment() {
+            console.log('=== INITIALIZING PAYMENT ===');
+
+            if (!paymentConfig) {
+                console.log('Payment config not available, fetching...');
+                await fetchPaymentConfig();
+            }
+
+            if (!paymentConfig) {
+                console.error('Failed to load payment configuration');
+
+                // Show more detailed error in the UI
+                const paymentContainer = document.getElementById('payment-form-container');
+                paymentContainer.innerHTML = `
+                    <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
+                        <div class="text-red-600 mb-4">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h4 class="font-semibold text-lg mb-2">Payment Configuration Error</h4>
+                            <p class="text-sm mb-4">Unable to load payment configuration from webhook.</p>
+                            <p class="text-xs text-gray-600 mb-4">Please check the browser console for detailed error information.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <button onclick="initializePayment()" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                Try Again
+                            </button>
+                            <button onclick="showMatchedHelpersView()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                Back to Helpers
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!selectedMaid) {
+                console.error('No maid selected for payment');
+                alert('No maid selected for payment.');
+                return;
+            }
+
+            console.log('Payment config available:', paymentConfig);
+            console.log('Selected maid:', selectedMaid);
+
+            // Show loading state
+            const paymentContainer = document.getElementById('payment-form-container');
+            paymentContainer.innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-500 mx-auto"></div><p class="mt-2 text-gray-600">Initializing payment...</p></div>';
+
+            // Generate unique transaction reference
+            const txRef = 'MAID_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+            // Set up timeout mechanism to prevent infinite loading
+            let paymentInitialized = false;
+            const timeoutDuration = 10000; // 10 seconds timeout
+
+            const timeoutId = setTimeout(() => {
+                if (!paymentInitialized) {
+                    console.error('Payment initialization timeout - FlutterwaveCheckout may have failed silently');
+                    paymentContainer.innerHTML = `
+                        <div class="text-center py-8 bg-yellow-50 rounded-xl border border-yellow-200">
+                            <div class="text-yellow-600 mb-4">
+                                <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <h4 class="font-semibold text-lg mb-2">Payment Initialization Timeout</h4>
+                                <p class="text-sm mb-4">The payment system is taking longer than expected to load.</p>
+                                <p class="text-xs text-gray-600 mb-4">This could be due to network issues or payment service unavailability.</p>
+                            </div>
+                            <div class="space-y-2">
+                                <button onclick="initializePayment()" class="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                                    Try Again
+                                </button>
+                                <button onclick="showMatchedHelpersView()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                    Back to Helpers
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, timeoutDuration);
+
+            try {
+                console.log('Initializing Flutterwave checkout...');
+                console.log('Payment config keys:', Object.keys(paymentConfig));
+
+                // Validate public key format
+                const publicKey = paymentConfig['public-key'] || paymentConfig['api-key'] || paymentConfig.api_key;
+                console.log('Using public key:', publicKey);
+
+                if (!publicKey) {
+                    throw new Error('No public key found in payment configuration');
+                }
+
+                // Check if public key has valid Flutterwave format
+                if (!publicKey.startsWith('FLWPUBK_TEST-') && !publicKey.startsWith('FLWPUBK_LIVE-')) {
+                    console.warn('⚠️ Public key may not have valid Flutterwave format:', publicKey);
+                }
+
+                // Check if FlutterwaveCheckout function is available
+                if (typeof FlutterwaveCheckout !== 'function') {
+                    throw new Error('FlutterwaveCheckout function is not available. Payment script may not have loaded properly.');
+                }
+
+                // Initialize Flutterwave checkout with enhanced error handling
+                const checkoutResult = FlutterwaveCheckout({
+                    PBFPubKey: publicKey,
+                    tx_ref: txRef,
+                    amount: paymentConfig.amount || 10000,
+                    currency: paymentConfig.currency || 'NGN',
+                    payment_options: 'card, banktransfer, ussd',
+                    customer: {
+                        email: 'customer@maids.ng',
+                        phone_number: '08012345678',
+                        name: 'Maid Service Customer'
+                    },
+                    customizations: {
+                        title: 'Maids.ng - Hire Maid Service',
+                        description: `Payment for hiring ${selectedMaid.name}`,
+                        logo: 'https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=maids%20ng%20logo%20cleaning%20service&image_size=square'
+                    },
+                    callback: function (data) {
+                        console.log('Payment callback:', data);
+                        paymentInitialized = true;
+                        clearTimeout(timeoutId);
+                        if (data.status === 'successful') {
+                            handlePaymentSuccess(data);
+                        } else {
+                            handlePaymentFailure(data);
+                        }
+                    },
+                    onclose: function () {
+                        console.log('Payment modal closed');
+                        paymentInitialized = true;
+                        clearTimeout(timeoutId);
+                        paymentContainer.innerHTML = `
+                            <div class="text-center py-8">
+                                <p class="text-gray-600 mb-4">Payment was cancelled</p>
+                                <button onclick="initializePayment()" class="bg-gold-500 text-white px-6 py-2 rounded-lg hover:bg-gold-600 transition-colors">
+                                    Try Again
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+
+                // Mark as initialized if FlutterwaveCheckout executed without throwing
+                if (checkoutResult !== false) {
+                    paymentInitialized = true;
+                    clearTimeout(timeoutId);
+                    console.log('FlutterwaveCheckout initialized successfully');
+                } else {
+                    throw new Error('FlutterwaveCheckout returned false - initialization failed');
+                }
+
+            } catch (error) {
+                console.error('Error initializing payment:', error);
+                clearTimeout(timeoutId);
+                paymentContainer.innerHTML = `
+                    <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
+                        <div class="text-red-600 mb-4">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h4 class="font-semibold text-lg mb-2">Payment Initialization Error</h4>
+                            <p class="text-sm mb-4">Error: ${error.message}</p>
+                            <p class="text-xs text-gray-600 mb-4">Please try again or contact support if the issue persists.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <button onclick="initializePayment()" class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                Try Again
+                            </button>
+                            <button onclick="showMatchedHelpersView()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                Back to Helpers
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Function to handle payment success
+        async function handlePaymentSuccess(paymentData) {
+            console.log('Payment successful:', paymentData);
+
+            // Send payment data to dedicated maid-payment-success endpoint only
+            await sendPaymentSuccessWebhook(paymentData);
+
+            // Show success view
+            showPaymentSuccessView(paymentData);
+        }
+
+        // Function to handle payment failure
+        async function handlePaymentFailure(paymentData) {
+            console.log('Payment failed:', paymentData);
+
+            // Send payment failure data to dedicated endpoint
+            await sendPaymentFailureWebhook(paymentData);
+
+            // Show failure view
+            showPaymentFailureView(paymentData);
+        }
+
+        // Function to send payment success data to dedicated endpoint
+        async function sendPaymentSuccessWebhook(paymentData) {
+            if (!selectedMaid) {
+                console.error('Missing selected maid data');
+                return;
+            }
+
+            const webhookData = {
+                status: 'success',
+                transaction: {
+                    id: paymentData.transaction_id,
+                    tx_ref: paymentData.tx_ref,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency,
+                    status: paymentData.status,
+                    created_at: paymentData.created_at
+                },
+                client: {
+                    email: paymentData.customer?.email || 'customer@maids.ng',
+                    phone: paymentData.customer?.phone_number || '08012345678',
+                    name: paymentData.customer?.name || 'Maid Service Customer'
+                },
+                maid: {
+                    name: selectedMaid.name,
+                    experience: selectedMaid.experience,
+                    skills: selectedMaid.skills,
+                    rate: selectedMaid.rate,
+                    rating: selectedMaid.rating,
+                    image: selectedMaid.image
+                },
+                request_details: {
+                    helpType: userAnswers[0] || null,
+                    accommodation: userAnswers[1] || null,
+                    location: userAnswers[2] || null,
+                    startDate: userAnswers[3] || null,
+                    budget: userAnswers[4] || null
+                },
+                timestamp: new Date().toISOString(),
+                payment_confirmed: true
+            };
+
+            try {
+                console.log('Sending payment success data to maid-payment-success endpoint...');
+                const response = await Webhook.post('paymentSuccess', webhookData);
+                console.log('Payment success webhook sent successfully:', response);
+            } catch (error) {
+                console.error('Error sending payment success webhook:', error);
+            }
+        }
+
+        // Function to send payment failure data to dedicated endpoint
+        async function sendPaymentFailureWebhook(paymentData) {
+            if (!selectedMaid) {
+                console.error('Missing selected maid data');
+                return;
+            }
+
+            const webhookData = {
+                status: 'failed',
+                transaction: {
+                    id: paymentData.transaction_id,
+                    tx_ref: paymentData.tx_ref,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency,
+                    status: paymentData.status,
+                    created_at: paymentData.created_at
+                },
+                client: {
+                    email: paymentData.customer?.email || 'customer@maids.ng',
+                    phone: paymentData.customer?.phone_number || '08012345678',
+                    name: paymentData.customer?.name || 'Maid Service Customer'
+                },
+                maid: {
+                    name: selectedMaid.name,
+                    experience: selectedMaid.experience,
+                    skills: selectedMaid.skills,
+                    rate: selectedMaid.rate,
+                    rating: selectedMaid.rating,
+                    image: selectedMaid.image
+                },
+                request_details: {
+                    helpType: userAnswers[0] || null,
+                    accommodation: userAnswers[1] || null,
+                    location: userAnswers[2] || null,
+                    startDate: userAnswers[3] || null,
+                    budget: userAnswers[4] || null
+                },
+                timestamp: new Date().toISOString(),
+                payment_confirmed: false,
+                failure_reason: paymentData.status || 'Payment processing failed'
+            };
+
+            try {
+                console.log('Sending payment failure data to maid-payment-failure endpoint...');
+                const response = await Webhook.post('paymentFailure', webhookData);
+                console.log('Payment failure webhook sent successfully:', response);
+            } catch (error) {
+                console.error('Error sending payment failure webhook:', error);
+            }
+        }
+
+        // Function to show payment success view
+        function showPaymentSuccessView(paymentData) {
+            const successDetails = document.getElementById('success-details');
+            if (successDetails) {
+                successDetails.innerHTML = `
+                    <p class="text-gray-600 mb-2"><strong>Transaction ID:</strong> ${paymentData.transaction_id}</p>
+                    <p class="text-gray-600 mb-2"><strong>Amount:</strong> ${paymentData.currency} ${paymentData.amount}</p>
+                    <p class="text-gray-600"><strong>Maid:</strong> ${selectedMaid?.name || 'N/A'}</p>
+                `;
+            }
+
+            hideAllViews();
+            document.getElementById('payment-success-view').classList.remove('hidden');
+        }
+
+        // Function to show payment failure view
+        function showPaymentFailureView(paymentData) {
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.textContent = paymentData.status || 'Payment failed. Please try again.';
+            }
+
+            hideAllViews();
+            document.getElementById('payment-failure-view').classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize site configuration first
+            initializeSiteConfig();
+
+            // Fetch payment config on page load
+            fetchPaymentConfig();
+
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Find Me A Maid button
+            const findMaidButton = document.getElementById('find-maid-btn');
+            if (findMaidButton) {
+                findMaidButton.addEventListener('click', async function () {
+                    showSummaryLoading();
+
+                    // Send search request data to webhook first
+                    await sendAllDataToWebhook();
+
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                    const matchedHelpers = await getMatchedHelpersFromWebhook();
+
+                    hideSummaryLoading();
+
+                    if (matchedHelpers === 'NO_MATCH_FOUND') {
+                        console.log('Webhook specifically returned "No Match Found" - showing no matches view');
+                        showNoMatchesView();
+                    } else if (matchedHelpers && matchedHelpers.length > 0) {
+                        displayMatchedHelpers(matchedHelpers);
+                        showMatchedHelpersView();
+                    } else {
+                        showNoMatchesView();
+                    }
+                });
+            }
+
+            // Publish profile button
+            const publishButton = document.getElementById('publish-profile-btn');
+            if (publishButton) {
+                publishButton.addEventListener('click', async function () {
+                    // Change button text and disable it
+                    this.textContent = 'Publishing Profile...';
+                    this.disabled = true;
+                    this.classList.add('opacity-50', 'cursor-not-allowed');
+
+                    try {
+                        // Send maid profile data to webhook
+                        await sendAllDataToWebhook();
+
+                        // Show success message
+                        alert('Profile published successfully! You will start receiving job matches.');
+                        showLandingView();
+                    } catch (error) {
+                        console.error('Error publishing profile:', error);
+                        alert('Failed to publish profile. Please try again.');
+
+                        // Reset button state on error
+                        this.textContent = 'Publish Profile';
+                        this.disabled = false;
+                        this.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+            }
+
+            // Submit contact button
+            const submitContactButton = document.getElementById('submit-contact-btn');
+            console.log('Submit contact button found:', submitContactButton);
+            if (submitContactButton) {
+                submitContactButton.addEventListener('click', function () {
+                    console.log('=== Submit contact button clicked ===');
+                    // Change button text and disable it
+                    this.textContent = 'Submitting...';
+                    this.disabled = true;
+                    this.classList.add('opacity-50', 'cursor-not-allowed');
+
+                    console.log('Calling submitContactInfo function...');
+                    submitContactInfo();
+                });
+            } else {
+                console.error('Submit contact button not found!');
+            }
+
+            // Back to summary button
+            const backToSummaryButton = document.getElementById('back-to-summary');
+            if (backToSummaryButton) {
+                backToSummaryButton.addEventListener('click', function () {
+                    showHouseholdSummaryView();
+                });
+            }
+
+            // Other input enter key
+            const otherInput = document.querySelector('#question-view .border-t input');
+            if (otherInput) {
+                otherInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        if (this.value.trim() !== '') {
+                            selectAnswer(this.value.trim(), currentStep);
+                            this.value = '';
+                        }
+                    }
+                });
+            }
+
+            // Share button
+            const shareButton = document.getElementById('share-btn');
+            if (shareButton) {
+                shareButton.addEventListener('click', function () {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Maids.ng - Find Your Perfect Maid',
+                            text: 'I found the perfect platform for finding trusted household help! Check out Maids.ng',
+                            url: window.location.href
+                        });
+                    } else {
+                        // Fallback for browsers that don't support Web Share API
+                        const shareText = `I found the perfect platform for finding trusted household help! Check out Maids.ng: ${window.location.href}`;
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(shareText);
+                            alert('Link copied to clipboard! Share it with your friends.');
+                        } else {
+                            alert('Share this link with your friends: ' + window.location.href);
+                        }
+                    }
+                });
+            }
+
+            // Back to home button
+            const backToHomeButton = document.getElementById('back-to-home-btn');
+            if (backToHomeButton) {
+                backToHomeButton.addEventListener('click', function () {
+                    location.reload(); // Refresh the page
+                });
+            }
+
+            // Hire this Maid button event listener (delegated)
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('hire-maid-btn')) {
+                    const helperData = e.target.getAttribute('data-helper');
+                    if (helperData) {
+                        try {
+                            const maidData = JSON.parse(helperData);
+                            showPaymentView(maidData);
+                        } catch (error) {
+                            console.error('Error parsing maid data:', error);
+                            alert('Error loading maid information. Please try again.');
+                        }
+                    }
+                }
+
+                // Share Helper button event listener (delegated)
+                if (e.target.closest('.share-helper-btn')) {
+                    const shareBtn = e.target.closest('.share-helper-btn');
+                    const helperData = shareBtn.getAttribute('data-helper');
+                    if (helperData) {
+                        try {
+                            const maidData = JSON.parse(helperData);
+                            shareHelperCard(maidData);
+                        } catch (error) {
+                            console.error('Error parsing helper data for sharing:', error);
+                            alert('Error loading helper information for sharing. Please try again.');
+                        }
+                    }
+                }
+            });
+
+            // Payment form initialize button
+            const initPaymentBtn = document.getElementById('init-payment-btn');
+            if (initPaymentBtn) {
+                initPaymentBtn.addEventListener('click', initializePayment);
+            }
+
+            // Retry payment button
+            const retryPaymentBtn = document.getElementById('retry-payment-btn');
+            if (retryPaymentBtn) {
+                retryPaymentBtn.addEventListener('click', function () {
+                    if (selectedMaid) {
+                        showPaymentView(selectedMaid);
+                    }
+                });
+            }
+
+            // Back to maids button
+            const backToMaidsBtn = document.getElementById('back-to-maids-btn');
+            if (backToMaidsBtn) {
+                backToMaidsBtn.addEventListener('click', function () {
+                    showMatchedHelpersView();
+                });
+            }
+
+            // Back to home from success button
+            const backToHomeSuccessBtn = document.getElementById('back-to-home-success-btn');
+            if (backToHomeSuccessBtn) {
+                backToHomeSuccessBtn.addEventListener('click', function () {
+                    location.reload();
+                });
+            }
+
+            // Setup ID upload functionality
+            setupIDUpload();
+        });
+
+        // Setup ID upload functionality
+        function setupIDUpload() {
+            // Legacy event listeners for backward compatibility
+            document.addEventListener('click', function (e) {
+                if (e.target.id === 'upload-btn') {
+                    showIDUploadOptions();
+                } else if (e.target.id === 'file-upload-btn') {
+                    triggerFileUpload();
+                } else if (e.target.id === 'camera-btn') {
+                    openCamera();
+                }
+            });
+
+            // Handle file input change
+            document.addEventListener('change', function (e) {
+                if (e.target.id === 'file-input') {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+        }
+
+        // Open camera for capture with stepType support
+        async function openCameraForCapture(stepType = '') {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById(`camera-video${stepType ? '-' + stepType : ''}`);
+                const controls = document.getElementById(`camera-controls${stepType ? '-' + stepType : ''}`);
+                const cameraBtn = document.getElementById(`camera-capture-btn${stepType ? '-' + stepType : ''}`);
+                const fileBtn = document.getElementById(`file-upload-btn${stepType ? '-' + stepType : ''}`);
+
+                if (video && controls) {
+                    video.srcObject = stream;
+                    video.classList.remove('hidden');
+                    controls.classList.remove('hidden');
+
+                    // Hide the main buttons while camera is active
+                    if (cameraBtn) cameraBtn.classList.add('hidden');
+                    if (fileBtn) fileBtn.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please check your permissions and try again.');
+            }
+        }
+
+        // Handle file selection from device storage with stepType support
+        function handleFileSelection(event, stepType = '') {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Store the image data
+                    userAnswers[currentStep] = {
+                        type: 'image',
+                        file: file,
+                        dataUrl: e.target.result
+                    };
+
+                    // Show preview
+                    const preview = document.getElementById(`upload-preview${stepType ? '-' + stepType : ''}`);
+                    const previewImage = document.getElementById(`preview-image${stepType ? '-' + stepType : ''}`);
+                    const cameraBtn = document.getElementById(`camera-capture-btn${stepType ? '-' + stepType : ''}`);
+                    const fileBtn = document.getElementById(`file-upload-btn${stepType ? '-' + stepType : ''}`);
+
+                    if (preview && previewImage) {
+                        previewImage.src = e.target.result;
+                        preview.classList.remove('hidden');
+
+                        // Hide the main buttons
+                        if (cameraBtn) cameraBtn.classList.add('hidden');
+                        if (fileBtn) fileBtn.classList.add('hidden');
+                    }
+
+                    // Show next button or continue flow
+                    showNextButton();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select a valid image file.');
+            }
+        }
+
+        // Capture photo from camera with stepType support
+        function capturePhotoFromCamera(stepType = '') {
+            const video = document.getElementById(`camera-video${stepType ? '-' + stepType : ''}`);
+            const canvas = document.getElementById(`camera-canvas${stepType ? '-' + stepType : ''}`);
+            const context = canvas.getContext('2d');
+
+            if (video && canvas) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+
+                // Convert to blob and store
+                canvas.toBlob(function (blob) {
+                    const dataUrl = canvas.toDataURL('image/jpeg');
+
+                    // Store the image data
+                    userAnswers[currentStep] = {
+                        type: 'image',
+                        blob: blob,
+                        dataUrl: dataUrl
+                    };
+
+                    // Show preview
+                    const preview = document.getElementById(`upload-preview${stepType ? '-' + stepType : ''}`);
+                    const previewImage = document.getElementById(`preview-image${stepType ? '-' + stepType : ''}`);
+
+                    if (preview && previewImage) {
+                        previewImage.src = dataUrl;
+                        preview.classList.remove('hidden');
+                    }
+
+                    // Close camera
+                    closeCameraView(stepType);
+
+                    // Show next button or continue flow
+                    showNextButton();
+                }, 'image/jpeg');
+            }
+        }
+
+        // Close camera view with stepType support
+        function closeCameraView(stepType = '') {
+            const video = document.getElementById(`camera-video${stepType ? '-' + stepType : ''}`);
+            const controls = document.getElementById(`camera-controls${stepType ? '-' + stepType : ''}`);
+            const cameraBtn = document.getElementById(`camera-capture-btn${stepType ? '-' + stepType : ''}`);
+            const fileBtn = document.getElementById(`file-upload-btn${stepType ? '-' + stepType : ''}`);
+
+            // Stop camera stream
+            if (video && video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+
+            // Hide camera elements
+            if (video) video.classList.add('hidden');
+            if (controls) controls.classList.add('hidden');
+
+            // Show main buttons again
+            if (cameraBtn) cameraBtn.classList.remove('hidden');
+            if (fileBtn) fileBtn.classList.remove('hidden');
+        }
+
+        // Show next button to continue flow
+        function showNextButton() {
+            // Create or show a next button to continue the flow
+            const otherContainer = document.querySelector('#question-view .border-t');
+            if (otherContainer) {
+                let nextBtn = document.getElementById('continue-btn');
+                if (!nextBtn) {
+                    nextBtn = document.createElement('button');
+                    nextBtn.id = 'continue-btn';
+                    nextBtn.className = 'w-full mt-4 bg-gradient-to-r from-gold-400 to-gold-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all';
+                    nextBtn.textContent = 'Continue';
+                    nextBtn.addEventListener('click', () => {
+                        currentStep++;
+                        updateProgress();
+                        loadQuestion(currentStep);
+                    });
+                    otherContainer.appendChild(nextBtn);
+                } else {
+                    nextBtn.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Show ID upload options
+        function showIDUploadOptions() {
+            const uploadBtn = document.getElementById('upload-btn');
+            if (uploadBtn) {
+                uploadBtn.innerHTML = `
+                    <div class="space-y-2">
+                        <button id="file-upload-btn" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            📁 Upload from Files
+                        </button>
+                        <button id="camera-btn" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            📷 Take Photo
+                        </button>
+                        <input type="file" id="file-input" accept="image/*" class="hidden">
+                        <video id="camera-video" class="hidden w-full max-w-sm mx-auto rounded" autoplay></video>
+                        <canvas id="camera-canvas" class="hidden"></canvas>
+                        <div id="camera-controls" class="hidden space-x-2 text-center">
+                            <button id="capture-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                                📸 Capture
+                            </button>
+                            <button id="close-camera-btn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                                ❌ Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Add event listeners for new buttons
+                document.getElementById('capture-btn')?.addEventListener('click', capturePhoto);
+                document.getElementById('close-camera-btn')?.addEventListener('click', closeCamera);
+            }
+        }
+
+        // Trigger file upload
+        function triggerFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) {
+                fileInput.click();
+            }
+        }
+
+        // Handle file upload
+        function handleFileUpload(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Store the image data
+                    userAnswers[currentStep] = {
+                        type: 'image',
+                        file: file,
+                        dataUrl: e.target.result
+                    };
+
+                    // Update UI to show upload completed
+                    const uploadBtn = document.getElementById('upload-btn');
+                    if (uploadBtn) {
+                        uploadBtn.innerHTML = `
+                            <div class="text-center">
+                                <img src="${e.target.result}" alt="Uploaded ID" class="w-32 h-32 object-cover mx-auto rounded mb-2">
+                                <span class="text-green-600">✓ ID Document Uploaded</span>
+                            </div>
+                        `;
+                        uploadBtn.classList.add('bg-green-50', 'border-green-200');
+                    }
+
+                    // Show next button or continue flow
+                    showNextButton();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select a valid image file.');
+            }
+        }
+
+        // Open camera
+        async function openCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('camera-video');
+                const controls = document.getElementById('camera-controls');
+
+                if (video && controls) {
+                    video.srcObject = stream;
+                    video.classList.remove('hidden');
+                    controls.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Unable to access camera. Please check your permissions and try again.');
+            }
+        }
+
+        // Capture photo
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+
+            if (video && canvas) {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+
+                canvas.toBlob(function (blob) {
+                    const dataUrl = canvas.toDataURL('image/jpeg');
+
+                    // Store the captured image
+                    userAnswers[currentStep] = {
+                        type: 'image',
+                        blob: blob,
+                        dataUrl: dataUrl
+                    };
+
+                    // Update UI to show capture completed
+                    const uploadBtn = document.getElementById('upload-btn');
+                    if (uploadBtn) {
+                        uploadBtn.innerHTML = `
+                            <div class="text-center">
+                                <img src="${dataUrl}" alt="Captured ID" class="w-32 h-32 object-cover mx-auto rounded mb-2">
+                                <span class="text-green-600">✓ ID Photo Captured</span>
+                            </div>
+                        `;
+                        uploadBtn.classList.add('bg-green-50', 'border-green-200');
+                    }
+
+                    // Close camera and show next button
+                    closeCamera();
+                    showNextButton();
+                }, 'image/jpeg');
+            }
+        }
+
+        // Close camera
+        function closeCamera() {
+            const video = document.getElementById('camera-video');
+            const controls = document.getElementById('camera-controls');
+
+            if (video) {
+                const stream = video.srcObject;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                video.srcObject = null;
+                video.classList.add('hidden');
+            }
+
+            if (controls) {
+                controls.classList.add('hidden');
+            }
+        }
+
+        // Show next button
+        function showNextButton() {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn) {
+                nextBtn.classList.remove('hidden');
+            }
+        }
+    </script>
+
+    <!-- Profile Photo Modal -->
+    <div id="photo-modal" class="photo-modal">
+        <div class="photo-modal-content">
+            <button class="photo-modal-close" onclick="closePhotoModal()">&times;</button>
+            <img id="modal-image" class="photo-modal-image" src="" alt="Profile Photo">
+        </div>
+    </div>
+
+    <script type="text/javascript"
+        src="/unprotected/back_to_spaceship.js?hash=4975d460e508829e8fb64d3962bc44ad35f3a95a"></script>
+
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+        }
+    </script>
+</body>
+
+</html>

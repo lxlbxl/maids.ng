@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Debug Tool - Maids.ng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-output {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: linear-gradient(to right, #f59e0b, #a8c850);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .test-button:hover {
+            opacity: 0.9;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .section {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .maid-result {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Webhook Debug Tool</h1>
+        <p>Debug webhook responses and test the maid fetching functionality</p>
+        
+        <div class="section">
+            <h3>🔍 Test Maid Search</h3>
+            <p>Test the main site's maid search functionality with different parameters</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Help Type:</label>
+                    <select id="helpType">
+                        <option value="Fulltime Maid">Fulltime Maid</option>
+                        <option value="Cleaner">Cleaner</option>
+                        <option value="Cook">Cook</option>
+                        <option value="Nanny">Nanny</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Accommodation:</label>
+                    <select id="accommodation">
+                        <option value="Live-in">Live-in</option>
+                        <option value="Live-out">Live-out</option>
+                        <option value="Either">Either</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Location:</label>
+                    <input type="text" id="location" value="Lagos Mainland" placeholder="Enter location">
+                </div>
+                <div>
+                    <label>Budget:</label>
+                    <select id="budget">
+                        <option value="₦30,000 - ₦50,000">₦30,000 - ₦50,000</option>
+                        <option value="₦50,000 - ₦80,000">₦50,000 - ₦80,000</option>
+                        <option value="₦80,000+">₦80,000+</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="test-button" onclick="testMaidSearch()">🔍 Test Maid Search</button>
+            <button class="test-button" onclick="testPaymentConfig()">💳 Test Payment Config</button>
+            <button class="test-button" onclick="clearDebugOutput()">🗑️ Clear Output</button>
+        </div>
+        
+        <div class="section">
+            <h3>📊 Webhook Response Analysis</h3>
+            <div id="response-analysis"></div>
+        </div>
+        
+        <div class="section">
+            <h3>👥 Parsed Maids</h3>
+            <div id="parsed-maids"></div>
+        </div>
+        
+        <div class="section">
+            <h3>🐞 Debug Console Output</h3>
+            <div id="debug-output" class="debug-output">Debug output will appear here...</div>
+        </div>
+    </div>
+
+    <!-- Include webhook manager -->
+    <script src="webhook-manager.js"></script>
+    <script>
+        // Override console.log to capture debug output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const debugOutput = document.getElementById('debug-output');
+        
+        function addToDebugOutput(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '[ERROR]' : '[LOG]';
+            const color = type === 'error' ? '#ff4444' : '#00ff00';
+            
+            debugOutput.innerHTML += `<span style="color: ${color}">[${timestamp}] ${prefix} ${message}</span>\n`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToDebugOutput(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToDebugOutput(args.join(' '), 'error');
+        };
+        
+        function clearDebugOutput() {
+            debugOutput.innerHTML = 'Debug output cleared...\n';
+        }
+        
+        // Simulate the main site's getMatchedHelpersFromWebhook function
+        async function testMaidSearch() {
+            const helpType = document.getElementById('helpType').value;
+            const accommodation = document.getElementById('accommodation').value;
+            const location = document.getElementById('location').value;
+            const budget = document.getElementById('budget').value;
+            
+            console.log('=== STARTING MAID SEARCH TEST ===');
+            console.log('Test parameters:', { helpType, accommodation, location, budget });
+            
+            try {
+                // Build parameters object for webhook manager
+                const params = {
+                    flowType: 'household',
+                    helpType: helpType,
+                    accommodation: accommodation,
+                    location: location,
+                    budget: budget,
+                    answer_0: helpType,
+                    answer_1: accommodation,
+                    answer_2: location,
+                    answer_3: 'Immediately',
+                    answer_4: budget
+                };
+                
+                console.log('Webhook GET params:', JSON.stringify(params, null, 2));
+                
+                const responseData = await Webhook.get('get', params);
+                
+                // Analyze the response
+                analyzeResponse(responseData);
+                
+                // Parse and display maids
+                const parsedMaids = parseWebhookResponse(responseData);
+                displayParsedMaids(parsedMaids);
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                document.getElementById('response-analysis').innerHTML = `
+                    <div class="error">❌ Test Failed: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test payment configuration
+        async function testPaymentConfig() {
+            console.log('=== STARTING PAYMENT CONFIG TEST ===');
+            
+            try {
+                console.log('Fetching payment configuration from keys endpoint...');
+                const config = await Webhook.get('keys');
+                
+                console.log('=== PAYMENT CONFIG RESPONSE ===');
+                console.log('Config type:', typeof config);
+                console.log('Config data:', config);
+                
+                // Analyze payment config
+                const analysisDiv = document.getElementById('response-analysis');
+                let analysis = `
+                    <h4>Payment Configuration Analysis:</h4>
+                    <p><strong>Type:</strong> ${typeof config}</p>
+                    <p><strong>Is Array:</strong> ${Array.isArray(config)}</p>
+                `;
+                
+                if (Array.isArray(config)) {
+                    analysis += `<p><strong>Array Length:</strong> ${config.length}</p>`;
+                    if (config.length > 0) {
+                        analysis += `<p><strong>First Item:</strong> ${JSON.stringify(config[0])}</p>`;
+                    }
+                } else if (typeof config === 'object' && config !== null) {
+                    analysis += `<p><strong>Object Keys:</strong> ${Object.keys(config).join(', ')}</p>`;
+                    
+                    // Check for required payment fields
+                    const requiredFields = ['api-key', 'amount', 'currency'];
+                    const foundFields = [];
+                    const missingFields = [];
+                    
+                    requiredFields.forEach(field => {
+                        if (config[field] || config[field.replace('-', '_')]) {
+                            foundFields.push(field);
+                        } else {
+                            missingFields.push(field);
+                        }
+                    });
+                    
+                    analysis += `<p><strong>Found Fields:</strong> ${foundFields.join(', ') || 'None'}</p>`;
+                    analysis += `<p><strong>Missing Fields:</strong> ${missingFields.join(', ') || 'None'}</p>`;
+                }
+                
+                analysis += `
+                    <h4>Raw Payment Config:</h4>
+                    <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(config, null, 2)}</pre>
+                `;
+                
+                analysisDiv.innerHTML = analysis;
+                
+                // Clear parsed maids section for payment config test
+                document.getElementById('parsed-maids').innerHTML = '<div class="success">✓ Payment configuration test completed - check analysis above</div>';
+                
+            } catch (error) {
+                console.error('Payment config test failed:', error);
+                document.getElementById('response-analysis').innerHTML = `
+                    <div class="error">❌ Payment Config Test Failed: ${error.message}</div>
+                    <div class="error">Error Details: ${error.stack}</div>
+                `;
+            }
+        }
+        
+        function analyzeResponse(responseData) {
+            const analysisDiv = document.getElementById('response-analysis');
+            
+            let analysis = `
+                <h4>Response Analysis:</h4>
+                <p><strong>Type:</strong> ${typeof responseData}</p>
+                <p><strong>Is Array:</strong> ${Array.isArray(responseData)}</p>
+            `;
+            
+            if (Array.isArray(responseData)) {
+                analysis += `<p><strong>Array Length:</strong> ${responseData.length}</p>`;
+                if (responseData.length > 0) {
+                    analysis += `<p><strong>First Item Type:</strong> ${typeof responseData[0]}</p>`;
+                    if (typeof responseData[0] === 'object') {
+                        analysis += `<p><strong>First Item Keys:</strong> ${Object.keys(responseData[0]).join(', ')}</p>`;
+                    }
+                }
+            } else if (typeof responseData === 'object' && responseData !== null) {
+                analysis += `<p><strong>Object Keys:</strong> ${Object.keys(responseData).join(', ')}</p>`;
+            }
+            
+            analysis += `
+                <h4>Raw Response:</h4>
+                <pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(responseData, null, 2)}</pre>
+            `;
+            
+            analysisDiv.innerHTML = analysis;
+        }
+        
+        function parseWebhookResponse(responseData) {
+            console.log('=== PARSING WEBHOOK RESPONSE ===');
+            console.log('Processing webhook response:', responseData);
+            
+            let matchedHelpers = null;
+            
+            if (Array.isArray(responseData)) {
+                console.log('Response is an array with length:', responseData.length);
+                
+                // Check for the actual response format: [{ "maids": [...] }]
+                if (responseData.length > 0 && responseData[0] && responseData[0].maids) {
+                    console.log('✓ Found maids in responseData[0].maids structure (actual format)');
+                    matchedHelpers = responseData[0].maids;
+                }
+                // Check if array contains objects with output.maids structure (test format)
+                else if (responseData.length > 0 && responseData[0] && responseData[0].output && responseData[0].output.maids) {
+                    console.log('✓ Found maids in responseData[0].output.maids structure (test format)');
+                    matchedHelpers = responseData[0].output.maids;
+                } else if (responseData.length > 0 && responseData[0] && typeof responseData[0] === 'object') {
+                    // Check if the response is an array of maid objects directly
+                    const firstItem = responseData[0];
+                    if (firstItem['First Name'] || firstItem.first_name || firstItem.name || firstItem.Name) {
+                        console.log('✓ Response appears to be direct array of maids');
+                        matchedHelpers = responseData;
+                    } else {
+                        console.log('Array item structure:', Object.keys(firstItem));
+                        matchedHelpers = responseData;
+                    }
+                } else {
+                    console.log('Response is array but unknown structure');
+                    matchedHelpers = responseData;
+                }
+            } else if (responseData && typeof responseData === 'object') {
+                console.log('Response is an object with keys:', Object.keys(responseData));
+                
+                // Check for direct maids property
+                if (responseData.maids) {
+                    console.log('✓ Found maids in responseData.maids structure');
+                    matchedHelpers = responseData.maids;
+                }
+                // Check for nested output.maids structure (test format)
+                else if (responseData.output && responseData.output.maids) {
+                    console.log('✓ Found maids in responseData.output.maids structure');
+                    matchedHelpers = responseData.output.maids;
+                } else {
+                    // Response is an object, check common property names
+                    matchedHelpers = responseData.helpers || 
+                                   responseData.data || 
+                                   responseData.results || 
+                                   responseData.profiles || 
+                                   responseData.matches;
+                    
+                    console.log('Checked common properties, found:', matchedHelpers ? 'data' : 'nothing');
+                }
+            }
+            
+            console.log('Final parsed helpers:', matchedHelpers);
+            return matchedHelpers;
+        }
+        
+        function displayParsedMaids(helpers) {
+            const container = document.getElementById('parsed-maids');
+            
+            if (!helpers || !Array.isArray(helpers) || helpers.length === 0) {
+                container.innerHTML = '<div class="error">❌ No maids found in response!</div>';
+                return;
+            }
+            
+            container.innerHTML = `<div class="success">✅ Successfully parsed ${helpers.length} maids!</div>`;
+            
+            helpers.forEach((helper, index) => {
+                // Map webhook response properties to expected format
+                const mappedHelper = {
+                    // Handle actual webhook format: "First Name", "Salary Expectation", etc.
+                    name: helper['First Name'] || helper.first_name || helper.Name || helper.name || 'Unknown Name',
+                    experience: helper.experience || helper.Experience || 'Experienced helper',
+                    availability: helper.Availability || helper.availability || 'Available now',
+                    // Handle both "Salary Expectation" (actual) and "salary" (test)
+                    rate: helper['Salary Expectation'] || helper.salary || helper.Salary || helper.rate || '₦30,000/month',
+                    rating: helper.Rating || helper.rating || '4.5',
+                    verification: helper.Verification || helper.verification || 'Verified',
+                    // Handle both "Address" (actual) and "location" (test)
+                    location: helper.Address || helper.location || helper.Location || 'Lagos',
+                    row: helper.row || helper.Row || '',
+                    age: helper.Age || helper.age || 'N/A',
+                    languages: helper.Laguages || helper.languages || helper.Language || 'English'
+                };
+                
+                const maidDiv = document.createElement('div');
+                maidDiv.className = 'maid-result';
+                maidDiv.innerHTML = `
+                    <h4>${mappedHelper.name}</h4>
+                    <p><strong>Location:</strong> ${mappedHelper.location}</p>
+                    <p><strong>Salary:</strong> ${mappedHelper.rate}</p>
+                    <p><strong>Age:</strong> ${mappedHelper.age}</p>
+                    <p><strong>Availability:</strong> ${mappedHelper.availability}</p>
+                    <p><strong>Languages:</strong> ${mappedHelper.languages}</p>
+                    <p><strong>Rating:</strong> ${mappedHelper.rating} ⭐</p>
+                    <p><strong>Status:</strong> ${mappedHelper.verification}</p>
+                    ${mappedHelper.row ? `<p><strong>Row:</strong> ${mappedHelper.row}</p>` : ''}
+                    <details>
+                        <summary>Raw Data</summary>
+                        <pre style="font-size: 11px; margin-top: 10px;">${JSON.stringify(helper, null, 2)}</pre>
+                    </details>
+                `;
+                container.appendChild(maidDiv);
+            });
+        }
+        
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Webhook Debug Tool loaded');
+            console.log('Available webhook endpoints:', Object.keys(WebhookConfig.endpoints));
+            console.log('Base URL:', WebhookConfig.baseURL);
+        });
+    </script>
+</body>
+</html>

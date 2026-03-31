@@ -1,0 +1,22 @@
+{
+  "name": "Maids.ng - Find Your Perfect Maid",
+  "short_name": "Maids.ng",
+  "description": "The easiest way to find and hire reliable maids and household help in Nigeria.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait"
+}

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Test Suite - Maids.ng</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .maid-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .maid-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+        }
+        .maid-details {
+            color: #666;
+            margin-top: 5px;
+        }
+        .test-button {
+            background: linear-gradient(to right, #f59e0b, #a8c850);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            opacity: 0.9;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .payment-test {
+            border-left: 4px solid #f59e0b;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        .test-section {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Webhook Test Suite</h1>
+        <p>Comprehensive testing for all webhook endpoints including payment processing</p>
+        
+        <div class="test-section">
+            <h3>🔍 Maid Search Webhook Test</h3>
+            <p>Testing the webhook response parsing with the provided JSON format</p>
+            <button class="test-button" onclick="testWebhookParsing()">Test Maid Search Response</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>💳 Payment Webhook Tests</h3>
+            <p>Testing payment success and failure webhook endpoints</p>
+            <div class="payment-test">
+                <h4>Payment Success Test</h4>
+                <button class="test-button" onclick="testPaymentSuccess()">Test Payment Success Webhook</button>
+            </div>
+            <div class="payment-test">
+                <h4>Payment Failure Test</h4>
+                <button class="test-button" onclick="testPaymentFailure()">Test Payment Failure Webhook</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>👤 Maid Profile Creation Tests</h3>
+            <p>Testing maid profile creation with images and voice samples</p>
+            <div class="payment-test">
+                <h4>Complete Profile Creation Test</h4>
+                <button class="test-button" onclick="testMaidProfileCreation()">Test Maid Profile Creation</button>
+            </div>
+            <div class="payment-test">
+                <h4>File Upload Test</h4>
+                <button class="test-button" onclick="testFileUploads()">Test Profile Images & Voice Upload</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 Comprehensive Test Runner</h3>
+            <p>Run all webhook tests in sequence</p>
+            <button class="test-button" onclick="runAllTests()" style="background: linear-gradient(to right, #10b981, #065f46);">Run All Tests</button>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Include webhook manager for payment tests -->
+    <script src="webhook-manager.js"></script>
+    <script>
+        // Mock webhook response with the exact format provided by the user
+        const mockWebhookResponse = [
+            {
+                "output": {
+                    "maids": [
+                        {
+                            "row": "1",
+                            "first_name": "Abigail",
+                            "location": "Unknown",
+                            "salary": "₦38,000",
+                            "availability": "immediately"
+                        },
+                        {
+                            "row": "2",
+                            "first_name": "Deola",
+                            "location": "Lekki",
+                            "salary": "₦35,000",
+                            "availability": "immediately"
+                        },
+                        {
+                            "row": "3",
+                            "first_name": "Mary",
+                            "location": "Lekki",
+                            "salary": "₦45,000",
+                            "availability": "immediately"
+                        },
+                        {
+                            "row": "4",
+                            "first_name": "Bunch",
+                            "location": "Lekki",
+                            "salary": "₦35,000",
+                            "availability": "immediately"
+                        },
+                        {
+                            "row": "10",
+                            "first_name": "Dillon",
+                            "location": "Address Email",
+                            "salary": "₦40,000",
+                            "availability": "immediately"
+                        }
+                    ]
+                }
+            }
+        ];
+
+        // Simulate the updated webhook parsing logic
+        function parseWebhookResponse(responseData) {
+            console.log('Processing webhook response:', responseData);
+            
+            let matchedHelpers = null;
+            
+            if (Array.isArray(responseData)) {
+                // Check if array contains objects with output.maids structure
+                if (responseData.length > 0 && responseData[0] && responseData[0].output && responseData[0].output.maids) {
+                    console.log('Found maids in responseData[0].output.maids structure');
+                    matchedHelpers = responseData[0].output.maids;
+                } else {
+                    // Response is directly an array of helpers
+                    matchedHelpers = responseData;
+                }
+            } else if (responseData && typeof responseData === 'object') {
+                // Check for nested output.maids structure first
+                if (responseData.output && responseData.output.maids) {
+                    console.log('Found maids in responseData.output.maids structure');
+                    matchedHelpers = responseData.output.maids;
+                } else {
+                    // Response is an object, check common property names
+                    matchedHelpers = responseData.helpers || 
+                                   responseData.data || 
+                                   responseData.results || 
+                                   responseData.maids || 
+                                   responseData.profiles || 
+                                   responseData.matches;
+                }
+            }
+            
+            return matchedHelpers;
+        }
+
+        // Simulate the updated display logic
+        function displayParsedMaids(helpers) {
+            const resultsDiv = document.getElementById('test-results');
+            let html = '<h2>Parsed Maids:</h2>';
+            
+            if (!helpers || helpers.length === 0) {
+                html += '<p class="error">No maids found in response!</p>';
+                resultsDiv.innerHTML = html;
+                return;
+            }
+            
+            html += `<p class="success">Successfully parsed ${helpers.length} maids!</p>`;
+            
+            helpers.forEach(helper => {
+                // Map webhook response properties to expected format
+                const mappedHelper = {
+                    name: helper.first_name || helper.Name || helper.name || 'Unknown Name',
+                    experience: helper.experience || helper.Experience || 'Experienced helper',
+                    languages: helper.languages || helper.Language || 'English',
+                    availability: helper.availability || helper.Availability || 'Available now',
+                    rate: helper.salary || helper.Salary || helper.rate || '₦30,000/month',
+                    reviews: helper.Reviews || helper.reviews || '(12 reviews)',
+                    rating: helper.Rating || helper.rating || '4.5',
+                    verification: helper.Verification || helper.verification || 'Verified',
+                    level: helper.Level || helper.level || 'Bronze',
+                    image: helper.Image || helper.image || '/images/default-avatar.svg',
+                    location: helper.location || helper.Location || 'Lagos',
+                    row: helper.row || helper.Row || ''
+                };
+                
+                html += `
+                    <div class="maid-card">
+                        <div class="maid-name">${mappedHelper.name}</div>
+                        <div class="maid-details">
+                            <strong>Location:</strong> ${mappedHelper.location}<br>
+                            <strong>Salary:</strong> ${mappedHelper.rate}<br>
+                            <strong>Availability:</strong> ${mappedHelper.availability}<br>
+                            <strong>Row:</strong> ${mappedHelper.row}<br>
+                            <strong>Rating:</strong> ${mappedHelper.rating} ⭐<br>
+                            <strong>Status:</strong> ${mappedHelper.verification}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Test function
+        function testWebhookParsing() {
+            console.log('Testing webhook response parsing...');
+            console.log('Mock response:', mockWebhookResponse);
+            
+            const parsedMaids = parseWebhookResponse(mockWebhookResponse);
+            console.log('Parsed maids:', parsedMaids);
+            
+            displayParsedMaids(parsedMaids);
+        }
+
+        // Payment webhook test functions
+        function generateMockPaymentData(status = 'successful') {
+            return {
+                transaction_id: 'TXN_' + Date.now(),
+                tx_ref: 'MAID_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                amount: 15000,
+                currency: 'NGN',
+                status: status,
+                created_at: new Date().toISOString(),
+                customer: {
+                    email: 'test@example.com',
+                    phone_number: '+2348012345678',
+                    name: 'Test Customer'
+                }
+            };
+        }
+
+        function generateMockMaidData() {
+            return {
+                name: 'Sarah Johnson',
+                experience: '5 years experience',
+                skills: ['Cleaning', 'Cooking', 'Childcare'],
+                rate: '₦45,000/month',
+                rating: '4.8',
+                image: '/images/default-avatar.svg'
+            };
+        }
+
+        function generateMockUserAnswers() {
+            return {
+                0: 'Fulltime Maid',
+                1: 'Live-in',
+                2: 'Lagos Mainland',
+                3: 'Immediately',
+                4: '₦40,000 - ₦50,000'
+            };
+        }
+
+        async function testPaymentSuccess() {
+            console.log('\n=== Testing Payment Success Webhook ===');
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>💳 Payment Success Test Results</h2><p>Testing payment success webhook...</p>';
+            
+            try {
+                const paymentData = generateMockPaymentData('successful');
+                const selectedMaid = generateMockMaidData();
+                const userAnswers = generateMockUserAnswers();
+                
+                const webhookData = {
+                    status: 'success',
+                    transaction: {
+                        id: paymentData.transaction_id,
+                        tx_ref: paymentData.tx_ref,
+                        amount: paymentData.amount,
+                        currency: paymentData.currency,
+                        status: paymentData.status,
+                        created_at: paymentData.created_at
+                    },
+                    client: {
+                        email: paymentData.customer?.email || 'customer@maids.ng',
+                        phone: paymentData.customer?.phone_number || '08012345678',
+                        name: paymentData.customer?.name || 'Maid Service Customer'
+                    },
+                    maid: {
+                        name: selectedMaid.name,
+                        experience: selectedMaid.experience,
+                        skills: selectedMaid.skills,
+                        rate: selectedMaid.rate,
+                        rating: selectedMaid.rating,
+                        image: selectedMaid.image
+                    },
+                    request_details: {
+                        helpType: userAnswers[0] || null,
+                        accommodation: userAnswers[1] || null,
+                        location: userAnswers[2] || null,
+                        startDate: userAnswers[3] || null,
+                        budget: userAnswers[4] || null
+                    },
+                    timestamp: new Date().toISOString(),
+                    payment_confirmed: true
+                };
+                
+                console.log('Payment Success Data:', webhookData);
+                
+                // Test the webhook call
+                const response = await Webhook.post('paymentSuccess', webhookData);
+                console.log('Payment Success Response:', response);
+                
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name">✅ Payment Success Test - PASSED</div>
+                        <div class="maid-details">
+                            <strong>Transaction ID:</strong> ${webhookData.transaction.id}<br>
+                            <strong>Amount:</strong> ₦${webhookData.transaction.amount.toLocaleString()}<br>
+                            <strong>Maid:</strong> ${webhookData.maid.name}<br>
+                            <strong>Status:</strong> ${webhookData.status}<br>
+                            <strong>Webhook Response:</strong> ${JSON.stringify(response).substring(0, 100)}...<br>
+                            <strong>Timestamp:</strong> ${webhookData.timestamp}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Payment Success Test Error:', error);
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name error">❌ Payment Success Test - FAILED</div>
+                        <div class="maid-details">
+                            <strong>Error:</strong> ${error.message}<br>
+                            <strong>Details:</strong> ${error.stack || 'No stack trace available'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function testPaymentFailure() {
+            console.log('\n=== Testing Payment Failure Webhook ===');
+            
+            const resultsDiv = document.getElementById('test-results');
+            if (!resultsDiv.innerHTML.includes('Payment Success Test Results')) {
+                resultsDiv.innerHTML = '<h2>💳 Payment Failure Test Results</h2><p>Testing payment failure webhook...</p>';
+            } else {
+                resultsDiv.innerHTML += '<h2>💳 Payment Failure Test Results</h2><p>Testing payment failure webhook...</p>';
+            }
+            
+            try {
+                const paymentData = generateMockPaymentData('failed');
+                const selectedMaid = generateMockMaidData();
+                const userAnswers = generateMockUserAnswers();
+                
+                const webhookData = {
+                    status: 'failed',
+                    transaction: {
+                        id: paymentData.transaction_id,
+                        tx_ref: paymentData.tx_ref,
+                        amount: paymentData.amount,
+                        currency: paymentData.currency,
+                        status: paymentData.status,
+                        created_at: paymentData.created_at
+                    },
+                    client: {
+                        email: paymentData.customer?.email || 'customer@maids.ng',
+                        phone: paymentData.customer?.phone_number || '08012345678',
+                        name: paymentData.customer?.name || 'Maid Service Customer'
+                    },
+                    maid: {
+                        name: selectedMaid.name,
+                        experience: selectedMaid.experience,
+                        skills: selectedMaid.skills,
+                        rate: selectedMaid.rate,
+                        rating: selectedMaid.rating,
+                        image: selectedMaid.image
+                    },
+                    request_details: {
+                        helpType: userAnswers[0] || null,
+                        accommodation: userAnswers[1] || null,
+                        location: userAnswers[2] || null,
+                        startDate: userAnswers[3] || null,
+                        budget: userAnswers[4] || null
+                    },
+                    timestamp: new Date().toISOString(),
+                    payment_confirmed: false,
+                    failure_reason: 'Payment processing failed - Test scenario'
+                };
+                
+                console.log('Payment Failure Data:', webhookData);
+                
+                // Test the webhook call
+                const response = await Webhook.post('paymentFailure', webhookData);
+                console.log('Payment Failure Response:', response);
+                
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name">✅ Payment Failure Test - PASSED</div>
+                        <div class="maid-details">
+                            <strong>Transaction ID:</strong> ${webhookData.transaction.id}<br>
+                            <strong>Amount:</strong> ₦${webhookData.transaction.amount.toLocaleString()}<br>
+                            <strong>Maid:</strong> ${webhookData.maid.name}<br>
+                            <strong>Status:</strong> ${webhookData.status}<br>
+                            <strong>Failure Reason:</strong> ${webhookData.failure_reason}<br>
+                            <strong>Webhook Response:</strong> ${JSON.stringify(response).substring(0, 100)}...<br>
+                            <strong>Timestamp:</strong> ${webhookData.timestamp}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Payment Failure Test Error:', error);
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name error">❌ Payment Failure Test - FAILED</div>
+                        <div class="maid-details">
+                            <strong>Error:</strong> ${error.message}<br>
+                            <strong>Details:</strong> ${error.stack || 'No stack trace available'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Maid Profile Creation Test Functions
+        function generateMockMaidProfile() {
+            return {
+                // Basic Info
+                name: 'Amara Okonkwo',
+                age: 28,
+                phone: '+2348123456789',
+                email: 'amara.okonkwo@example.com',
+                location: 'Lagos, Nigeria',
+                address: '12 Victoria Street, Lagos Island',
+                
+                // Professional Info
+                experience: '6 years',
+                skills: ['House Cleaning', 'Cooking', 'Laundry', 'Childcare'],
+                availability: 'immediately',
+                expected_salary: '45000',
+                work_type: 'Fulltime Maid',
+                preferred_locations: ['Victoria Island', 'Lagos Mainland', 'Ikeja'],
+                
+                // Documents & Media
+                nin_number: '12345678901',
+                profile_image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/',
+                nin_card_image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/',
+                intro_voice: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//NAwAAAAP//JgGgfgP//NAwAAAAP//JgGgfgP//NAwAAAAP//JgGgfgP/',
+                
+                // Metadata
+                timestamp: new Date().toISOString(),
+                profile_id: 'MAID_' + Date.now(),
+                status: 'profile_submitted',
+                verification_status: 'pending',
+                flowType: 'helper'
+            };
+        }
+
+        async function testMaidProfileCreation() {
+            console.log('\n=== Testing Maid Profile Creation ===');
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>👤 Maid Profile Creation Test</h2><p>Testing maid profile creation...</p>';
+            
+            try {
+                const profileData = generateMockMaidProfile();
+                
+                console.log('Maid Profile Data:', profileData);
+                
+                // Test the webhook call
+                const response = await Webhook.post('post', profileData);
+                console.log('Profile Creation Response:', response);
+                
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name">✅ Maid Profile Creation - PASSED</div>
+                        <div class="maid-details">
+                            <strong>Name:</strong> ${profileData.name}<br>
+                            <strong>Phone:</strong> ${profileData.phone}<br>
+                            <strong>Experience:</strong> ${profileData.experience}<br>
+                            <strong>Skills:</strong> ${profileData.skills.join(', ')}<br>
+                            <strong>Expected Salary:</strong> ₦${parseFloat(profileData.expected_salary).toLocaleString()}<br>
+                            <strong>Has Profile Image:</strong> ${profileData.profile_image ? 'Yes (' + profileData.profile_image.substring(0, 50) + '...)' : 'No'}<br>
+                            <strong>Has NIN Card:</strong> ${profileData.nin_card_image ? 'Yes (' + profileData.nin_card_image.substring(0, 50) + '...)' : 'No'}<br>
+                            <strong>Has Voice Intro:</strong> ${profileData.intro_voice ? 'Yes (' + profileData.intro_voice.substring(0, 50) + '...)' : 'No'}<br>
+                            <strong>Webhook Response:</strong> ${JSON.stringify(response).substring(0, 100)}...
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Maid Profile Creation Error:', error);
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name error">❌ Maid Profile Creation - FAILED</div>
+                        <div class="maid-details">
+                            <strong>Error:</strong> ${error.message}<br>
+                            <strong>Details:</strong> ${error.stack || 'No stack trace available'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function testFileUploads() {
+            console.log('\n=== Testing File Upload Functionality ===');
+            
+            const resultsDiv = document.getElementById('test-results');
+            if (!resultsDiv.innerHTML.includes('Maid Profile Creation Test')) {
+                resultsDiv.innerHTML = '<h2>📁 File Upload Test</h2><p>Testing file upload capabilities...</p>';
+            } else {
+                resultsDiv.innerHTML += '<h2>📁 File Upload Test</h2><p>Testing file upload capabilities...</p>';
+            }
+            
+            try {
+                // Create FormData for file uploads
+                const formData = new FormData();
+                
+                // Add profile data
+                const profileData = generateMockMaidProfile();
+                Object.keys(profileData).forEach(key => {
+                    if (typeof profileData[key] === 'object' && Array.isArray(profileData[key])) {
+                        formData.append(key, JSON.stringify(profileData[key]));
+                    } else {
+                        formData.append(key, profileData[key]);
+                    }
+                });
+                
+                console.log('File Upload Data prepared');
+                
+                // Test file upload
+                const response = await Webhook.uploadFile('post', formData);
+                console.log('File Upload Response:', response);
+                
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name">✅ File Upload Test - PASSED</div>
+                        <div class="maid-details">
+                            <strong>Profile Image:</strong> Base64 JPEG (${profileData.profile_image.length} chars)<br>
+                            <strong>NIN Card Image:</strong> Base64 JPEG (${profileData.nin_card_image.length} chars)<br>
+                            <strong>Voice Intro:</strong> Base64 Audio (${profileData.intro_voice.length} chars)<br>
+                            <strong>Upload Method:</strong> FormData multipart/form-data<br>
+                            <strong>Response:</strong> ${JSON.stringify(response).substring(0, 100)}...
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('File Upload Test Error:', error);
+                resultsDiv.innerHTML += `
+                    <div class="maid-card">
+                        <div class="maid-name error">❌ File Upload Test - FAILED</div>
+                        <div class="maid-details">
+                            <strong>Error:</strong> ${error.message}<br>
+                            <strong>Details:</strong> ${error.stack || 'No stack trace available'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Comprehensive test runner
+        async function runAllTests() {
+            console.log('\n=== Running All Webhook Tests ===');
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>🚀 Running Comprehensive Test Suite...</h2>';
+            
+            // Test 1: Maid Search Parsing
+            testWebhookParsing();
+            
+            // Wait a bit between tests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test 2: Payment Success
+            await testPaymentSuccess();
+            
+            // Wait a bit between tests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test 3: Payment Failure
+            await testPaymentFailure();
+            
+            // Wait a bit between tests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test 4: Maid Profile Creation
+            await testMaidProfileCreation();
+            
+            // Wait a bit between tests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Test 5: File Uploads
+            await testFileUploads();
+            
+            console.log('\n=== All Tests Completed ===');
+        }
+
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Webhook Test Suite loaded. Available tests:');
+            console.log('1. testWebhookParsing() - Test maid search response parsing');
+            console.log('2. testPaymentSuccess() - Test payment success webhook');
+            console.log('3. testPaymentFailure() - Test payment failure webhook');
+            console.log('4. runAllTests() - Run all tests automatically');
+            
+            // Auto-run the maid search test
+            testWebhookParsing();
+        });
+    </script>
+</body>
+</html>

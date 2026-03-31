@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Capture Test</title>
+    <script src="webhook-manager.js"></script>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 20px;">
+    <h1>Lead Capture Test</h1>
+    
+    <div style="margin: 20px 0;">
+        <label for="whatsapp">WhatsApp Number:</label><br>
+        <input type="tel" id="whatsapp" placeholder="08012345678" style="padding: 10px; margin: 10px 0; width: 200px;">
+        <button onclick="testLeadCapture()" style="padding: 10px 20px; margin-left: 10px;">Test Lead Capture</button>
+    </div>
+    
+    <div id="result" style="margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 5px;"></div>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="testWebhookConfig()" style="padding: 10px 20px;">Test Webhook Config</button>
+    </div>
+
+    <script>
+        async function testLeadCapture() {
+            const whatsapp = document.getElementById('whatsapp').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!whatsapp) {
+                resultDiv.innerHTML = '<span style="color: red;">Please enter a WhatsApp number</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<span style="color: blue;">Testing lead capture...</span>';
+            
+            try {
+                const leadData = {
+                    whatsapp: whatsapp,
+                    timestamp: new Date().toISOString(),
+                    source: 'test_page',
+                    step: 'whatsapp_entered'
+                };
+                
+                console.log('Sending lead data:', leadData);
+                const result = await Webhook.post('lead', leadData);
+                console.log('Lead capture result:', result);
+                
+                resultDiv.innerHTML = `
+                    <div style="color: green;">
+                        <strong>Lead capture successful!</strong><br>
+                        Response: ${JSON.stringify(result, null, 2)}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Lead capture error:', error);
+                resultDiv.innerHTML = `
+                    <div style="color: red;">
+                        <strong>Lead capture failed!</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function testWebhookConfig() {
+            const resultDiv = document.getElementById('result');
+            
+            // Check if the lead endpoint is configured
+            const leadEndpoint = Webhook.config.endpoints.lead;
+            
+            resultDiv.innerHTML = `
+                <div>
+                    <strong>Webhook Configuration Test:</strong><br>
+                    Lead endpoint: ${leadEndpoint || 'NOT CONFIGURED'}<br>
+                    Full URL: ${Webhook.config.baseURL}${leadEndpoint || 'N/A'}<br>
+                    Status: ${leadEndpoint ? '<span style="color: green;">✓ Configured</span>' : '<span style="color: red;">✗ Not configured</span>'}
+                </div>
+            `;
+        }
+        
+        // Test webhook config on page load
+        window.addEventListener('load', () => {
+            console.log('Webhook config loaded:', Webhook.config);
+            console.log('Available endpoints:', Webhook.config.endpoints);
+        });
+    </script>
+</body>
+</html>

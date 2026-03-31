@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Configuration Test - Maids.ng</title>
+    <script src="webhook-manager.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #d97706;
+            border-bottom: 2px solid #f59e0b;
+            padding-bottom: 10px;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .config-item:last-child {
+            border-bottom: none;
+        }
+        .config-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .config-value {
+            font-family: 'Courier New', monospace;
+            background: #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #1f2937;
+        }
+        .status {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .test-button {
+            background: linear-gradient(to right, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .test-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .contact-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .contact-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .contact-card h4 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        .contact-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            color: #374151;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .contact-link:hover {
+            background: #e5e7eb;
+        }
+        .service-fee-demo {
+            background: linear-gradient(135deg, #fef3c7, #ecfdf5);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .service-fee-amount {
+            font-size: 2em;
+            font-weight: bold;
+            color: #d97706;
+            margin: 10px 0;
+        }
+        .log-output {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Site Configuration Test Dashboard</h1>
+        <p>Testing the enhanced webhook manager's site-wide configuration functionality</p>
+        
+        <div class="section">
+            <h3>📡 Configuration Status</h3>
+            <div class="config-item">
+                <span class="config-label">Service Health:</span>
+                <span id="health-status" class="status loading">Checking...</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Configuration Status:</span>
+                <span id="config-status" class="status loading">Loading...</span>
+            </div>
+            <div class="config-item">
+                <span class="config-label">Last Updated:</span>
+                <span id="last-updated" class="config-value">-</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⚙️ Configuration Data</h3>
+            <div id="config-data">
+                <div class="config-item">
+                    <span class="config-label">Phone:</span>
+                    <span id="config-phone" class="config-value">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">WhatsApp:</span>
+                    <span id="config-whatsapp" class="config-value">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Support Email:</span>
+                    <span id="config-email" class="config-value">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Service Fee Amount:</span>
+                    <span id="config-service-amount" class="config-value">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Service Fee Currency:</span>
+                    <span id="config-service-currency" class="config-value">Loading...</span>
+                </div>
+                <div class="config-item">
+                    <span class="config-label">Formatted Service Fee:</span>
+                    <span id="config-service-formatted" class="config-value">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📞 Dynamic Contact Information Demo</h3>
+            <div class="contact-demo">
+                <div class="contact-card">
+                    <h4>📱 Phone</h4>
+                    <div id="demo-phone-display">Loading...</div>
+                    <a id="demo-phone-link" href="#" class="contact-link">Call Now</a>
+                </div>
+                <div class="contact-card">
+                    <h4>💬 WhatsApp</h4>
+                    <div id="demo-whatsapp-display">Loading...</div>
+                    <a id="demo-whatsapp-link" href="#" class="contact-link" target="_blank">Chat Now</a>
+                </div>
+                <div class="contact-card">
+                    <h4>✉️ Email</h4>
+                    <div id="demo-email-display">Loading...</div>
+                    <a id="demo-email-link" href="#" class="contact-link">Send Email</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>💰 Dynamic Service Fee Demo</h3>
+            <div class="service-fee-demo">
+                <div>Service Cost</div>
+                <div id="demo-service-fee" class="service-fee-amount">Loading...</div>
+                <div>Free replacement within 10 days if not satisfied</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Manual Actions</h3>
+            <button id="refresh-config" class="test-button">Refresh Configuration</button>
+            <button id="clear-cache" class="test-button">Clear Cache</button>
+            <button id="test-fallback" class="test-button">Test Fallback Values</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Console Logs</h3>
+            <div id="log-output" class="log-output">Waiting for logs...</div>
+        </div>
+    </div>
+
+    <script>
+        let siteConfig = null;
+        let originalConsoleLog = console.log;
+        let originalConsoleError = console.error;
+        
+        // Override console methods to capture logs
+        function logToOutput(message, type = 'log') {
+            const logOutput = document.getElementById('log-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logOutput.textContent += logEntry;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            
+            // Call original console method
+            if (type === 'error') {
+                originalConsoleError(message);
+            } else {
+                originalConsoleLog(message);
+            }
+        }
+        
+        console.log = (message) => logToOutput(message, 'log');
+        console.error = (message) => logToOutput(message, 'error');
+        
+        // Initialize the test dashboard
+        async function initializeTest() {
+            logToOutput('Starting site configuration test...');
+            
+            try {
+                // Test health check
+                logToOutput('Testing webhook health...');
+                const isHealthy = await Webhook.healthCheck();
+                updateStatus('health-status', isHealthy ? 'success' : 'error', isHealthy ? 'Healthy ✅' : 'Error ❌');
+                
+                // Load site configuration
+                logToOutput('Loading site configuration...');
+                siteConfig = await Webhook.getSiteConfig();
+                
+                if (siteConfig) {
+                    updateStatus('config-status', 'success', 'Loaded ✅');
+                    updateConfigDisplay(siteConfig);
+                    updateDemoElements(siteConfig);
+                    logToOutput('Site configuration loaded successfully');
+                } else {
+                    throw new Error('No configuration received');
+                }
+                
+            } catch (error) {
+                logToOutput(`Error during initialization: ${error.message}`, 'error');
+                updateStatus('config-status', 'error', 'Failed ❌');
+                loadFallbackConfig();
+            }
+            
+            updateTimestamp();
+        }
+        
+        // Update status indicators
+        function updateStatus(elementId, type, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status ${type}`;
+                element.textContent = text;
+            }
+        }
+        
+        // Update configuration display
+        function updateConfigDisplay(config) {
+            document.getElementById('config-phone').textContent = config.contact?.phone || 'Not set';
+            document.getElementById('config-whatsapp').textContent = config.contact?.whatsapp || 'Not set';
+            document.getElementById('config-email').textContent = config.contact?.supportEmail || 'Not set';
+            document.getElementById('config-service-amount').textContent = config.serviceFees?.amount || 'Not set';
+            document.getElementById('config-service-currency').textContent = config.serviceFees?.currency || 'Not set';
+            
+            const formattedFee = Webhook.formatServiceFee(config.serviceFees);
+            document.getElementById('config-service-formatted').textContent = formattedFee;
+        }
+        
+        // Update demo elements
+        function updateDemoElements(config) {
+            // Phone demo
+            if (config.contact?.phone) {
+                document.getElementById('demo-phone-display').textContent = config.contact.phone;
+                const cleanPhone = config.contact.phone.replace(/[^+0-9]/g, '');
+                document.getElementById('demo-phone-link').href = `tel:${cleanPhone}`;
+            }
+            
+            // WhatsApp demo
+            if (config.contact?.whatsapp) {
+                document.getElementById('demo-whatsapp-display').textContent = config.contact.whatsapp;
+                const cleanWhatsapp = config.contact.whatsapp.replace(/[^+0-9]/g, '');
+                document.getElementById('demo-whatsapp-link').href = `https://wa.me/${cleanWhatsapp}`;
+            }
+            
+            // Email demo
+            if (config.contact?.supportEmail) {
+                document.getElementById('demo-email-display').textContent = config.contact.supportEmail;
+                document.getElementById('demo-email-link').href = `mailto:${config.contact.supportEmail}`;
+            }
+            
+            // Service fee demo
+            const formattedFee = Webhook.formatServiceFee(config.serviceFees);
+            document.getElementById('demo-service-fee').textContent = formattedFee;
+        }
+        
+        // Load fallback configuration for demo
+        function loadFallbackConfig() {
+            logToOutput('Loading fallback configuration...');
+            const fallbackConfig = {
+                contact: {
+                    phone: '+234-XXX-XXX-XXXX',
+                    whatsapp: '+234-XXX-XXX-XXXX',
+                    supportEmail: 'support@maids.ng'
+                },
+                serviceFees: {
+                    amount: 10000,
+                    currency: '₦',
+                    description: 'Service cost for hiring a maid'
+                }
+            };
+            
+            updateConfigDisplay(fallbackConfig);
+            updateDemoElements(fallbackConfig);
+            logToOutput('Fallback configuration loaded');
+        }
+        
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            logToOutput('DOM loaded, initializing test dashboard...');
+            initializeTest();
+            
+            // Refresh configuration button
+            document.getElementById('refresh-config').addEventListener('click', async function() {
+                this.disabled = true;
+                this.textContent = 'Refreshing...';
+                
+                try {
+                    logToOutput('Manual refresh requested...');
+                    await initializeTest();
+                } finally {
+                    this.disabled = false;
+                    this.textContent = 'Refresh Configuration';
+                }
+            });
+            
+            // Clear cache button
+            document.getElementById('clear-cache').addEventListener('click', function() {
+                logToOutput('Clearing all caches...');
+                Webhook.clearCache();
+                Webhook.clearSiteConfigCache();
+                logToOutput('Caches cleared');
+            });
+            
+            // Test fallback button
+            document.getElementById('test-fallback').addEventListener('click', function() {
+                logToOutput('Testing fallback configuration...');
+                loadFallbackConfig();
+                updateStatus('config-status', 'error', 'Fallback Mode');
+            });
+        });
+    </script>
+</body>
+</html>

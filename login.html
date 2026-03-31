@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Maids.ng - Access Your Domestic Worker Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://maids.ng/favicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/api-service.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: { 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' },
+                        lemon: { 50: '#fcfdf4', 400: '#c7de75', 500: '#a8c850' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fcfdf4 100%);
+        }
+
+        .pulse-bg {
+            background: linear-gradient(45deg, #f59e0b, #a8c850);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-gold-50 via-white to-lemon-50 min-h-screen">
+    <!-- Login View -->
+    <div id="login-view" class="view-transition">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gold-200">
+            <div class="max-w-md mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <a href="index.html" class="flex items-center group">
+                        <img src="https://maids.ng/logo.png" alt="Maids.ng Logo"
+                            class="h-16 w-auto object-contain drop-shadow-lg hover:drop-shadow-xl transition-all duration-300 group-hover:scale-105">
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-md mx-auto px-4 py-6">
+            <!-- Page Header -->
+            <div class="text-center mb-8">
+                <div class="pulse-bg w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-900 mb-2">Welcome Back</h2>
+                <p class="text-gray-600">Sign in to your account</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="bg-white rounded-2xl shadow-lg border border-gold-100 p-6 mb-6">
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="whatsapp" class="block text-sm font-medium text-gray-700 mb-2">WhatsApp
+                            Number</label>
+                        <div class="relative">
+                            <input type="tel" id="whatsapp" name="whatsapp" required
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100"
+                                placeholder="08012345678" maxlength="11" pattern="[0-9]{11}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">4-6 Digit PIN</label>
+                        <div class="relative">
+                            <input type="password" id="pin" name="pin" required
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-100 text-center text-2xl tracking-widest"
+                                placeholder="••••" maxlength="6" pattern="[0-9]{4,6}">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="login-btn"
+                        class="w-full bg-gradient-to-r from-gold-400 to-lemon-400 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="login-btn-text">Sign In</span>
+                    </button>
+                </form>
+
+                <!-- Error Message Display -->
+                <div id="error-message" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <p id="error-text" class="text-red-700 text-sm font-medium"></p>
+                </div>
+            </div>
+
+            <!-- User Type Selection -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">New to Maids.ng?</h3>
+                <div class="space-y-3">
+                    <a href="index.html"
+                        class="block w-full bg-gradient-to-r from-gold-400 to-gold-500 text-white p-4 rounded-xl text-center font-medium hover:shadow-lg transition-all">
+                        I need a Maid
+                    </a>
+                    <a href="job.html"
+                        class="block w-full bg-gradient-to-r from-lemon-400 to-lemon-500 text-white p-4 rounded-xl text-center font-medium hover:shadow-lg transition-all">
+                        I need a Maid Job
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiService = new ApiService('http://localhost:8000/api');
+
+        // Auto-redirect if already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const role = userData.user_type;
+                if (role === 'admin') window.location.href = 'admin.html';
+                else if (role === 'agency') window.location.href = 'agency.html';
+                else window.location.href = 'employer.html';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('login-btn-text');
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            btn.disabled = true;
+            btnText.textContent = 'Signing in...';
+            errorDiv.classList.add('hidden');
+
+            const phone = document.getElementById('whatsapp').value;
+            const pin = document.getElementById('pin').value;
+
+            try {
+                const response = await apiService.post('/auth/login', { phone, pin });
+
+                if (response.success && response.tokens) {
+                    localStorage.setItem('access_token', response.tokens.access_token);
+                    localStorage.setItem('userData', JSON.stringify(response.user));
+                    localStorage.setItem('userPhone', phone);
+
+                    // Redirect based on role
+                    const role = response.user.user_type; // Ensure backend sends 'user_type'
+
+                    if (role === 'admin') {
+                        // Admins must use the dedicated Admin Portal for proper access
+                        window.location.href = 'admin-login.html';
+                    } else if (role === 'agency') {
+                        window.location.href = 'agency.html';
+                    } else {
+                        // Default to Employer Dashboard
+                        window.location.href = 'employer.html';
+                    }
+                } else {
+                    throw new Error(response.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error(error);
+                errorText.textContent = error.message || 'An error occurred during login.';
+                errorDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btnText.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Maids.ng</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://maids.ng/favicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/api-service.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            /* Slate 900 */
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full glass rounded-2xl p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <div
+                class="h-16 w-16 bg-emerald-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-4">
+                <span class="text-3xl font-bold text-white">M</span>
+            </div>
+            <h2 class="text-2xl font-bold text-white">Admin Portal</h2>
+            <p class="text-slate-400 mt-2">Secure access for staff and administrators</p>
+        </div>
+
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+                <input type="email" id="email" name="email" required
+                    class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-slate-500"
+                    placeholder="admin@maids.ng">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                <input type="password" id="password" name="password" required
+                    class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-slate-500"
+                    placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="login-btn"
+                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-emerald-600/20 transition-all duration-200 transform hover:-translate-y-0.5">
+                <span id="login-btn-text">Sign In to Dashboard</span>
+            </button>
+        </form>
+
+        <div id="error-message" class="hidden mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div class="flex items-center space-x-3 text-red-500">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="error-text" class="text-sm font-medium"></span>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <a href="login.html" class="text-slate-500 hover:text-white text-sm transition-colors">
+                Return to Main Site
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const apiService = new ApiService('http://localhost:8000/api');
+
+        // Auto-redirect if already logged in as ADMIN
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                // Admin login returns 'user' with 'role' key in adminLogin but 'user_type' in login
+                // Actually adminLogin returns user object from admin_users table which has key 'role'
+                // Let's check api-service logic or response debug.
+
+                // If we are already on admin-login, only redirect if we are SURE it's an admin.
+                if (userData.role || userData.role_name) {
+                    window.location.href = 'admin.html';
+                }
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('login-btn-text');
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            btn.disabled = true;
+            btnText.textContent = 'Authenticating...';
+            errorDiv.classList.add('hidden');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // Use the new admin-login endpoint
+                const response = await apiService.post('/auth/admin-login', { email, password });
+
+                if (response.success && response.tokens) {
+                    localStorage.setItem('access_token', response.tokens.access_token);
+                    localStorage.setItem('refresh_token', response.tokens.refresh_token);
+                    localStorage.setItem('userData', JSON.stringify(response.user));
+
+                    // Redirect to Admin Dashboard
+                    window.location.href = 'admin.html';
+                } else {
+                    throw new Error(response.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error(error);
+                errorText.textContent = error.message || 'Invalid email or password.';
+                errorDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btnText.textContent = 'Sign In to Dashboard';
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</body>
+
+</html>

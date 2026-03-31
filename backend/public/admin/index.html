@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Maids.ng Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+                            400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+                            800: '#92400e', 900: '#78350f'
+                        },
+                        dark: {
+                            50: '#f8f6f3', 100: '#f0ece5', 200: '#e0d7ca',
+                            300: '#c9bba6', 400: '#b09b80', 500: '#1a1614',
+                            600: '#141210', 700: '#0f0d0b', 800: '#0a0908', 900: '#050404'
+                        },
+                        cream: { 50: '#FEFDFB', 100: '#FDF9F3', 200: '#FAF3E8' }
+                    },
+                    fontFamily: {
+                        display: ['Playfair Display', 'serif'],
+                        body: ['DM Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'DM Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #login-page {
+            z-index: 100;
+            position: fixed;
+            inset: 0;
+        }
+
+        #login-page.active {
+            display: flex !important;
+        }
+
+        #login-page:not(.active) {
+            display: none !important;
+        }
+
+        #main-app.hidden {
+            display: none !important;
+        }
+
+        .nav-item.active .nav-icon {
+            color: #f59e0b;
+        }
+
+        .nav-item.active .nav-label {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .nav-item.active .nav-dot {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @keyframes pulse-soft {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .stat-card {
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .stat-card:active {
+            transform: scale(0.97);
+        }
+
+        .list-item {
+            transition: all 0.2s ease;
+        }
+
+        .list-item:active {
+            transform: scale(0.985);
+            background: #FDF9F3;
+        }
+
+        .modal {
+            display: none;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+            filter: brightness(0.95);
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0ece5 25%, #faf3e8 50%, #f0ece5 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        .loading-pulse {
+            animation: pulse-soft 1.5s infinite;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e0d7ca;
+            border-radius: 4px;
+        }
+
+        /* Bottom nav safe area */
+        .pb-safe {
+            padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* Desktop sidebar */
+        @media (min-width: 768px) {
+            .desktop-sidebar {
+                display: flex;
+            }
+
+            .mobile-bottom-nav {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 260px;
+            }
+
+            .mobile-header {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .desktop-sidebar {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease;
+            border-radius: 12px;
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .sidebar-link:not(.active):hover {
+            background: #FDF9F3;
+            color: #d97706;
+        }
+
+        /* Warm gradient bg */
+        .warm-gradient {
+            background: linear-gradient(135deg, #1a1614 0%, #2d2420 50%, #1a1614 100%);
+        }
+
+        .warm-gradient-light {
+            background: linear-gradient(180deg, #FDF9F3 0%, #f8f6f3 100%);
+        }
+
+        /* Badge pulse for notifications */
+        .badge-pulse {
+            animation: pulse-soft 2s infinite;
+        }
+
+        /* Dropdown animation */
+        .dropdown-enter {
+            animation: slideDown 0.2s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-cream-50 min-h-screen font-body">
+
+    <!-- ==================== LOGIN PAGE ==================== -->
+    <div id="login-page"
+        class="page active min-h-screen flex items-center justify-center p-4 warm-gradient overflow-hidden">
+        <!-- Decorative circles -->
+        <div class="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-gold-500/5 blur-3xl"></div>
+        <div class="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] rounded-full bg-gold-500/5 blur-3xl"></div>
+
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10">
+            <div class="text-center mb-8">
+                <div
+                    class="w-16 h-16 bg-gradient-to-br from-gold-400 to-gold-600 rounded-2xl mx-auto mb-5 flex items-center justify-center shadow-lg shadow-gold-500/20 rotate-3">
+                    <span class="text-white font-display font-bold text-2xl -rotate-3">M</span>
+                </div>
+                <h1 class="text-2xl font-display font-bold text-dark-500">Admin Portal</h1>
+                <p class="text-dark-300 mt-2 text-sm">Maids.ng Management Console</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Email
+                        Address</label>
+                    <input type="email" id="login-email" required
+                        class="w-full px-4 py-3.5 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition-all text-dark-500 placeholder-dark-300"
+                        placeholder="admin@maids.ng">
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-semibold text-dark-400 uppercase tracking-wider mb-2">Password</label>
+                    <input type="password" id="login-password" required
+                        class="w-full px-4 py-3.5 bg-cream-100 border-0 rounded-xl focus:ring-2 focus:ring-gold-500 focus:bg-white transition-all text-dark-500 placeholder-dark-300"
+                        placeholder="Enter your password">
+                </div>
+                <div id="login-error" class="text-red-500 text-sm text-center hidden rounded-lg bg-red-50 p-3"></div>
+                <button type="submit"
+                    class="w-full py-4 btn-primary text-white rounded-xl font-semibold text-sm tracking-wide shadow-lg shadow-gold-500/25 mt-2">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="main-app" class="hidden">
+
+        <!-- Desktop Sidebar -->
+        <aside
+            class="desktop-sidebar fixed top-0 left-0 bottom-0 w-[260px] bg-white border-r border-dark-100 flex flex-col z-30">
+            <div class="p-6 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center shadow-sm rotate-3">
+                        <span class="text-white font-display font-bold text-lg -rotate-3">M</span>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-dark-500 text-lg">Maids.ng</h1>
+                        <p class="text-[10px] text-dark-300 uppercase tracking-widest">Admin Console</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
+                <button onclick="showPage('dashboard')"
+                    class="sidebar-link active w-full flex items-center space-x-3 px-4 py-3 text-left"
+                    data-sidebar="dashboard">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span class="font-medium text-sm">Dashboard</span>
+                </button>
+                <button onclick="showPage('helpers')"
+                    class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 text-left text-dark-400"
+                    data-sidebar="helpers">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="font-medium text-sm">Maids</span>
+                </button>
+                <button onclick="showPage('agencies')"
+                    class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 text-left text-dark-400"
+                    data-sidebar="agencies">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span class="font-medium text-sm">Agencies</span>
+                </button>
+                <button onclick="showPage('bookings')"
+                    class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 text-left text-dark-400"
+                    data-sidebar="bookings">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span class="font-medium text-sm">Bookings</span>
+                </button>
+                <button onclick="showPage('payments')"
+                    class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 text-left text-dark-400"
+                    data-sidebar="payments">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="font-medium text-sm">Payments</span>
+                </button>
+                <button onclick="showPage('settings')"
+                    class="sidebar-link w-full flex items-center space-x-3 px-4 py-3 text-left text-dark-400"
+                    data-sidebar="settings">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="font-medium text-sm">Settings</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-dark-100">
+                <div class="flex items-center space-x-3 px-3 mb-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-white text-xs font-bold"
+                        id="sidebar-avatar">A</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-dark-500 truncate" id="sidebar-admin-name">Admin</p>
+                        <p class="text-[11px] text-dark-300">Administrator</p>
+                    </div>
+                </div>
+                <button onclick="logout()"
+                    class="w-full flex items-center space-x-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile Header -->
+        <header
+            class="mobile-header bg-white/90 backdrop-blur-xl fixed top-0 left-0 right-0 z-40 border-b border-dark-100/50 md:hidden">
+            <div class="px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-9 h-9 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl flex items-center justify-center shadow-sm rotate-2">
+                        <span class="text-white font-display font-bold text-base -rotate-2">M</span>
+                    </div>
+                    <div>
+                        <h1 class="font-display font-bold text-dark-500 text-base">Maids.ng</h1>
+                        <p class="text-[10px] text-dark-300" id="admin-name">Admin</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button onclick="refreshCurrentPage()"
+                        class="p-2.5 text-dark-300 hover:text-gold-600 rounded-xl hover:bg-cream-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                    <button onclick="logout()"
+                        class="p-2.5 text-dark-300 hover:text-red-500 rounded-xl hover:bg-red-50 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="main-content pt-16 md:pt-0 pb-safe md:pb-4">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 md:py-8">
+
+                <!-- ==================== DASHBOARD PAGE ==================== -->
+                <div id="dashboard-page" class="page active">
+                    <div class="py-4 md:py-0">
+                        <div class="flex items-end justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500">Dashboard</h2>
+                                <p class="text-dark-300 text-sm mt-1">Here's what's happening today</p>
+                            </div>
+                            <p class="text-xs text-dark-300 hidden md:block" id="dashboard-date"></p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+                            <div class="stat-card glass-card rounded-2xl p-4 md:p-5 cursor-pointer"
+                                onclick="showPage('helpers')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-gold-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-gold-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <svg class="w-4 h-4 text-dark-200" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                                <p class="text-2xl md:text-3xl font-bold text-dark-500" id="stat-helpers">--</p>
+                                <p class="text-xs text-dark-300 mt-1">Total Maids</p>
+                            </div>
+                            <div class="stat-card glass-card rounded-2xl p-4 md:p-5 cursor-pointer">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <p class="text-2xl md:text-3xl font-bold text-dark-500" id="stat-verified">--</p>
+                                <p class="text-xs text-dark-300 mt-1">Verified</p>
+                            </div>
+                            <div class="stat-card glass-card rounded-2xl p-4 md:p-5 cursor-pointer"
+                                onclick="showPage('bookings')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                    </div>
+                                    <svg class="w-4 h-4 text-dark-200" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                                <p class="text-2xl md:text-3xl font-bold text-dark-500" id="stat-bookings">--</p>
+                                <p class="text-xs text-dark-300 mt-1">Bookings</p>
+                            </div>
+                            <div class="stat-card glass-card rounded-2xl p-4 md:p-5 cursor-pointer"
+                                onclick="showPage('payments')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <svg class="w-4 h-4 text-dark-200" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+                                <p class="text-xl md:text-2xl font-bold text-dark-500" id="stat-revenue">--</p>
+                                <p class="text-xs text-dark-300 mt-1">Revenue</p>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="grid md:grid-cols-2 gap-4 mb-6">
+                            <div class="glass-card rounded-2xl p-5">
+                                <h3 class="font-semibold text-dark-500 mb-4 text-sm">Revenue <span
+                                        class="text-dark-300 font-normal">(7 Days)</span></h3>
+                                <canvas id="revenue-chart" height="200"></canvas>
+                            </div>
+                            <div class="glass-card rounded-2xl p-5">
+                                <h3 class="font-semibold text-dark-500 mb-4 text-sm">Bookings <span
+                                        class="text-dark-300 font-normal">(7 Days)</span></h3>
+                                <canvas id="bookings-chart" height="200"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="glass-card rounded-2xl p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-dark-500 text-sm">Recent Activity</h3>
+                                <span class="text-xs text-dark-300">Last 24 hours</span>
+                            </div>
+                            <div id="activity-list" class="space-y-1">
+                                <div class="skeleton h-12 w-full mb-2"></div>
+                                <div class="skeleton h-12 w-full mb-2"></div>
+                                <div class="skeleton h-12 w-3/4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== HELPERS/MAIDS PAGE ==================== -->
+                <div id="helpers-page" class="page">
+                    <div class="py-4 md:py-0">
+                        <div class="flex items-end justify-between mb-5">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500">Maids</h2>
+                                <p class="text-dark-300 text-sm mt-1">Manage all registered helpers</p>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="flex flex-col sm:flex-row gap-3 mb-5">
+                            <div class="flex-1 relative">
+                                <svg class="w-4 h-4 text-dark-300 absolute left-4 top-1/2 -translate-y-1/2" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input type="text" id="helper-search" placeholder="Search maids by name, location..."
+                                    class="w-full pl-11 pr-4 py-3 bg-white border border-dark-100 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm transition"
+                                    onkeyup="debounceSearch(loadHelpers)">
+                            </div>
+                            <div class="flex gap-2">
+                                <select id="helper-filter-status" onchange="loadHelpers()"
+                                    class="px-3 py-3 bg-white border border-dark-100 rounded-xl text-sm focus:ring-2 focus:ring-gold-500 text-dark-400">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <select id="helper-filter-verification" onchange="loadHelpers()"
+                                    class="px-3 py-3 bg-white border border-dark-100 rounded-xl text-sm focus:ring-2 focus:ring-gold-500 text-dark-400">
+                                    <option value="">Verification</option>
+                                    <option value="verified">Verified</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Helpers List -->
+                        <div id="helpers-list" class="space-y-2">
+                            <div class="skeleton h-20 w-full mb-2"></div>
+                            <div class="skeleton h-20 w-full mb-2"></div>
+                            <div class="skeleton h-20 w-full"></div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div id="helpers-pagination" class="flex justify-center items-center space-x-2 mt-6"></div>
+                    </div>
+                </div>
+
+                <!-- ==================== AGENCIES PAGE ==================== -->
+                <div id="agencies-page" class="page">
+                    <div class="py-4 md:py-0">
+                        <div class="flex items-end justify-between mb-5">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500">Agencies</h2>
+                                <p class="text-dark-300 text-sm mt-1">Manage registered agencies</p>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="relative">
+                                <svg class="w-4 h-4 text-dark-300 absolute left-4 top-1/2 -translate-y-1/2" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input type="text" id="agency-search" placeholder="Search agencies..."
+                                    class="w-full pl-11 pr-4 py-3 bg-white border border-dark-100 rounded-xl focus:ring-2 focus:ring-gold-500 focus:border-transparent text-sm transition"
+                                    onkeyup="debounceSearch(loadAgencies)">
+                            </div>
+                        </div>
+
+                        <div id="agencies-list" class="space-y-2">
+                            <div class="skeleton h-20 w-full mb-2"></div>
+                            <div class="skeleton h-20 w-full mb-2"></div>
+                            <div class="skeleton h-20 w-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== BOOKINGS PAGE ==================== -->
+                <div id="bookings-page" class="page">
+                    <div class="py-4 md:py-0">
+                        <div class="flex items-end justify-between mb-5">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500">Bookings</h2>
+                                <p class="text-dark-300 text-sm mt-1">Track all booking activity</p>
+                            </div>
+                            <select id="booking-filter-status" onchange="loadBookings()"
+                                class="px-3 py-2.5 bg-white border border-dark-100 rounded-xl text-sm focus:ring-2 focus:ring-gold-500 text-dark-400">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div id="bookings-list" class="space-y-2">
+                            <div class="skeleton h-24 w-full mb-2"></div>
+                            <div class="skeleton h-24 w-full mb-2"></div>
+                            <div class="skeleton h-24 w-full"></div>
+                        </div>
+                        <div id="bookings-pagination" class="flex justify-center items-center space-x-2 mt-6"></div>
+                    </div>
+                </div>
+
+                <!-- ==================== PAYMENTS PAGE ==================== -->
+                <div id="payments-page" class="page">
+                    <div class="py-4 md:py-0">
+                        <div class="flex items-end justify-between mb-5">
+                            <div>
+                                <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500">Payments</h2>
+                                <p class="text-dark-300 text-sm mt-1">Revenue & transaction tracking</p>
+                            </div>
+                            <button onclick="exportPayments()"
+                                class="flex items-center space-x-2 px-4 py-2.5 btn-primary text-white text-sm rounded-xl font-medium shadow-sm shadow-gold-500/20">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>Export</span>
+                            </button>
+                        </div>
+
+                        <!-- Payment Stats -->
+                        <div class="grid grid-cols-3 gap-3 mb-5">
+                            <div class="glass-card rounded-2xl p-4 text-center">
+                                <p class="text-[11px] text-dark-300 uppercase tracking-wider font-medium">Today</p>
+                                <p class="text-lg font-bold text-green-600 mt-1" id="payment-today">--</p>
+                            </div>
+                            <div class="glass-card rounded-2xl p-4 text-center">
+                                <p class="text-[11px] text-dark-300 uppercase tracking-wider font-medium">This Month</p>
+                                <p class="text-lg font-bold text-blue-600 mt-1" id="payment-month">--</p>
+                            </div>
+                            <div class="glass-card rounded-2xl p-4 text-center">
+                                <p class="text-[11px] text-dark-300 uppercase tracking-wider font-medium">All Time</p>
+                                <p class="text-lg font-bold text-purple-600 mt-1" id="payment-total">--</p>
+                            </div>
+                        </div>
+
+                        <div id="payments-list" class="space-y-2">
+                            <div class="skeleton h-16 w-full mb-2"></div>
+                            <div class="skeleton h-16 w-full mb-2"></div>
+                            <div class="skeleton h-16 w-full"></div>
+                        </div>
+                        <div id="payments-pagination" class="flex justify-center items-center space-x-2 mt-6"></div>
+                    </div>
+                </div>
+
+                <!-- ==================== SETTINGS PAGE ==================== -->
+                <div id="settings-page" class="page">
+                    <div class="py-4 md:py-0">
+                        <h2 class="text-2xl md:text-3xl font-display font-bold text-dark-500 mb-1">Settings</h2>
+                        <p class="text-dark-300 text-sm mb-6">Platform configuration & management</p>
+
+                        <div class="space-y-4">
+                            <!-- Verification Queue -->
+                            <div class="glass-card rounded-2xl p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold text-dark-500 text-sm">Pending Verifications</h3>
+                                    <span class="bg-red-100 text-red-600 text-xs px-2.5 py-1 rounded-full font-semibold"
+                                        id="pending-count">0</span>
+                                </div>
+                                <div id="verification-queue" class="space-y-2">
+                                    <div class="skeleton h-12 w-full"></div>
+                                </div>
+                            </div>
+
+                            <!-- Service Fee -->
+                            <div class="glass-card rounded-2xl p-5">
+                                <h3 class="font-semibold text-dark-500 text-sm mb-4">Service Fee</h3>
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center flex-1 bg-cream-100 rounded-xl overflow-hidden">
+                                        <span
+                                            class="px-4 py-3 text-dark-300 text-sm font-medium border-r border-dark-100">NGN</span>
+                                        <input type="number" id="service-fee-input"
+                                            class="flex-1 px-4 py-3 bg-transparent border-0 focus:ring-0 text-dark-500"
+                                            value="10000">
+                                    </div>
+                                    <button onclick="updateServiceFee()"
+                                        class="px-5 py-3 btn-primary text-white rounded-xl text-sm font-medium">Save</button>
+                                </div>
+                            </div>
+
+                            <!-- Payment Integration -->
+                            <div class="glass-card rounded-2xl p-5">
+                                <h3 class="font-semibold text-dark-500 text-sm mb-4">Payment Integration</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-dark-300 mb-1.5 font-medium">Flutterwave Public
+                                            Key</label>
+                                        <input type="text" id="flw-public-key" placeholder="FLWPUBK_..."
+                                            class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl text-sm font-mono focus:ring-2 focus:ring-gold-500 focus:bg-white transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-dark-300 mb-1.5 font-medium">Flutterwave Secret
+                                            Key</label>
+                                        <input type="password" id="flw-secret-key" placeholder="FLWSECK_..."
+                                            class="w-full px-4 py-3 bg-cream-100 border-0 rounded-xl text-sm font-mono focus:ring-2 focus:ring-gold-500 focus:bg-white transition">
+                                    </div>
+                                    <button onclick="updatePaymentKeys()"
+                                        class="w-full py-3 btn-primary text-white rounded-xl text-sm font-medium mt-1">
+                                        Save Payment Keys
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Admin Users -->
+                            <div class="glass-card rounded-2xl p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold text-dark-500 text-sm">Admin Users</h3>
+                                    <button onclick="showAddAdminModal()"
+                                        class="flex items-center space-x-1 text-gold-600 text-sm font-medium hover:text-gold-700 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span>Add</span>
+                                    </button>
+                                </div>
+                                <div id="admin-users-list" class="space-y-2">
+                                    <div class="skeleton h-12 w-full"></div>
+                                </div>
+                            </div>
+
+                            <!-- Roles -->
+                            <div class="glass-card rounded-2xl p-5">
+                                <h3 class="font-semibold text-dark-500 text-sm mb-4">Roles & Permissions</h3>
+                                <div id="roles-list" class="space-y-2">
+                                    <div class="skeleton h-12 w-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-dark-100/30 z-50 md:hidden"
+            style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+            <div class="flex justify-around items-center py-2 px-2">
+                <button onclick="showPage('dashboard')"
+                    class="nav-item active flex flex-col items-center py-1.5 px-3 rounded-xl transition"
+                    data-page="dashboard">
+                    <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span class="nav-label text-[10px] mt-0.5 text-dark-300 transition">Home</span>
+                    <div
+                        class="nav-dot w-1 h-1 rounded-full bg-gold-500 mt-0.5 opacity-0 transform scale-x-0 transition-all">
+                    </div>
+                </button>
+                <button onclick="showPage('helpers')"
+                    class="nav-item flex flex-col items-center py-1.5 px-3 rounded-xl transition" data-page="helpers">
+                    <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="nav-label text-[10px] mt-0.5 text-dark-300 transition">Maids</span>
+                    <div
+                        class="nav-dot w-1 h-1 rounded-full bg-gold-500 mt-0.5 opacity-0 transform scale-x-0 transition-all">
+                    </div>
+                </button>
+                <button onclick="showPage('bookings')"
+                    class="nav-item flex flex-col items-center py-1.5 px-3 rounded-xl transition" data-page="bookings">
+                    <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span class="nav-label text-[10px] mt-0.5 text-dark-300 transition">Bookings</span>
+                    <div
+                        class="nav-dot w-1 h-1 rounded-full bg-gold-500 mt-0.5 opacity-0 transform scale-x-0 transition-all">
+                    </div>
+                </button>
+                <button onclick="showPage('payments')"
+                    class="nav-item flex flex-col items-center py-1.5 px-3 rounded-xl transition" data-page="payments">
+                    <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="nav-label text-[10px] mt-0.5 text-dark-300 transition">Payments</span>
+                    <div
+                        class="nav-dot w-1 h-1 rounded-full bg-gold-500 mt-0.5 opacity-0 transform scale-x-0 transition-all">
+                    </div>
+                </button>
+                <button onclick="showPage('settings')"
+                    class="nav-item flex flex-col items-center py-1.5 px-3 rounded-xl transition" data-page="settings">
+                    <svg class="nav-icon w-6 h-6 text-dark-300 transition" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="nav-label text-[10px] mt-0.5 text-dark-300 transition">Settings</span>
+                    <div
+                        class="nav-dot w-1 h-1 rounded-full bg-gold-500 mt-0.5 opacity-0 transform scale-x-0 transition-all">
+                    </div>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"
+        class="modal fixed inset-0 bg-dark-500/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl">
+            <!-- Modal content injected here -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/shared/js/utils.js"></script>
+    <script src="/shared/js/store.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="/shared/js/toast.js"></script>
+    <script src="/admin/js/app.js"></script>
+</body>
+
+</html>
