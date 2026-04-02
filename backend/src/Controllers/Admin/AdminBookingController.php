@@ -20,7 +20,6 @@ class AdminBookingController
     public function index(Request $request, Response $response): Response
     {
         $params = $request->getQueryParams();
-
         $page = max(1, (int)($params['page'] ?? 1));
         $limit = min(100, max(1, (int)($params['limit'] ?? 20)));
         $offset = ($page - 1) * $limit;
@@ -28,13 +27,10 @@ class AdminBookingController
         $where = [];
         $queryParams = [];
 
-        // Status filter
         if (!empty($params['status'])) {
             $where[] = "b.status = ?";
             $queryParams[] = $params['status'];
         }
-
-        // Date range filter
         if (!empty($params['from_date'])) {
             $where[] = "b.created_at >= ?";
             $queryParams[] = $params['from_date'];
@@ -43,8 +39,6 @@ class AdminBookingController
             $where[] = "b.created_at <= ?";
             $queryParams[] = $params['to_date'] . ' 23:59:59';
         }
-
-        // Search
         if (!empty($params['search'])) {
             $where[] = "(b.reference LIKE ? OR h.full_name LIKE ?)";
             $searchTerm = '%' . $params['search'] . '%';
@@ -54,21 +48,13 @@ class AdminBookingController
 
         $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        // Get total count
-        $countSql = "
-            SELECT COUNT(*) as total
-            FROM bookings b
-            JOIN helpers h ON b.helper_id = h.id
-            {$whereClause}
-        ";
+        $countSql = "SELECT COUNT(*) as total FROM bookings b JOIN helpers h ON b.helper_id = h.id {$whereClause}";
         $stmt = $this->pdo->prepare($countSql);
         $stmt->execute($queryParams);
-        $total = (int)$stmt->fetch()['total'];
+        $total = (int) $stmt->fetch()['total'];
 
-        // Get bookings
         $sql = "
-            SELECT b.*,
-                   h.full_name as helper_name, h.profile_photo as helper_photo, h.work_type,
+            SELECT b.*, h.full_name as helper_name, h.profile_photo as helper_photo, h.work_type,
                    e.full_name as employer_name, u.phone as employer_phone,
                    (SELECT SUM(amount) FROM payments WHERE booking_id = b.id AND status = 'success') as paid_amount
             FROM bookings b
@@ -79,7 +65,6 @@ class AdminBookingController
             ORDER BY b.created_at DESC
             LIMIT ? OFFSET ?
         ";
-
         $queryParams[] = $limit;
         $queryParams[] = $offset;
 
@@ -102,13 +87,9 @@ class AdminBookingController
     public function show(Request $request, Response $response, array $args): Response
     {
         $bookingId = (int)$args['id'];
-
         $stmt = $this->pdo->prepare("
-            SELECT b.*,
-                   h.full_name as helper_name, h.profile_photo as helper_photo,
-                   h.work_type, h.rating_avg, h.badge_level,
-                   hu.phone as helper_phone,
-                   e.full_name as employer_name, e.location as employer_location,
+            SELECT b.*, h.full_name as helper_name, h.profile_photo as helper_photo, h.work_type, h.rating_avg, h.badge_level,
+                   hu.phone as helper_phone, e.full_name as employer_name, e.location as employer_location,
                    eu.phone as employer_phone
             FROM bookings b
             JOIN helpers h ON b.helper_id = h.id
@@ -121,13 +102,9 @@ class AdminBookingController
         $booking = $stmt->fetch();
 
         if (!$booking) {
-            return $this->jsonResponse($response, [
-                'success' => false,
-                'error' => 'Booking not found'
-            ], 404);
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Booking not found'], 404);
         }
 
-        // Get payments
         $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE booking_id = ? ORDER BY created_at DESC");
         $stmt->execute([$bookingId]);
         $booking['payments'] = $stmt->fetchAll();
@@ -142,7 +119,6 @@ class AdminBookingController
     {
         $bookingId = (int)$args['id'];
         $data = $request->getParsedBody();
-
         $allowedFields = ['status', 'start_date', 'notes', 'monthly_rate'];
         $updates = [];
         $params = [];
@@ -155,10 +131,7 @@ class AdminBookingController
         }
 
         if (empty($updates)) {
-            return $this->jsonResponse($response, [
-                'success' => false,
-                'error' => 'No fields to update'
-            ], 400);
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'No fields to update'], 400);
         }
 
         $updates[] = "updated_at = CURRENT_TIMESTAMP";
@@ -168,66 +141,84 @@ class AdminBookingController
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        return $this->jsonResponse($response, [
-            'success' => true,
-            'message' => 'Booking updated'
-        ]);
+        return $this->jsonResponse($response, ['success'=>true,'message'=>'Booking updated']);
     }
 
     public function cancel(Request $request, Response $response, array $args): Response
     {
         $bookingId = (int)$args['id'];
         $data = $request->getParsedBody();
-
         $stmt = $this->pdo->prepare("
-            UPDATE bookings SET
-                status = 'cancelled',
-                cancelled_reason = ?,
-                updated_at = CURRENT_TIMESTAMP
+            UPDATE bookings SET status = 'cancelled', cancelled_reason = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
-        $stmt->execute([
-            $data['reason'] ?? 'Cancelled by admin',
-            $bookingId
-        ]);
+        $stmt->execute([$data['reason'] ?? 'Cancelled by admin', $bookingId]);
+        return $this->jsonResponse($response, ['success'=>true,'message'=>'Booking cancelled']);
+    }
 
-        return $this->jsonResponse($response, [
-            'success' => true,
-            'message' => 'Booking cancelled'
-        ]);
+    public function assignHelper(Request $request, Response $response, array $args): Response
+    {
+        $bookingId = (int)$args['id'];
+        $data = $request->getParsedBody();
+
+        $newHelperId = (int)($data['helper_id'] ?? 0);
+        if (!$newHelperId) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'New helper ID is required'], 400);
+        }
+
+        // Verify the new helper exists
+        $stmt = $this->pdo->prepare("SELECT * FROM helpers WHERE id = ?");
+        $stmt->execute([$newHelperId]);
+        $newHelper = $stmt->fetch();
+
+        if (!$newHelper) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Helper not found'], 404);
+        }
+
+        // Update booking
+        $stmt = $this->pdo->prepare("UPDATE bookings SET helper_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt->execute([$newHelperId, $bookingId]);
+
+        // Log action (optional)
+        $adminId = $request->getAttribute('user_id') ?? null;
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO webhook_logs (event_type, payload, status)
+                VALUES ('booking.assigned', ?, 'processed')
+            ");
+            $stmt->execute([json_encode(['booking_id' => $bookingId, 'new_helper_id' => $newHelperId, 'by_admin' => $adminId])]);
+        } catch (\Throwable $e) {
+            // Table may not exist; ignore
+        }
+
+        return $this->jsonResponse($response, ['success'=>true,'message'=>'Helper reassigned']);
     }
 
     public function getStats(Request $request, Response $response): Response
     {
         $stats = [];
 
-        // Status counts
         $stmt = $this->pdo->query("SELECT status, COUNT(*) as count FROM bookings GROUP BY status");
         while ($row = $stmt->fetch()) {
             $stats['by_status'][$row['status']] = (int)$row['count'];
         }
 
-        // Today's bookings
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(created_at) = DATE('now')");
         $stats['today'] = (int)$stmt->fetch()['count'];
 
-        // This week
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM bookings WHERE created_at >= DATE('now', '-7 days')");
         $stats['this_week'] = (int)$stmt->fetch()['count'];
 
-        // This month
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM bookings WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')");
         $stats['this_month'] = (int)$stmt->fetch()['count'];
 
-        return $this->jsonResponse($response, [
-            'success' => true,
-            'stats' => $stats
-        ]);
+        return $this->jsonResponse($response, ['success'=>true,'stats'=>$stats]);
     }
 
     private function jsonResponse(Response $response, array $data, int $status = 200): Response
     {
-        $response->getBody()->write(json_encode($data));
+        $payload = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE);
+        $response->getBody()->write($payload);
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($status);

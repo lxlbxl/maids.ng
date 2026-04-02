@@ -169,5 +169,66 @@ class NotificationService
             $this->emailService->send($helper['email'], $subject, $message);
         }
     }
+
+    public function notifyBookingAccepted(array $booking, array $helper, array $employer): void
+    {
+        $this->logger->info("Internal Notification: Booking Accepted", [
+            'reference' => $booking['reference'],
+            'helper' => $helper['full_name'] ?? 'Unknown',
+            'employer' => $employer['full_name'] ?? 'Unknown'
+        ]);
+
+        // Notify employer
+        if (!empty($employer['email'])) {
+            $subject = 'Booking Accepted – Next Step';
+            $message = "Good news! Your booking (Ref: {$booking['reference']}) has been accepted by {$helper['full_name']}. Please proceed to payment to secure the booking.";
+            $this->emailService->send($employer['email'], $subject, $message);
+        }
+
+        if (!empty($employer['phone'])) {
+            $sms = "Maids.ng: Booking {$booking['reference']} accepted. Log in to complete payment. Thank you!";
+            $this->smsService->send($employer['phone'], $sms);
+        }
+    }
+
+    public function notifyBookingRejected(array $booking, array $helper, array $employer): void
+    {
+        $this->logger->info("Internal Notification: Booking Rejected", [
+            'reference' => $booking['reference'],
+            'helper' => $helper['full_name'] ?? 'Unknown',
+            'employer' => $employer['full_name'] ?? 'Unknown'
+        ]);
+
+        // Notify employer
+        if (!empty($employer['email'])) {
+            $subject = 'Booking Declined';
+            $message = "We regret to inform you that your booking (Ref: {$booking['reference']}) for {$helper['full_name']} has been declined. Please search for another helper on Maids.ng.";
+            $this->emailService->send($employer['email'], $subject, $message);
+        }
+
+        if (!empty($employer['phone'])) {
+            $sms = "Maids.ng: Booking {$booking['reference']} declined. Please try again or search for another helper.";
+            $this->smsService->send($employer['phone'], $sms);
+        }
+    }
+
+    public function notifyBookingApprovedByAgency(array $booking, array $employer): void
+    {
+        $this->logger->info("Internal Notification: Booking Approved by Agency", [
+            'reference' => $booking['reference']
+        ]);
+
+        // Notify employer
+        if (!empty($employer['email'])) {
+            $subject = 'Booking Approved by Agency';
+            $message = "Your booking (Ref: {$booking['reference']}) has been approved by the agency. Please check your dashboard for next steps.";
+            $this->emailService->send($employer['email'], $subject, $message);
+        }
+
+        if (!empty($employer['phone'])) {
+            $sms = "Maids.ng: Agency approved your booking {$booking['reference']}. Proceed to payment.";
+            $this->smsService->send($employer['phone'], $sms);
+        }
+    }
 }
 

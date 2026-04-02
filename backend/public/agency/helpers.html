@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Helpers - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/agency/helpers.html" class="nav-link active">My Helpers</a>
+        <a href="/agency/requests.html" class="nav-link">Requests</a>
+        <a href="/agency/dashboard.html" class="nav-link">Dashboard</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm hidden-mobile">Logout</button>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/agency/helpers.html" class="nav-link active">My Helpers</a>
+        <a href="/agency/requests.html" class="nav-link">Requests</a>
+        <a href="/agency/dashboard.html" class="nav-link">Dashboard</a>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-block">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <div class="flex justify-between items-center mb-6">
+        <h1>My Helpers</h1>
+        <a href="#" class="btn btn-primary" onclick="showAddModal()">+ Add Helper</a>
+      </div>
+      
+      <div class="card">
+        <div class="card-body">
+          <div id="helpersList">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['agency'])) return;
+
+      // Mock helpers data
+      const helpers = [
+        { id: 1, name: 'Mary Amodu', skills: ['Cook', 'Cleaner'], status: 'active', location: 'Lagos' },
+        { id: 2, name: 'Fatima Bello', skills: ['Babysitter', 'Cleaner'], status: 'available', location: 'Abuja' },
+        { id: 3, name: 'Jane Dior', skills: ['Elderly Care'], status: 'active', location: 'Rivers' },
+      ];
+
+      const helpersList = document.getElementById('helpersList');
+      
+      if (helpers.length > 0) {
+        helpersList.innerHTML = `
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Skills</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${helpers.map(h => `
+                  <tr>
+                    <td><strong>${h.name}</strong></td>
+                    <td>${h.skills.map(s => `<span class="badge badge-info" style="margin-right: 0.25rem;">${s}</span>`).join('')}</td>
+                    <td>${h.location}</td>
+                    <td><span class="badge ${window.app.getStatusBadge(h.status)}">${window.app.formatStatus(h.status)}</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm" onclick="editHelper(${h.id})">Edit</button>
+                      <button class="btn btn-ghost btn-sm" onclick="viewHelper(${h.id})">View</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        helpersList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <h4 class="empty-state-title">No helpers yet</h4>
+            <p class="empty-state-text">Add your first helper to get started.</p>
+            <button onclick="showAddModal()" class="btn btn-primary">Add Helper</button>
+          </div>
+        `;
+      }
+    });
+
+    function showAddModal() {
+      window.app.Toast.info('Add helper form would open here (bulk CSV upload available)');
+    }
+
+    function editHelper(id) {
+      window.app.Toast.info(`Edit helper ${id}`);
+    }
+
+    function viewHelper(id) {
+      window.location.href = `/helper/profile.html?id=${id}`;
+    }
+  </script>
+</body>
+</html>

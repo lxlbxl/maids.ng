@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Helper Profile - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link">Dashboard</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm hidden-mobile">Logout</button>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link">Dashboard</a>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-block">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <!-- Back Button -->
+      <div class="mb-6">
+        <a href="/household/" class="btn btn-ghost btn-sm">
+          ← Back to Search
+        </a>
+      </div>
+
+      <!-- Profile Content -->
+      <div id="profileContainer">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['household'])) return;
+
+      const profileContainer = document.getElementById('profileContainer');
+      const pathParts = window.location.pathname.split('/');
+      const helperId = pathParts[pathParts.length - 1].replace('.html', '');
+
+      try {
+        const helper = await window.api.getHelper(helperId);
+        const user = getCurrentUser();
+
+        profileContainer.innerHTML = `
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Profile Card -->
+            <div class="lg:col-span-1">
+              <div class="card">
+                <div class="card-body text-center">
+                  <div class="mb-4">
+                    <div class="helper-avatar" style="width: 120px; height: 120px; font-size: 3rem; margin: 0 auto;">
+                      ${helper.avatar ? `<img src="${helper.avatar}" alt="${helper.firstName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
+                    </div>
+                  </div>
+                  <h2 class="mb-2">${window.app.Toast.escapeHtml(helper.firstName)} ${window.app.Toast.escapeHtml(helper.lastName)}</h2>
+                  <p class="text-secondary mb-4">${window.app.Toast.escapeHtml(helper.role || 'Helper')}</p>
+                  
+                  ${helper.location ? `<p class="text-sm text-tertiary mb-4">📍 ${window.app.Toast.escapeHtml(helper.location)}</p>` : ''}
+                  
+                  <div class="mb-4">
+                    <span class="badge ${window.app.getStatusBadge(helper.status)}">${window.app.formatStatus(helper.status)}</span>
+                  </div>
+                  
+                  ${helper.yearsExperience ? `<p class="text-sm"><strong>${helper.yearsExperience}+ years</strong> experience</p>` : ''}
+                  
+                  <div class="mt-6 flex flex-col gap-3">
+                    <button class="btn btn-primary btn-block" onclick="sendHireRequest(${helper.id})">
+                      Send Hire Request
+                    </button>
+                    <button class="btn btn-secondary btn-block" onclick="window.open('/household/helpers/${helper.id}.html?chat=true', '_blank')">
+                      Message
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Skills Card -->
+              <div class="card mt-6">
+                <div class="card-header">
+                  <h4 class="text-primary mb-0">Skills</h4>
+                </div>
+                <div class="card-body">
+                  ${helper.skills && helper.skills.length > 0 ? `
+                    <div class="flex flex-wrap gap-2">
+                      ${helper.skills.map(skill => `
+                        <span class="skill-tag">${window.app.Toast.escapeHtml(skill)}</span>
+                      `).join('')}
+                    </div>
+                  ` : '<p class="text-tertiary">No skills listed</p>'}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Details -->
+            <div class="lg:col-span-2">
+              <div class="card">
+                <div class="card-header">
+                  <h4 class="text-primary mb-0">About</h4>
+                </div>
+                <div class="card-body">
+                  <p>${helper.bio ? window.app.Toast.escapeHtml(helper.bio) : 'No bio available.'}</p>
+                </div>
+              </div>
+
+              <!-- Previous Experience -->
+              ${helper.previousExperience ? `
+                <div class="card mt-6">
+                  <div class="card-header">
+                    <h4 class="text-primary mb-0">Previous Experience</h4>
+                  </div>
+                  <div class="card-body">
+                    <p>${window.app.Toast.escapeHtml(helper.previousExperience)}</p>
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Availability -->
+              <div class="card mt-6">
+                <div class="card-header">
+                  <h4 class="text-primary mb-0">Availability</h4>
+                </div>
+                <div class="card-body">
+                  <p><strong>Type:</strong> ${window.app.formatStatus(helper.availability || 'Not specified')}</p>
+                  ${helper.expectedSalary ? `<p><strong>Expected Salary:</strong> ₦${helper.expectedSalary.toLocaleString()}/month</p>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        profileContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h4 class="empty-state-title">Failed to load profile</h4>
+            <p class="empty-state-text">${window.app.Toast.escapeHtml(error.message || 'Unknown error')}</p>
+            <a href="/household/" class="btn btn-primary">Back to Search</a>
+          </div>
+        `;
+        window.app.Toast.error(error.message || 'Failed to load profile');
+      }
+    });
+
+    async function sendHireRequest(helperId) {
+      if (!localStorage.getItem('token')) {
+        window.app.Toast.warning('Please login to send a hire request');
+        setTimeout(() => window.location.href = '/household/login.html', 1500);
+        return;
+      }
+
+      const jobDetails = prompt('Describe the job (duties, schedule, etc.):');
+      if (!jobDetails) return;
+
+      try {
+        await window.api.sendHireRequest(helperId, { description: jobDetails });
+        window.app.Toast.success('Hire request sent successfully!');
+      } catch (error) {
+        window.app.Toast.error('Failed to send request: ' + (error.message || 'Unknown error'));
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Helpers - Admin - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">Maids.ng Admin</a>
+      <nav class="nav-links">
+        <a href="/admin/helpers.html" class="nav-link active">Helpers</a>
+        <a href="/admin/agencies.html" class="nav-link">Agencies</a>
+        <a href="/admin/hire-requests.html" class="nav-link">Requests</a>
+        <a href="/admin/dashboard.html" class="nav-link">Dashboard</a>
+      </nav>
+      <div class="flex items-center gap-4">
+        <span id="adminName" class="text-sm"></span>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container" style="padding: 2rem 1rem;">
+    <div class="flex justify-between items-center mb-6">
+      <h1>Manage Helpers</h1>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="showBulkUpload()">Bulk Upload</button>
+        <button class="btn btn-primary btn-sm" onclick="showAddModal()">+ Add Helper</button>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="filters-sidebar mb-6">
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <div class="filter-options">
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="pending" checked> Pending
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="approved" checked> Approved
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="rejected" checked> Rejected
+          </label>
+        </div>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">Skills</label>
+        <div class="filter-options">
+          <label class="filter-checkbox"><input type="checkbox" name="skill" value="cook"> Cook</label>
+          <label class="filter-checkbox"><input type="checkbox" name="skill" value="cleaner"> Cleaner</label>
+          <label class="filter-checkbox"><input type="checkbox" name="skill" value="babysitter"> Babysitter</label>
+          <label class="filter-checkbox"><input type="checkbox" name="skill" value="elderly"> Elderly Care</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div id="helpersList">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['admin'])) return;
+
+      // Mock helpers data
+      const helpers = [
+        { id: 1, name: 'Mary Amodu', email: 'mary@example.com', phone: '08012345678', skills: ['Cook', 'Cleaner'], status: 'approved', city: 'Lagos' },
+        { id: 2, name: 'Fatima Bello', email: 'fatima@example.com', phone: '08023456789', skills: ['Babysitter'], status: 'pending', city: 'Abuja' },
+        { id: 3, name: 'Jane Dior', email: 'jane@example.com', phone: '08034567890', skills: ['Elderly Care'], status: 'approved', city: 'Rivers' },
+        { id: 4, name: 'Amina Mohammed', email: 'amina@example.com', phone: '08045678901', skills: ['Cook', 'Cleaner', 'Housekeeper'], status: 'pending', city: 'Kano' },
+        { id: 5, name: 'Chioma Obi', email: 'chioma@example.com', phone: '08056789012', skills: ['Babysitter', 'Cleaner'], status: 'rejected', city: 'Enugu' },
+      ];
+
+      const helpersList = document.getElementById('helpersList');
+      
+      helpersList.innerHTML = `
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Skills</th>
+                <th>City</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${helpers.map(h => `
+                <tr>
+                  <td><strong>${h.name}</strong></td>
+                  <td>
+                    <a href="mailto:${h.email}" class="text-primary">${h.email}</a><br>
+                    <span class="text-sm text-muted">${h.phone}</span>
+                  </td>
+                  <td>${h.skills.map(s => `<span class="badge badge-info" style="margin-right: 0.25rem;">${s}</span>`).join('')}</td>
+                  <td>${h.city}</td>
+                  <td><span class="badge ${window.app.getStatusBadge(h.status)}">${window.app.formatStatus(h.status)}</span></td>
+                  <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editHelper(${h.id})">Edit</button>
+                    <button class="btn btn-ghost btn-sm" onclick="viewHelper(${h.id})">View</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+
+    function showBulkUpload() {
+      window.app.Toast.info('Bulk CSV upload modal would open here');
+    }
+
+    function showAddModal() {
+      window.app.Toast.info('Add helper form would open here');
+    }
+
+    function editHelper(id) {
+      window.app.Toast.info(`Edit helper ${id}`);
+    }
+
+    function viewHelper(id) {
+      window.app.Toast.info(`View helper ${id}`);
+    }
+  </script>
+</body>
+</html>

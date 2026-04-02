@@ -382,9 +382,6 @@ class MatchingService
         };
     }
 
-        return $helpers;
-    }
-
     public function getHelper(int $helperId): ?array
     {
         $stmt = $this->pdo->prepare("

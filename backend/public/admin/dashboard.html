@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">Maids.ng Admin</a>
+      <nav class="nav-links">
+        <a href="/admin/helpers.html">Helpers</a>
+        <a href="/admin/agencies.html">Agencies</a>
+        <a href="/admin/hire-requests.html">Requests</a>
+        <a href="/admin/dashboard.html" class="active">Dashboard</a>
+      </nav>
+      <div class="flex items-center gap-4">
+        <span id="adminName" class="text-sm"></span>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container" style="padding: 2rem 1rem;">
+    <h1 class="mb-6">Platform Dashboard</h1>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalHelpers">0</div>
+        <div class="stat-label">Total Helpers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalAgencies">0</div>
+        <div class="stat-label">Agencies</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="pendingRequests">0</div>
+        <div class="stat-label">Pending Requests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalUsers">0</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2" style="--grid-cols: 1; gap: 1.5rem; margin-top: 2rem;">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="text-primary mb-4">Quick Links</h4>
+          <div class="flex flex-col gap-3">
+            <a href="/admin/helpers.html" class="btn btn-secondary">Manage Helpers</a>
+            <a href="/admin/agencies.html" class="btn btn-secondary">Manage Agencies</a>
+            <a href="/admin/hire-requests.html" class="btn btn-secondary">Review Requests</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h4 class="text-primary mb-4">Recent Activity</h4>
+          <div id="recentActivity">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['admin'])) return;
+
+      const user = getCurrentUser();
+      document.getElementById('adminName').textContent = user.email || 'Admin';
+
+      // Mock dashboard data
+      document.getElementById('totalHelpers').textContent = '127';
+      document.getElementById('totalAgencies').textContent = '15';
+      document.getElementById('pendingRequests').textContent = '8';
+      document.getElementById('totalUsers').textContent = '312';
+
+      const activity = document.getElementById('recentActivity');
+      activity.innerHTML = `
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>New Helper Registration</td>
+                <td><span class="badge badge-warning">Pending</span></td>
+                <td>Just now</td>
+              </tr>
+              <tr>
+                <td>Agency Verification</td>
+                <td><span class="badge badge-info">Review</span></td>
+                <td>2 hours ago</td>
+              </tr>
+              <tr>
+                <td>Hire Request</td>
+                <td><span class="badge badge-success">Approved</span></td>
+                <td>1 day ago</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4"><a href="/admin/hire-requests.html" class="text-primary">View all requests →</a></div>
+      `;
+    });
+  </script>
+</body>
+</html>

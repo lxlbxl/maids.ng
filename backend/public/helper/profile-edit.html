@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/helper/dashboard.html" class="nav-link">Dashboard</a>
+        <a href="/helper/profile-edit.html" class="nav-link active">Edit Profile</a>
+        <a href="/helper/requests.html" class="nav-link">Requests</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm hidden-mobile">Logout</button>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/helper/dashboard.html" class="nav-link">Dashboard</a>
+        <a href="/helper/profile-edit.html" class="nav-link active">Edit Profile</a>
+        <a href="/helper/requests.html" class="nav-link">Requests</a>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-block">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <h1 class="mb-6">Edit Profile</h1>
+      
+      <div class="card">
+        <div class="card-body">
+          <form id="profileForm">
+            <div class="form-group">
+              <label class="form-label form-label-required">First Name</label>
+              <input type="text" class="form-input" name="firstName" id="firstName" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label form-label-required">Last Name</label>
+              <input type="text" class="form-input" name="lastName" id="lastName" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" class="form-input" name="phone" id="phone">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea class="form-textarea" name="bio" id="bio" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Location (City)</label>
+              <input type="text" class="form-input" name="city" id="city">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Expected Monthly Salary (₦)</label>
+              <input type="number" class="form-input" name="expectedSalary" id="expectedSalary">
+            </div>
+            
+            <h4 class="mt-6 mb-4">Skills</h4>
+            <div class="flex flex-col gap-3 mb-6">
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="cook"> Cooking
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="cleaner"> Cleaning
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="babysitter"> Babysitting
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="elderly"> Elderly Care
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="driver"> Driving
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="laundry"> Laundry
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="gardening"> Gardening
+              </label>
+              <label class="form-checkbox">
+                <input type="checkbox" name="skills" value="housekeeper"> Housekeeping
+              </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['helper'])) return;
+
+      try {
+        const profile = await window.api.getHelperProfile();
+        
+        // Fill form fields
+        document.getElementById('firstName').value = profile.firstName || '';
+        document.getElementById('lastName').value = profile.lastName || '';
+        document.getElementById('phone').value = profile.phone || '';
+        document.getElementById('city').value = profile.city || '';
+        document.getElementById('bio').value = profile.bio || '';
+        document.getElementById('expectedSalary').value = profile.expectedSalary || '';
+        
+        // Check skills
+        if (profile.skills) {
+          const skillValues = Array.isArray(profile.skills) ? profile.skills : [profile.skills];
+          skillValues.forEach(skill => {
+            const checkbox = document.querySelector(`input[name="skills"][value="${skill}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Failed to load profile');
+      }
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const skills = formData.getAll('skills');
+      const data = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        phone: formData.get('phone'),
+        bio: formData.get('bio'),
+        city: formData.get('city'),
+        expectedSalary: formData.get('expectedSalary') ? parseFloat(formData.get('expectedSalary')) : null,
+        skills: skills
+      };
+      
+      try {
+        await window.api.updateHelperProfile(data);
+        window.app.Toast.success('Profile updated successfully!');
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Failed to update profile');
+      }
+    });
+  </script>
+</body>
+</html>

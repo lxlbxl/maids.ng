@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Helper Registration - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <div class="container" style="min-height: 100vh; padding: 2rem 1rem;">
+    <h1 class="text-center mb-6">Create Helper Profile</h1>
+    
+    <!-- Steps Indicator -->
+    <div class="steps-indicator">
+      <div class="step active" data-step-indicator="0">
+        <div class="step-number">1</div>
+        <span class="hidden-mobile">Personal</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step-indicator="1">
+        <div class="step-number">2</div>
+        <span class="hidden-mobile">Experience</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" data-step-indicator="2">
+        <div class="step-number">3</div>
+        <span class="hidden-mobile">Documents</span>
+      </div>
+    </div>
+
+    <form id="registerForm" class="card">
+      <!-- Step 1: Personal Information -->
+      <div class="form-step" data-step="0">
+        <h3 class="mb-4">Personal Information</h3>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">First Name</label>
+          <input type="text" class="form-input" name="firstName" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Last Name</label>
+          <input type="text" class="form-input" name="lastName" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Email</label>
+          <input type="email" class="form-input" name="email" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Phone</label>
+          <input type="tel" class="form-input" name="phone" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Date of Birth</label>
+          <input type="date" class="form-input" name="dateOfBirth" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Gender</label>
+          <select class="form-select" name="gender" required>
+            <option value="">Select Gender</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Address</label>
+          <input type="text" class="form-input" name="address" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">City</label>
+          <input type="text" class="form-input" name="city" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">State</label>
+          <select class="form-select" name="state" required>
+            <option value="">Select State</option>
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+            <option value="Rivers">Rivers</option>
+            <option value="Kano">Kano</option>
+            <option value="Oyo">Oyo</option>
+            <option value="Edo">Edo</option>
+            <option value="Delta">Delta</option>
+            <option value="Anambra">Anambra</option>
+            <option value="Enugu">Enugu</option>
+            <option value="Kaduna">Kaduna</option>
+            <option value="Plateau">Plateau</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 2: Experience & Skills -->
+      <div class="form-step" data-step="1" style="display: none;">
+        <h3 class="mb-4">Experience & Skills</h3>
+        
+        <div class="form-group">
+          <label class="form-label form-label-required">Years of Experience</label>
+          <select class="form-select" name="yearsExperience" required>
+            <option value="">Select</option>
+            <option value="0">Less than 1 year</option>
+            <option value="1">1 year</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="4">4 years</option>
+            <option value="5">5+ years</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Skills (select all that apply)</label>
+          <div class="flex flex-col gap-3">
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="cook"> Cooking
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="cleaner"> Cleaning
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="babysitter"> Babysitting
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="elderly"> Elderly Care
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="driver"> Driving
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="laundry"> Laundry
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="gardening"> Gardening
+            </label>
+            <label class="form-checkbox">
+              <input type="checkbox" name="skills" value="housekeeper"> Housekeeping
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Availability</label>
+          <select class="form-select" name="availability" required>
+            <option value="">Select Availability</option>
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="live-in">Live-in</option>
+            <option value="live-out">Live-out</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Expected Monthly Salary (₦)</label>
+          <input type="number" class="form-input" name="expectedSalary" placeholder="e.g. 50000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Bio / Introduction</label>
+          <textarea class="form-textarea" name="bio" rows="4" placeholder="Tell households about yourself, your experience, and what you can offer..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Previous Work Experience</label>
+          <textarea class="form-textarea" name="previousExperience" rows="3" placeholder="Describe your previous jobs and responsibilities..."></textarea>
+        </div>
+      </div>
+
+      <!-- Step 3: Documents -->
+      <div class="form-step" data-step="2" style="display: none;">
+        <h3 class="mb-4">Documents & Verification</h3>
+        
+        <div class="alert alert-info mb-6">
+          Please upload the following documents to verify your profile. All documents are kept secure and confidential.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Profile Photo</label>
+          <div id="photoUpload" class="upload-zone">
+            <input type="file" id="photoFile" accept="image/*">
+            <p>Click or drag to upload your photo</p>
+            <p class="text-sm text-muted">JPG, PNG allowed</p>
+          </div>
+          <div id="photoPreview" class="mt-4" style="display: none;">
+            <img id="photoImg" style="max-width: 150px; border-radius: 0.5rem;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">ID Card / Passport</label>
+          <div id="idUpload" class="upload-zone">
+            <input type="file" id="idFile" accept="image/*,.pdf">
+            <p>Click or drag to upload</p>
+            <p class="text-sm text-muted">Clear photo of government ID</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">References (optional)</label>
+          <textarea class="form-textarea" name="references" rows="3" placeholder="Names and contact info of previous employers..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Password</label>
+          <input type="password" class="form-input" name="password" required minlength="6">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label form-label-required">Confirm Password</label>
+          <input type="password" class="form-input" name="confirmPassword" required minlength="6">
+        </div>
+
+        <div class="form-group">
+          <label class="form-checkbox">
+            <input type="checkbox" name="terms" required>
+            <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-between mt-8" style="gap: 1rem;">
+        <button type="button" class="btn btn-secondary" data-prev style="display: none;">Previous</button>
+        <div style="flex: 1;"></div>
+        <button type="button" class="btn btn-primary" data-next>Next</button>
+        <button type="submit" class="btn btn-success" data-submit style="display: none;">Complete Registration</button>
+      </div>
+    </form>
+
+    <p class="text-center mt-6 text-muted">
+      Already have an account? <a href="/helper/login.html">Login</a>
+    </p>
+  </div>
+
+  <script>
+    const formEl = document.getElementById('registerForm');
+    const formSteps = formEl.querySelectorAll('.form-step');
+    const nextBtn = formEl.querySelector('[data-next]');
+    const prevBtn = formEl.querySelector('[data-prev]');
+    const submitBtn = formEl.querySelector('[data-submit]');
+    
+    let currentStep = 0;
+    let uploadedFiles = { photo: null, id: null };
+
+    function setupFileUpload(zoneId, inputId, callback) {
+      const zone = document.getElementById(zoneId);
+      const input = document.getElementById(inputId);
+      if (!zone || !input) return;
+      
+      zone.addEventListener('click', () => input.click());
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = 'var(--color-primary)';
+        zone.style.backgroundColor = 'var(--color-primary-50)';
+      });
+      zone.addEventListener('dragleave', () => {
+        zone.style.borderColor = '';
+        zone.style.backgroundColor = '';
+      });
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.style.borderColor = '';
+        zone.style.backgroundColor = '';
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          callback(e.dataTransfer.files[0]);
+        }
+      });
+      input.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+          callback(e.target.files[0]);
+        }
+      });
+    }
+
+    setupFileUpload('photoUpload', 'photoFile', (file) => {
+      uploadedFiles.photo = file;
+      const preview = document.getElementById('photoPreview');
+      const img = document.getElementById('photoImg');
+      preview.style.display = 'block';
+      img.src = URL.createObjectURL(file);
+    });
+
+    setupFileUpload('idUpload', 'idFile', (file) => {
+      uploadedFiles.id = file;
+      event.target.closest('.upload-zone').innerHTML = `<p>✓ ${file.name}</p>`;
+    });
+
+    function showStep(stepIndex) {
+      formSteps.forEach((step, i) => {
+        step.style.display = i === stepIndex ? 'block' : 'none';
+      });
+      
+      currentStep = stepIndex;
+      
+      prevBtn.style.display = stepIndex > 0 ? 'block' : 'none';
+      nextBtn.style.display = stepIndex < formSteps.length - 1 ? 'block' : 'none';
+      submitBtn.style.display = stepIndex === formSteps.length - 1 ? 'block' : 'none';
+      
+      // Update step indicators
+      document.querySelectorAll('[data-step-indicator]').forEach((ind, i) => {
+        ind.classList.remove('active', 'completed');
+        if (i < stepIndex) ind.classList.add('completed');
+        if (i === stepIndex) ind.classList.add('active');
+      });
+    }
+
+    function validateStep(stepIndex) {
+      const step = formSteps[stepIndex];
+      const requiredFields = step.querySelectorAll('[required]');
+      let valid = true;
+
+      requiredFields.forEach(field => {
+        const existingError = field.parentElement.querySelector('.form-error');
+        if (existingError) existingError.remove();
+
+        if (field.type === 'checkbox') {
+          if (!field.checked) {
+            valid = false;
+            const error = document.createElement('div');
+            error.className = 'form-error';
+            error.textContent = 'This field is required';
+            field.parentElement.appendChild(error);
+          }
+        } else if (!field.value.trim()) {
+          valid = false;
+          const error = document.createElement('div');
+          error.className = 'form-error';
+          error.textContent = 'This field is required';
+          field.parentElement.appendChild(error);
+        }
+      });
+
+      // Validate file uploads on last step
+      if (stepIndex === 2) {
+        if (!uploadedFiles.photo) {
+          valid = false;
+          alert('Please upload a profile photo');
+        }
+        if (!uploadedFiles.id) {
+          valid = false;
+          alert('Please upload an ID document');
+        }
+      }
+
+      // Validate password match on last step
+      if (stepIndex === 2) {
+        const password = formEl.querySelector('input[name="password"]').value;
+        const confirmPassword = formEl.querySelector('input[name="confirmPassword"]').value;
+        if (password !== confirmPassword) {
+          valid = false;
+          alert('Passwords do not match');
+        }
+      }
+
+      return valid;
+    }
+
+    function collectStepData() {
+      const data = {};
+      const allInputs = formSteps[currentStep].querySelectorAll('input, select, textarea');
+      
+      allInputs.forEach(input => {
+        if (input.type === 'checkbox') {
+          if (input.checked) {
+            if (!data[input.name]) data[input.name] = [];
+            data[input.name].push(input.value);
+          }
+        } else if (input.type !== 'file') {
+          data[input.name] = input.value;
+        }
+      });
+
+      // Collect skills as array
+      const skills = formEl.querySelectorAll('input[name="skills"]:checked');
+      data.skills = Array.from(skills).map(cb => cb.value);
+
+      return data;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (!validateStep(currentStep)) return;
+      
+      const stepData = collectStepData();
+      Object.assign(window.formData || (window.formData = {}), stepData);
+      
+      showStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    prevBtn.addEventListener('click', () => {
+      showStep(currentStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!validateStep(currentStep)) return;
+      
+      const stepData = collectStepData();
+      Object.assign(window.formData || (window.formData = {}), stepData);
+      
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+
+        const formData = new FormData();
+        Object.keys(window.formData).forEach(key => {
+          const value = window.formData[key];
+          if (key === 'skills') {
+            formData.append(key, JSON.stringify(value));
+          } else if (!(value instanceof File)) {
+            formData.append(key, value);
+          }
+        });
+        
+        if (uploadedFiles.photo) formData.append('photo', uploadedFiles.photo);
+        if (uploadedFiles.id) formData.append('idDocument', uploadedFiles.id);
+
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Registration failed');
+        }
+
+        const result = await response.json();
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        
+        window.app.Toast.success('Registration successful!');
+        window.location.href = '/helper/dashboard.html';
+      } catch (error) {
+        window.app.Toast.error('Registration failed: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Complete Registration';
+      }
+    });
+
+    // Initialize
+    showStep(0);
+  </script>
+</body>
+</html>

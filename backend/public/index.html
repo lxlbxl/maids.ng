@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Maids.ng - Connect with trusted domestic helpers across Nigeria. Find reliable maids, cleaners, and caregivers.">
+  <title>Maids.ng - Find Trusted Helpers in Nigeria</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <!-- Skip link for accessibility -->
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/agency/" class="nav-link">Agency Portal</a>
+        <a href="/helper/" class="nav-link">Join as Helper</a>
+        <a href="/admin/login" class="nav-link">Admin</a>
+      </nav>
+      
+      <div class="header-actions">
+        <a href="/household/" class="btn btn-primary btn-sm hidden-mobile">Get Started</a>
+        <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" aria-hidden="true">
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/agency/" class="nav-link">Agency Portal</a>
+        <a href="/helper/" class="nav-link">Join as Helper</a>
+        <a href="/admin/login" class="nav-link">Admin</a>
+        <a href="/household/" class="btn btn-primary btn-block">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Connect with Trusted Domestic Helpers Across Nigeria</h1>
+        <p>Find reliable, verified maids, cleaners, and caregivers. Or register your agency and grow your business.</p>
+        
+        <div class="choice-grid">
+          <div class="choice-card" onclick="window.location.href='/household/'">
+            <span class="choice-card-icon">🏠</span>
+            <h3>I'm Looking for a Helper</h3>
+            <p>Browse qualified helpers and send hire requests</p>
+          </div>
+          
+          <div class="choice-card" onclick="window.location.href='/agency/'">
+            <span class="choice-card-icon">🏢</span>
+            <h3>I'm an Agency</h3>
+            <p>Manage your helpers and incoming requests</p>
+          </div>
+          
+          <div class="choice-card" onclick="window.location.href='/helper/'">
+            <span class="choice-card-icon">👤</span>
+            <h3>I'm a Helper</h3>
+            <p>Create your profile and find job opportunities</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title">Why Choose Maids.ng?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="card text-center">
+            <div class="text-success font-bold" style="font-size: 2.5rem; margin-bottom: var(--space-4);">✓</div>
+            <h4 class="text-primary">Verified Profiles</h4>
+            <p class="text-secondary">All helpers and agencies undergo thorough verification for your safety</p>
+          </div>
+          
+          <div class="card text-center">
+            <div class="text-success font-bold" style="font-size: 2.5rem; margin-bottom: var(--space-4);">🔒</div>
+            <h4 class="text-primary">Secure Platform</h4>
+            <p class="text-secondary">Your data and payments are protected with industry-standard security</p>
+          </div>
+          
+          <div class="card text-center">
+            <div class="text-accent font-bold" style="font-size: 2.5rem; margin-bottom: var(--space-4);">⚡</div>
+            <h4 class="text-primary">Quick Matching</h4>
+            <p class="text-secondary">Find the perfect helper in minutes with our smart search</p>
+          </div>
+          
+          <div class="card text-center">
+            <div class="text-primary font-bold" style="font-size: 2.5rem; margin-bottom: var(--space-4);">🤝</div>
+            <h4 class="text-primary">24/7 Support</h4>
+            <p class="text-secondary">Our dedicated team is always here to help you</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="section section-alt">
+      <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <div class="text-primary font-bold" style="font-size: 3rem; margin-bottom: var(--space-4);">1</div>
+            <h4 class="text-primary">Create an Account</h4>
+            <p class="text-secondary">Sign up as a household, agency, or helper. It's free and takes minutes.</p>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-primary font-bold" style="font-size: 3rem; margin-bottom: var(--space-4);">2</div>
+            <h4 class="text-primary">Complete Your Profile</h4>
+            <p class="text-secondary">Add your details, preferences, and requirements to find the best matches.</p>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-primary font-bold" style="font-size: 3rem; margin-bottom: var(--space-4);">3</div>
+            <h4 class="text-primary">Connect & Hire</h4>
+            <p class="text-secondary">Browse profiles, send requests, and connect with your perfect match.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section">
+      <div class="container">
+        <div class="card" style="max-width: 800px; margin: 0 auto; text-align: center; background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%); border: none;">
+          <h2 class="text-primary">Ready to Get Started?</h2>
+          <p class="text-secondary" style="max-width: 600px; margin: 0 auto var(--space-6);">Join thousands of households and helpers already using Maids.ng</p>
+          <div class="flex gap-4 justify-center flex-col" style="--flex-direction: column; gap: 1rem;">
+            <a href="/household/" class="btn btn-primary btn-lg">Find a Helper</a>
+            <a href="/agency/" class="btn btn-secondary btn-lg">Register Agency</a>
+            <a href="/helper/" class="btn btn-ghost btn-lg">Become a Helper</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin Access -->
+    <section class="container" style="padding-bottom: 4rem;">
+      <div class="card" style="max-width: 400px; margin: 0 auto; text-align: center;">
+        <h3 class="text-primary mb-4">Administrator Access</h3>
+        <p class="text-secondary mb-6">For platform administrators and moderators</p>
+        <a href="/admin/login" class="btn btn-primary btn-block">Admin Login</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <a href="/" class="footer-logo">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+              <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+            </svg>
+            Maids.ng
+          </a>
+          <p class="footer-description">Connecting Nigerian households with trusted domestic helpers since 2020.</p>
+        </div>
+        
+        <div>
+          <h5 class="footer-title">Platform</h5>
+          <ul class="footer-links">
+            <li><a href="/household/">Find Helpers</a></li>
+            <li><a href="/agency/">Agency Portal</a></li>
+            <li><a href="/helper/">Join as Helper</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h5 class="footer-title">Support</h5>
+          <ul class="footer-links">
+            <li><a href="#">Help Center</a></li>
+            <li><a href="#">Contact Us</a></li>
+            <li><a href="#">Safety</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h5 class="footer-title">Legal</h5>
+          <ul class="footer-links">
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Cookie Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    // Initialize mobile menu and header scroll effect
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.app && window.app.MobileMenu) {
+        window.app.MobileMenu.init();
+      }
+      if (window.app && window.app.Header) {
+        window.app.Header.init();
+      }
+    });
+  </script>
+</body>
+</html>

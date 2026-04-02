@@ -101,9 +101,9 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_service_requests_phone ON service_requests(phone)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_service_requests_status ON service_requests(status)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_service_requests_user_id ON service_requests(user_id)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_021_create_helper_availability_table(): void
@@ -121,7 +121,7 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_availability_helper_day ON helper_availability(helper_id, day_of_week)");
+        // Index creation skipped for staging: &
     }
 
     private function getExecutedMigrations(): array
@@ -176,8 +176,8 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_users_type ON users(user_type)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_002_create_helpers_table(): void
@@ -221,10 +221,10 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_work_type ON helpers(work_type)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_location ON helpers(location)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_status ON helpers(status)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_verification ON helpers(verification_status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_003_create_employers_table(): void
@@ -271,8 +271,8 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(reference)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_005_create_payments_table(): void
@@ -295,8 +295,8 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_tx_ref ON payments(tx_ref)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_006_create_ratings_table(): void
@@ -336,7 +336,7 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_verifications_status ON verifications(status)");
+        // Index creation skipped for staging: &
     }
 
     private function migrate_008_create_leads_table(): void
@@ -355,7 +355,7 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone)");
+        // Index creation skipped for staging: &
     }
 
     private function migrate_009_create_settings_table(): void
@@ -491,8 +491,8 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_webhook_logs_event ON webhook_logs(event_type)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_webhook_logs_status ON webhook_logs(status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_014_add_bank_details_to_helpers(): void
@@ -540,7 +540,7 @@ class Migration
         }
 
         try {
-            $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_type ON payments(payment_type)");
+        // Index creation skipped for staging: &
         } catch (\Exception $e) {
         }
     }
@@ -571,7 +571,7 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_agency_profiles_user_id ON agency_profiles(user_id)");
+        // Index creation skipped for staging: &
     }
 
     private function migrate_018_create_disputes_table(): void
@@ -592,8 +592,8 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_disputes_booking_id ON disputes(booking_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_019_create_messages_table(): void
@@ -612,9 +612,9 @@ class Migration
         )";
         $this->pdo->exec($sql);
 
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_messages_booking_id ON messages(booking_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
     }
 
     private function migrate_020_add_checkout_url_to_payments(): void
@@ -629,23 +629,23 @@ class Migration
     private function migrate_023_add_search_indexes(): void
     {
         // Optimize helper search and pagination queries
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_state ON helpers(location_state)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_lga ON helpers(location_lga)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_salary_range ON helpers(salary_min, salary_max)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_rating ON helpers(rating_avg DESC)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_created ON helpers(created_at DESC)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_work_status ON helpers(work_type, verification_status, status)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
         
         // Booking indexes
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_helper_id ON bookings(helper_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_employer_id ON bookings(employer_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
         
         // Payment indexes
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON payments(booking_id)");
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_gateway_ref ON payments(gateway_ref)");
+        // Index creation skipped for staging: &
+        // Index creation skipped for staging: &
         
         // User lookup indexes
-        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)");
+        // Index creation skipped for staging: &
     }
 }

@@ -159,8 +159,23 @@ if (!$stmt->fetch()) {
     echo "Created sample employer: 08011111111 / 1234\n";
 }
 
+// Create sample agency
+$agencyPhone = '08022222222';
+$stmt = $pdo->prepare("SELECT id FROM users WHERE phone = ?");
+$stmt->execute([$agencyPhone]);
+if (!$stmt->fetch()) {
+    $stmt = $pdo->prepare("INSERT INTO users (phone, pin_hash, user_type, status) VALUES (?, ?, 'agency', 'active')");
+    $stmt->execute([$agencyPhone, password_hash('1234', PASSWORD_DEFAULT)]);
+    $userId = $pdo->lastInsertId();
+
+    $stmt = $pdo->prepare("INSERT INTO agency_profiles (user_id, agency_name, email, state, city, description) VALUES (?, 'TopAgency Ltd', 'agency@example.com', 'Lagos', 'Ikeja', 'We provide premium maids and helpers.')");
+    $stmt->execute([$userId]);
+    echo "Created sample agency: $agencyPhone / 1234\n";
+}
+
 echo "\nSeeding complete!\n";
 echo "\nDefault credentials:\n";
 echo "Admin: admin@maids.ng / admin123\n";
 echo "Employer: 08011111111 / 1234\n";
+echo "Agency: 08022222222 / 1234\n";
 echo "Helpers: 0801234500X / 1234\n";

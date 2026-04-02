@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Helpers - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link active">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link">Dashboard</a>
+      </nav>
+      
+      <div class="header-actions">
+        <a href="/household/login.html" class="btn btn-secondary btn-sm hidden-mobile">Login</a>
+        <a href="/household/register.html" class="btn btn-primary btn-sm">Sign Up</a>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link active">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link">Dashboard</a>
+        <a href="/household/login.html" class="nav-link">Login</a>
+        <a href="/household/register.html" class="btn btn-primary btn-block">Sign Up</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <!-- Search Card -->
+      <div class="card mb-8">
+        <h2 class="mb-4">Find Your Perfect Helper</h2>
+        <form id="searchForm" class="search-form">
+          <input 
+            type="text" 
+            class="search-input" 
+            placeholder="Search by location, skills, or experience..."
+            id="searchInput"
+            aria-label="Search helpers"
+          >
+          <button type="submit" class="btn btn-primary search-btn">Search</button>
+        </form>
+        
+        <!-- Quick Filters -->
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button type="button" class="btn btn-secondary btn-sm" data-filter="cook">Cook</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-filter="cleaner">Cleaner</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-filter="babysitter">Babysitter</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-filter="elderly">Elderly Care</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-filter="driver">Driver</button>
+        </div>
+      </div>
+
+      <!-- Results Count -->
+      <div class="mb-4">
+        <p class="text-secondary" id="resultsCount">Loading helpers...</p>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsContainer">
+        <div id="helpersList" class="helper-grid">
+          <!-- Helpers loaded dynamically -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchForm = document.getElementById('searchForm');
+      const searchInput = document.getElementById('searchInput');
+      const helpersList = document.getElementById('helpersList');
+      const resultsCount = document.getElementById('resultsCount');
+
+      async function loadHelpers(params = {}) {
+        try {
+          window.app.Loading.show(helpersList, { text: 'Loading helpers...' });
+          resultsCount.textContent = 'Loading...';
+          
+          const data = await window.api.searchHelpers(params);
+          
+          if (data.helpers && data.helpers.length > 0) {
+            resultsCount.textContent = `Showing ${data.helpers.length} helper${data.helpers.length !== 1 ? 's' : ''}`;
+            helpersList.innerHTML = data.helpers.map(helper => `
+              <div class="helper-card" data-helper-id="${helper.id}">
+                <div class="helper-card-header">
+                  <div class="flex items-center">
+                    <div class="helper-avatar">
+                      ${helper.avatar ? `<img src="${helper.avatar}" alt="${helper.firstName}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
+                    </div>
+                    <div class="helper-info">
+                      <div class="helper-name">${window.app.Toast.escapeHtml(helper.firstName)} ${window.app.Toast.escapeHtml(helper.lastName)}</div>
+                      <div class="helper-role">${window.app.Toast.escapeHtml(helper.role || 'Helper')}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="helper-card-body">
+                  <p class="text-muted mb-4">${window.app.Toast.escapeHtml(helper.bio || 'No bio available')}</p>
+                  ${helper.location ? `<p class="text-sm text-tertiary mb-4">📍 ${window.app.Toast.escapeHtml(helper.location)}</p>` : ''}
+                  ${helper.skills ? `<div class="helper-skills">
+                    ${helper.skills.slice(0, 4).map(skill => `
+                      <span class="skill-tag">${window.app.Toast.escapeHtml(skill)}</span>
+                    `).join('')}
+                  </div>` : ''}
+                  <div class="mt-4 flex gap-2 flex-col" style="--flex-direction: column; gap: 0.5rem;">
+                    <a href="/household/helpers/${helper.id}.html" class="btn btn-primary btn-sm" style="flex: 1;">View Profile</a>
+                    <button class="btn btn-secondary btn-sm" onclick="window.sendHireRequest('${helper.id}')" style="flex: 1;">Hire Now</button>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            resultsCount.textContent = 'No helpers found';
+            helpersList.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-state-icon">🔍</div>
+                <h4 class="empty-state-title">No helpers found</h4>
+                <p class="empty-state-text">Try adjusting your search criteria or browse all helpers</p>
+                <a href="/household/" class="btn btn-primary">Browse All</a>
+              </div>
+            `;
+          }
+        } catch (error) {
+          resultsCount.textContent = '';
+          helpersList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">⚠️</div>
+              <h4 class="empty-state-title">Failed to load</h4>
+              <p class="empty-state-text">${window.app.Toast.escapeHtml(error.message || 'Unknown error')}</p>
+              <button onclick="loadHelpers()" class="btn btn-primary">Retry</button>
+            </div>
+          `;
+          window.app.Toast.error(error.message || 'Failed to load helpers');
+        }
+      }
+
+      window.sendHireRequest = async function(helperId) {
+        if (!localStorage.getItem('token')) {
+          window.app.Toast.warning('Please login to send a hire request');
+          setTimeout(() => window.location.href = '/household/login.html', 1500);
+          return;
+        }
+
+        const jobDetails = prompt('Describe the job (duties, schedule, etc.):');
+        if (!jobDetails) return;
+
+        try {
+          await window.api.sendHireRequest(helperId, { description: jobDetails });
+          window.app.Toast.success('Hire request sent successfully!');
+        } catch (error) {
+          window.app.Toast.error('Failed to send request: ' + (error.message || 'Unknown error'));
+        }
+      };
+
+      // Search submission
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        loadHelpers({ q: query });
+      });
+
+      // Quick filter buttons
+      document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const skill = btn.dataset.filter;
+          loadHelpers({ skills: skill });
+        });
+      });
+
+      // Initial load
+      loadHelpers();
+    });
+  </script>
+</body>
+</html>

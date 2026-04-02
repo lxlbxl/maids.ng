@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Services\MatchingService;
 use App\Services\PaymentService;
 use App\Services\NotificationService;
+use App\Controllers\NotificationController;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -211,9 +212,113 @@ class BookingController
         ]);
     }
 
+    public function getIncomingRequests(Request $request, Response $response): Response
+    {
+        $userId = $request->getAttribute('user_id');
+        $stmt = $this->pdo->prepare("SELECT id FROM helpers WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $helper = $stmt->fetch();
+        if (!$helper) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Helper profile not found'], 404);
+        }
+        $helperId = (int)$helper['id'];
+        $stmt = $this->pdo->prepare("
+            SELECT b.*, e.full_name as employer_name, e.location as employer_location, h.full_name as helper_name
+            FROM bookings b
+            JOIN helpers h ON b.helper_id = h.id
+            JOIN employers e ON b.employer_id = e.id
+            WHERE b.helper_id = ? AND b.status IN ('pending', 'confirmed')
+            ORDER BY b.created_at DESC
+        ");
+        $stmt->execute([$helperId]);
+        $bookings = $stmt->fetchAll();
+        return $this->jsonResponse($response, ['success'=>true,'requests'=>$bookings]);
+    }
+
+    public function accept(Request $request, Response $response, array $args): Response
+    {
+        $bookingId = (int)$args['id'];
+        $userId = $request->getAttribute('user_id');
+        $stmt = $this->pdo->prepare("SELECT id FROM helpers WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $helper = $stmt->fetch();
+        if (!$helper) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Helper profile not found'], 404);
+        }
+        $helperId = (int)$helper['id'];
+        $stmt = $this->pdo->prepare("SELECT b.* FROM bookings b WHERE b.id = ? AND b.helper_id = ? AND b.status = 'pending'");
+        $stmt->execute([$bookingId, $helperId]);
+        $booking = $stmt->fetch();
+        if (!$booking) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Booking not found or cannot be accepted'], 404);
+        }
+        $stmt = $this->pdo->prepare("UPDATE bookings SET status = 'confirmed', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt->execute([$bookingId]);
+
+        $bookingData = $booking;
+        $helperData = ['id'=>$helperId, 'full_name'=>$booking['helper_name'] ?? '', 'email'=>null, 'phone'=>null];
+        $employerData = ['id'=>$booking['employer_id'] ?? 0, 'full_name'=>$booking['employer_name'] ?? '', 'email'=>null, 'phone'=>null];
+
+        $stmt = $this->pdo->prepare("SELECT u.phone FROM employers e JOIN users u ON e.user_id = u.id WHERE e.id = ?");
+        $stmt->execute([$booking['employer_id']]);
+        $emp = $stmt->fetch();
+        if ($emp) { $employerData['phone'] = $emp['phone']; }
+
+        NotificationController::send($this->pdo, (int)$employerData['id'], 'booking.accepted', 'email', 'Booking Accepted', 'Your booking has been accepted by the helper. Proceed to payment.', ['booking_id'=>$bookingId, 'reference'=>$booking['reference']]);
+
+        try {
+            $this->notificationService->notifyBookingAccepted($bookingData, $helperData, $employerData);
+        } catch (\Throwable $e) {
+            $this->logger?->error('Notification failed: booking.accepted', ['exception'=>$e]);
+        }
+
+        return $this->jsonResponse($response, ['success'=>true,'message'=>'Booking accepted']);
+    }
+
+    public function decline(Request $request, Response $response, array $args): Response
+    {
+        $bookingId = (int)$args['id'];
+        $userId = $request->getAttribute('user_id');
+        $stmt = $this->pdo->prepare("SELECT id FROM helpers WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $helper = $stmt->fetch();
+        if (!$helper) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Helper profile not found'], 404);
+        }
+        $helperId = (int)$helper['id'];
+        $stmt = $this->pdo->prepare("SELECT b.* FROM bookings b WHERE b.id = ? AND b.helper_id = ? AND b.status = 'pending'");
+        $stmt->execute([$bookingId, $helperId]);
+        $booking = $stmt->fetch();
+        if (!$booking) {
+            return $this->jsonResponse($response, ['success'=>false,'error'=>'Booking not found or cannot be declined'], 404);
+        }
+        $stmt = $this->pdo->prepare("UPDATE bookings SET status = 'declined', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt->execute([$bookingId]);
+
+        $bookingData = $booking;
+        $helperData = ['id'=>$helperId, 'full_name'=>$booking['helper_name'] ?? '', 'email'=>null, 'phone'=>null];
+        $employerData = ['id'=>$booking['employer_id'] ?? 0, 'full_name'=>$booking['employer_name'] ?? '', 'email'=>null, 'phone'=>null];
+
+        $stmt = $this->pdo->prepare("SELECT u.phone FROM employers e JOIN users u ON e.user_id = u.id WHERE e.id = ?");
+        $stmt->execute([$booking['employer_id']]);
+        $emp = $stmt->fetch();
+        if ($emp) { $employerData['phone'] = $emp['phone']; }
+
+        NotificationController::send($this->pdo, (int)$employerData['id'], 'booking.declined', 'email', 'Booking Declined', 'Your booking request was declined by the helper.', ['booking_id'=>$bookingId]);
+
+        try {
+            $this->notificationService->notifyBookingRejected($bookingData, $helperData, $employerData);
+        } catch (\Throwable $e) {
+            $this->logger?->error('Notification failed: booking.declined', ['exception'=>$e]);
+        }
+
+        return $this->jsonResponse($response, ['success'=>true,'message'=>'Booking declined']);
+    }
+
     private function jsonResponse(Response $response, array $data, int $status = 200): Response
     {
-        $response->getBody()->write(json_encode($data));
+        $payload = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE);
+        $response->getBody()->write($payload);
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($status);

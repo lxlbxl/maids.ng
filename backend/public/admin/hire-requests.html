@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hire Requests - Admin - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">Maids.ng Admin</a>
+      <nav class="nav-links">
+        <a href="/admin/helpers.html" class="nav-link">Helpers</a>
+        <a href="/admin/agencies.html" class="nav-link">Agencies</a>
+        <a href="/admin/hire-requests.html" class="nav-link active">Requests</a>
+        <a href="/admin/dashboard.html" class="nav-link">Dashboard</a>
+      </nav>
+      <div class="flex items-center gap-4">
+        <span id="adminName" class="text-sm"></span>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container" style="padding: 2rem 1rem;">
+    <h1 class="mb-6">Hire Requests</h1>
+    
+    <!-- Filters -->
+    <div class="filters-sidebar mb-6">
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <div class="filter-options">
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="pending" checked> Pending
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="approved" checked> Approved
+          </label>
+          <label class="filter-checkbox">
+            <input type="checkbox" name="status" value="rejected" checked> Rejected
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-body">
+        <div id="requestsList">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['admin'])) return;
+
+      // Mock requests data
+      const requests = [
+        { id: 1, type: 'hire-request', household: 'John Smith', helper: 'Mary Amodu', status: 'pending', createdAt: new Date() },
+        { id: 2, type: 'hire-request', household: 'Sarah Johnson', helper: 'Fatima Bello', status: 'approved', createdAt: new Date(Date.now() - 86400000) },
+        { id: 3, type: 'hire-request', household: 'Mike Brown', helper: 'Jane Dior', status: 'pending', createdAt: new Date(Date.now() - 172800000) },
+        { id: 4, type: 'hire-request', household: 'Emma Wilson', helper: 'Amina Mohammed', status: 'rejected', createdAt: new Date(Date.now() - 259200000) },
+        { id: 5, type: 'hire-request', household: 'David Lee', helper: 'Chioma Obi', status: 'approved', createdAt: new Date(Date.now() - 345600000) },
+      ];
+
+      const requestsList = document.getElementById('requestsList');
+      
+      requestsList.innerHTML = `
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Household</th>
+                <th>Helper</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${requests.map(req => `
+                <tr>
+                  <td>${window.app.formatDate(req.createdAt)}</td>
+                  <td>${req.household}</td>
+                  <td>${req.helper}</td>
+                  <td><span class="badge ${window.app.getStatusBadge(req.status)}">${window.app.formatStatus(req.status)}</span></td>
+                  <td>
+                    ${req.status === 'pending' ? `
+                      <button class="btn btn-success btn-sm" onclick="updateStatus(${req.id}, 'approved')">Approve</button>
+                      <button class="btn btn-danger btn-sm" onclick="updateStatus(${req.id}, 'rejected')">Reject</button>
+                    ` : `
+                      <button class="btn btn-ghost btn-sm" onclick="viewRequest(${req.id})">View</button>
+                    `}
+                  </td>
+                </tr>
+              `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+    });
+
+    async function updateStatus(id, status) {
+      try {
+        await window.api.updateHireRequest(id, status, '');
+        window.app.Toast.success(`Request ${status}`);
+        location.reload();
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Failed to update');
+      }
+    }
+
+    function viewRequest(id) {
+      window.app.Toast.info(`View request ${id}`);
+    }
+  </script>
+</body>
+</html>

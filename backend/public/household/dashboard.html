@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Household Dashboard - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link active">Dashboard</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm hidden-mobile">Logout</button>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/household/" class="nav-link">Find Helpers</a>
+        <a href="/household/requests.html" class="nav-link">My Requests</a>
+        <a href="/household/dashboard.html" class="nav-link active">Dashboard</a>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-block">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <h1 class="mb-6">Household Dashboard</h1>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="activeRequests">0</div>
+          <div class="stat-label">Active Requests</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalHired">0</div>
+          <div class="stat-label">Helpers Hired</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="profileViews">0</div>
+          <div class="stat-label">Profile Views</div>
+        </div>
+      </div>
+      
+      <div class="card mt-8">
+        <div class="card-header">
+          <h4 class="text-primary mb-0">Recent Activity</h4>
+        </div>
+        <div class="card-body">
+          <div id="recentActivity">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-8">
+        <a href="/household/" class="btn btn-primary btn-lg">Search Helpers</a>
+        <a href="/household/requests.html" class="btn btn-secondary btn-lg">View All Requests</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['household'])) return;
+
+      try {
+        const user = getCurrentUser();
+        // Mock dashboard data - integrate with API as needed
+        document.getElementById('activeRequests').textContent = '3';
+        document.getElementById('totalHired').textContent = '1';
+        document.getElementById('profileViews').textContent = '24';
+        
+        const activity = document.getElementById('recentActivity');
+        activity.innerHTML = `
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Just now</td>
+                  <td>Viewed helper profile</td>
+                  <td><span class="badge badge-info">Completed</span></td>
+                </tr>
+                <tr>
+                  <td>2 days ago</td>
+                  <td>Sent hire request to Jane D.</td>
+                  <td><span class="badge badge-warning">Pending</span></td>
+                </tr>
+                <tr>
+                  <td>1 week ago</td>
+                  <td>Hired Michael A.</td>
+                  <td><span class="badge badge-success">Accepted</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Error loading dashboard');
+      }
+    });
+  </script>
+</body>
+</html>

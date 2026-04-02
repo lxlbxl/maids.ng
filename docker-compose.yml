@@ -9,7 +9,7 @@ services:
       target: base
     container_name: maids-ng-app
     ports:
-      - "8000:80"
+      - "8010:80"
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_DEBUG: ${APP_DEBUG:-true}

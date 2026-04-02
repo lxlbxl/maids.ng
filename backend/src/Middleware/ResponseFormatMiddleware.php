@@ -7,6 +7,7 @@ namespace App\Middleware;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Response;
 
 class ResponseFormatMiddleware implements MiddlewareInterface
@@ -39,13 +40,15 @@ class ResponseFormatMiddleware implements MiddlewareInterface
                     'error' => $success ? null : $this->formatError($data)
                 ];
 
-                $newResponse = new Response(
-                    $response->getStatusCode(),
-                    $response->getHeaders()
-                );
-                $newResponse->getBody()->write(json_encode($envelope, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+                // Replace response body with envelope JSON
+                $body = $response->getBody();
+                $body->rewind();
+                $body->write(json_encode($envelope, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+                $body->rewind();
 
-                return $newResponse->withHeader('Content-Type', 'application/json');
+                // Return response with JSON header
+                return $response
+                    ->withHeader('Content-Type', 'application/json');
             }
         }
 

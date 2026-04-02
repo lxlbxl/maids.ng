@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Requests - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-content">
+      <a href="/" class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="40" height="40" rx="8" fill="var(--color-primary)"/>
+          <path d="M20 10L30 30H10L20 10Z" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        </svg>
+        <span>Maids.ng</span>
+      </a>
+      
+      <nav class="nav-links">
+        <a href="/helper/dashboard.html" class="nav-link">Dashboard</a>
+        <a href="/helper/profile-edit.html" class="nav-link">Edit Profile</a>
+        <a href="/helper/requests.html" class="nav-link active">Requests</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-sm hidden-mobile">Logout</button>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+          <span></span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="mobile-menu">
+      <nav class="nav-links">
+        <a href="/helper/dashboard.html" class="nav-link">Dashboard</a>
+        <a href="/helper/profile-edit.html" class="nav-link">Edit Profile</a>
+        <a href="/helper/requests.html" class="nav-link active">Requests</a>
+        <button onclick="window.api.logout()" class="btn btn-secondary btn-block">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="container" style="padding: 2rem 1rem;">
+      <h1 class="mb-6">Job Requests</h1>
+      
+      <div class="card">
+        <div class="card-body">
+          <div id="requestsList">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="text-muted text-sm">&copy; 2025 Maids.ng. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/common/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth(['helper'])) return;
+
+      const requestsList = document.getElementById('requestsList');
+      
+      try {
+        const requests = await window.api.getHelperIncomingRequests();
+        
+        if (requests.length > 0) {
+          requestsList.innerHTML = `
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Household</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${requests.map(req => `
+                    <tr>
+                      <td>${window.app.formatDate(req.createdAt)}</td>
+                      <td>${window.app.Toast.escapeHtml(req.householdName || 'Household')}</td>
+                      <td>${window.app.Toast.escapeHtml(req.description || 'No description').substring(0, 50)}${(req.description || '').length > 50 ? '...' : ''}</td>
+                      <td><span class="badge ${window.app.getStatusBadge(req.status)}">${window.app.formatStatus(req.status)}</span></td>
+                      <td>
+                        ${req.status === 'pending' ? `
+                          <button class="btn btn-success btn-sm" onclick="respond(${req.id}, 'approved')">Accept</button>
+                          <button class="btn btn-danger btn-sm" onclick="respond(${req.id}, 'rejected')">Reject</button>
+                        ` : '<span class="text-muted">-</span>'}
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          requestsList.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <h4 class="empty-state-title">No requests yet</h4>
+              <p class="empty-state-text">When households send you hire requests, they'll appear here.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        requestsList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h4 class="empty-state-title">Failed to load requests</h4>
+            <p class="empty-state-text">${window.app.Toast.escapeHtml(error.message)}</p>
+          </div>
+        `;
+        window.app.Toast.error(error.message);
+      }
+    });
+
+    async function respond(reqId, status) {
+      try {
+        await window.api.respondToRequest(reqId, { status });
+        window.app.Toast.success('Response sent');
+        location.reload();
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Failed to respond');
+      }
+    }
+  </script>
+</body>
+</html>

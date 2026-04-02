@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Helper Login - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <div class="container" style="min-height: 100vh; padding: 2rem 1rem; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px; width: 100%;">
+      <div class="card-body">
+        <h2 class="text-center mb-6">Helper Login</h2>
+        
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label form-label-required">Email</label>
+            <input type="email" class="form-input" name="email" required autofocus>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Password</label>
+            <input type="password" class="form-input" name="password" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Login</button>
+        </form>
+        
+        <div class="text-center mt-6">
+          <p class="text-secondary">Don't have an account? <a href="/helper/register.html">Sign up</a></p>
+        </div>
+        
+        <div class="text-center mt-4">
+          <a href="/" class="btn btn-ghost btn-sm">← Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      try {
+        const result = await window.api.login('helper', formData.get('email'), formData.get('password'));
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        window.app.Toast.success('Login successful!');
+        window.location.href = '/helper/dashboard.html';
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Login failed');
+      }
+    });
+  </script>
+</body>
+</html>

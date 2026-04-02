@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Household Registration - Maids.ng</title>
+  <link rel="stylesheet" href="/common/style.css">
+  <script src="/common/api.js"></script>
+</head>
+<body>
+  <div class="container" style="min-height: 100vh; padding: 2rem 1rem;">
+    <div class="card" style="max-width: 500px; margin: 0 auto;">
+      <div class="card-body">
+        <h2 class="text-center mb-6">Create Household Account</h2>
+        
+        <form id="registerForm">
+          <div class="form-group">
+            <label class="form-label form-label-required">Full Name</label>
+            <input type="text" class="form-input" name="name" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Email</label>
+            <input type="email" class="form-input" name="email" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Phone</label>
+            <input type="tel" class="form-input" name="phone" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Address</label>
+            <textarea class="form-textarea" name="address" rows="2" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">City</label>
+            <input type="text" class="form-input" name="city" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">State</label>
+            <select class="form-select" name="state" required>
+              <option value="">Select State</option>
+              <option value="Lagos">Lagos</option>
+              <option value="Abuja">Abuja</option>
+              <option value="Rivers">Rivers</option>
+              <option value="Kano">Kano</option>
+              <option value="Oyo">Oyo</option>
+              <option value="Edo">Edo</option>
+              <option value="Delta">Delta</option>
+              <option value="Anambra">Anambra</option>
+              <option value="Enugu">Enugu</option>
+              <option value="Kaduna">Kaduna</option>
+              <option value="Plateau">Plateau</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Password</label>
+            <input type="password" class="form-input" name="password" required minlength="6">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label form-label-required">Confirm Password</label>
+            <input type="password" class="form-input" name="confirmPassword" required minlength="6">
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+        </form>
+        
+        <div class="text-center mt-6">
+          <p class="text-secondary">Already have an account? <a href="/household/login.html">Login</a></p>
+        </div>
+        
+        <div class="text-center mt-4">
+          <a href="/" class="btn btn-ghost btn-sm">← Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const password = formData.get('password');
+      const confirmPassword = formData.get('confirmPassword');
+      
+      if (password !== confirmPassword) {
+        window.app.Toast.error('Passwords do not match');
+        return;
+      }
+      
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        address: formData.get('address'),
+        city: formData.get('city'),
+        state: formData.get('state'),
+        password: password
+      };
+      
+      try {
+        const result = await window.api.register(data);
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        window.app.Toast.success('Registration successful!');
+        window.location.href = '/household/dashboard.html';
+      } catch (error) {
+        window.app.Toast.error(error.message || 'Registration failed');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -176,37 +176,43 @@ return function (App $app) {
         $group->get('/booking/{id}', [\App\Controllers\MessageController::class, 'getMessages']);
     })->add($container->get(JwtAuthMiddleware::class));
 
-    // Admin Routes
-    $app->group('/api/admin', function (RouteCollectorProxy $group) {
-        // Dashboard
-        $group->get('/dashboard', [\App\Controllers\Admin\AdminDashboardController::class, 'index']);
+    // Notifications (for user to list their notifications)
+    $app->group('/api/notifications', function (RouteCollectorProxy $group) {
+        $group->get('', [\App\Controllers\NotificationController::class, 'index']);
+        $group->post('/{id}/read', [\App\Controllers\NotificationController::class, 'markRead']);
+    })->add($container->get(JwtAuthMiddleware::class));
 
-        // Helpers
-        $group->get('/helpers', [\App\Controllers\Admin\AdminHelperController::class, 'index']);
-        $group->get('/helpers/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'show']);
-        $group->put('/helpers/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'update']);
-        $group->delete('/helpers/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'delete']);
-        $group->post('/helpers/{id}/verify', [\App\Controllers\Admin\AdminHelperController::class, 'verify']);
+    // Helper Actions (accept/decline booking requests)
+    $app->group('/api/me', function (RouteCollectorProxy $group) {
+        $group->get('/requests', [\App\Controllers\BookingController::class, 'getIncomingRequests']);
+        $group->post('/bookings/{id}/accept', [\App\Controllers\BookingController::class, 'accept']);
+        $group->post('/bookings/{id}/decline', [\App\Controllers\BookingController::class, 'decline']);
+    })->add($container->get(JwtAuthMiddleware::class));
 
-        // Admin Users
-        $group->get('/users', [\App\Controllers\Admin\AdminUserController::class, 'index']);
-        $group->post('/users', [\App\Controllers\Admin\AdminUserController::class, 'create']);
-        $group->put('/users/{id}', [\App\Controllers\Admin\AdminUserController::class, 'update']);
-        $group->delete('/users/{id}', [\App\Controllers\Admin\AdminUserController::class, 'delete']);
+    // Agency Hire Request Approval (approve/reject employer booking)
+    $app->group('/api/agency/bookings', function (RouteCollectorProxy $group) {
+        $group->get('/pending', [\App\Controllers\AgencyController::class, 'getPendingBookings']);
+        $group->post('/{id}/approve', [\App\Controllers\AgencyController::class, 'approveBooking']);
+        $group->post('/{id}/reject', [\App\Controllers\AgencyController::class, 'rejectBooking']);
+    })->add($container->get(JwtAuthMiddleware::class));
 
-        // Agencies
-        $group->get('/agencies', [\App\Controllers\Admin\AdminAgencyController::class, 'index']);
-        $group->get('/agencies/{id}', [\App\Controllers\Admin\AdminAgencyController::class, 'getAgencyDetails']);
-        $group->post('/agencies/{id}/verify', [\App\Controllers\Admin\AdminAgencyController::class, 'verifyAgency']);
-        $group->delete('/agencies/{id}', [\App\Controllers\Admin\AdminAgencyController::class, 'deleteAgency']);
+    // Admin Hire Requests Management
+    $app->group('/api/admin/bookings', function (RouteCollectorProxy $group) {
+        $group->get('', [\App\Controllers\Admin\AdminBookingController::class, 'index']);
+        $group->get('/{id}', [\App\Controllers\Admin\AdminBookingController::class, 'show']);
+        $group->put('/{id}', [\App\Controllers\Admin\AdminBookingController::class, 'update']);
+        $group->post('/{id}/cancel', [\App\Controllers\Admin\AdminBookingController::class, 'cancel']);
+        $group->post('/{id}/assign', [\App\Controllers\Admin\AdminBookingController::class, 'assignHelper']);
+    })->add($container->get(JwtAuthMiddleware::class));
 
-        // Payments
-        $group->get('/payments', [\App\Controllers\Admin\AdminPaymentController::class, 'index']);
-
-        // Service Requests
-        $group->get('/service-requests', [\App\Controllers\Admin\AdminServiceRequestController::class, 'index']);
-        $group->put('/service-requests/{id}', [\App\Controllers\Admin\AdminServiceRequestController::class, 'update']);
-
+    // Admin Helper Bulk Upload
+    $app->group('/api/admin/helpers', function (RouteCollectorProxy $group) {
+        $group->get('', [\App\Controllers\Admin\AdminHelperController::class, 'index']);
+        $group->get('/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'show']);
+        $group->put('/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'update']);
+        $group->delete('/{id}', [\App\Controllers\Admin\AdminHelperController::class, 'delete']);
+        $group->post('/{id}/verify', [\App\Controllers\Admin\AdminHelperController::class, 'verify']);
+        $group->post('/bulk', [\App\Controllers\Admin\AdminHelperController::class, 'bulkUpload']);
     })->add($container->get(JwtAuthMiddleware::class));
 };
 
