@@ -1,0 +1,902 @@
+openapi: 3.0.3
+info:
+  title: Maids.ng API
+  version: 1.0.0
+  description: |
+    Maids.ng API - Connect Nigerian households with verified domestic workers.
+    
+    ## Base URL
+    Production: `https://maids.ng/api/v1`
+    Development: `http://localhost:8000/api/v1`
+    
+    ## Authentication
+    Most endpoints require a JWT Bearer token in the Authorization header:
+    `Authorization: Bearer <your_token>`
+    
+    ## Rate Limits
+    - General API: 60 requests/minute
+    - Login/Register: 5 requests/minute
+    - Payment Initialization: 10 requests/minute
+    - NIN Verification: 5 requests/5 minutes
+    
+    ## Error Format
+    All errors follow this envelope:
+    ```json
+    {
+      "success": false,
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Human readable error message",
+        "details": { "field": "phone", "issue": "must be 11 digits" }
+      },
+      "meta": {}
+    }
+    ```
+    
+    ## Success Format
+    ```json
+    {
+      "success": true,
+      "data": { ... },
+      "meta": {
+        "pagination": {
+          "total": 150,
+          "page": 1,
+          "per_page": 20,
+          "pages": 8
+        }
+      },
+      "error": null
+    }
+    ```
+  contact:
+    name: API Support
+    email: api@maids.ng
+  license:
+    name: Proprietary
+    url: https://maids.ng/license
+
+servers:
+  - url: /api/v1
+    description: API server (relative URL, works in all environments)
+  
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Helper:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        work_type:
+          type: string
+          enum: [Nanny, Cook, Cleaner, Fulltime Maid, Driver, Gardener]
+        accommodation:
+          type: string
+          enum: [Live-in, Live-out, Either]
+        location:
+          type: string
+        location_state:
+          type: string
+        location_lga:
+          type: string
+        salary_min:
+          type: integer
+        salary_max:
+          type: integer
+        rate:
+          type: string
+          example: "₦30,000 - ₦60,000"
+        availability:
+          type: string
+          example: "Immediately"
+        availability_date:
+          type: string
+          format: date
+        experience:
+          type: string
+        experience_years:
+          type: integer
+        skills:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
+          format: uri
+        bio:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        gender:
+          type: string
+          enum: [Male, Female]
+        rating:
+          type: number
+          format: float
+        badge:
+          type: string
+        verification:
+          type: string
+          enum: [verified, pending, rejected]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        helper_id:
+          type: integer
+        employer_id:
+          type: integer
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, confirmed, in_progress, completed, cancelled]
+        total_amount:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        booking_id:
+          type: integer
+        amount:
+          type: integer
+        payment_type:
+          type: string
+          enum: [service_fee, salary, matching_fee]
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        gateway:
+          type: string
+          enum: [flutterwave, paystack]
+        transaction_ref:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Invalid or missing token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: UNAUTHORIZED
+              message: Invalid or expired token
+            meta: {}
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: Too many requests
+      headers:
+        X-RateLimit-Limit:
+          description: Request limit per window
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          description: Remaining requests
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          description: Seconds until limit resets
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: RATE_LIMITED
+              message: Too many requests. Please try again later.
+            meta:
+              retry_after: 60
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/auth/login:
+    post:
+      summary: User login (phone + PIN)
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, pin]
+              properties:
+                phone:
+                  type: string
+                  example: "08012345678"
+                pin:
+                  type: string
+                  example: "1234"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  access_token: eyJhbGciOiJIUzI1NiIs...
+                  refresh_token: eyJhbGciOiJIUzI1NiIs...
+                  user:
+                    id: 123
+                    phone: 08012345678
+                    user_type: employer
+                meta: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/v1/auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, pin, user_type]
+              properties:
+                phone:
+                  type: string
+                  example: "08012345678"
+                pin:
+                  type: string
+                  minLength: 4
+                  maxLength: 6
+                  example: "1234"
+                user_type:
+                  type: string
+                  enum: [employer, helper, agency]
+                  example: "employer"
+      responses:
+        '201':
+          description: Registration successful
+        '409':
+          description: Phone number already registered
+
+  /api/v1/helpers/match:
+    get:
+      summary: Find matching helpers
+      tags: [Helpers]
+      security: []
+      parameters:
+        - name: work_type
+          in: query
+          schema:
+            type: string
+            enum: [Nanny, Cook, Cleaner, Fulltime Maid, Driver, Gardener]
+        - name: location
+          in: query
+          schema:
+            type: string
+            example: "Lagos"
+        - name: budget_min
+          in: query
+          schema:
+            type: integer
+        - name: budget_max
+          in: query
+          schema:
+            type: integer
+        - name: accommodation
+          in: query
+          schema:
+            type: string
+            enum: [Live-in, Live-out, Either]
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+            collectionFormat: multi
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [Male, Female]
+        - name: experience_years_min
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 12
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [rating_desc, price_asc, price_desc, exp_desc, exp_asc, newest]
+            default: rating_desc
+      responses:
+        '200':
+          description: List of matching helpers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Helper'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+
+  /api/v1/helpers/{id}:
+    get:
+      summary: Get helper details
+      tags: [Helpers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Helper details
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  id: 123
+                  full_name: "Amina Lawal"
+                  work_type: "Nanny"
+                  # ... fields from Helper schema
+                meta: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/helpers:
+    post:
+      summary: Create helper profile (requires auth)
+      tags: [Helpers]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name, work_type, location, salary_min, salary_max]
+              properties:
+                full_name:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                work_type:
+                  type: string
+                accommodation:
+                  type: string
+                location:
+                  type: string
+                location_state:
+                  type: string
+                location_lga:
+                  type: string
+                salary_min:
+                  type: integer
+                salary_max:
+                  type: integer
+                availability:
+                  type: string
+                experience:
+                  type: string
+                experience_years:
+                  type: integer
+                skills:
+                  type: array
+                  items:
+                    type: string
+                bio:
+                  type: string
+                languages:
+                  type: array
+                  items:
+                    type: string
+                gender:
+                  type: string
+                  enum: [Male, Female]
+                nin_number:
+                  type: string
+                date_of_birth:
+                  type: string
+                  format: date
+                profile_photo_base64:
+                  type: string
+                  format: byte
+                nin_image_base64:
+                  type: string
+                  format: byte
+      responses:
+        '201':
+          description: Helper profile created
+
+  /api/v1/bookings:
+    post:
+      summary: Create booking
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [helper_id, start_date, end_date]
+              properties:
+                helper_id:
+                  type: integer
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                notes:
+                  type: string
+      responses:
+        '201':
+          description: Booking created
+
+    get:
+      summary: Get user's bookings
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of bookings
+
+  /api/v1/payments/initialize:
+    post:
+      summary: Initialize payment
+      tags: [Payments]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [booking_id, amount, email, phone]
+              properties:
+                booking_id:
+                  type: integer
+                amount:
+                  type: integer
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Payment initialized with redirect URL
+
+  /api/v1/payments/verify:
+    post:
+      summary: Verify payment (webhook from gateway)
+      tags: [Payments]
+      security: [] # Handled by webhook verification middleware
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id:
+                  type: string
+                status:
+                  type: string
+                  enum: [success, failed, cancelled]
+                amount:
+                  type: integer
+      responses:
+        '200':
+          description: Payment verified
+
+  /api/v1/config/locations:
+    get:
+      summary: Get list of locations (states, LGAs)
+      tags: [Config]
+      responses:
+        '200':
+          description: Locations list
+
+  /api/v1/config/skills:
+    get:
+      summary: Get list of available skills
+      tags: [Config]
+      responses:
+        '200':
+          description: Skills list
+
+  /api/v1/config/fees:
+    get:
+      summary: Get service fees
+      tags: [Config]
+      responses:
+        '200':
+          description: Fee structure
+
+  /api/v1/config/work-types:
+    get:
+      summary: Get available work types
+      tags: [Config]
+      responses:
+        '200':
+          description: Work types list
+
+  /api/v1/config/site:
+    get:
+      summary: Get site configuration (contact info, etc.)
+      tags: [Config]
+      responses:
+        '200':
+          description: Site config
+
+  /api/v1/ratings:
+    post:
+      summary: Submit rating for helper
+      tags: [Ratings]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [booking_id, helper_id, rating, comment]
+              properties:
+                booking_id:
+                  type: integer
+                helper_id:
+                  type: integer
+                rating:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+                categories:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Rating submitted
+
+  /api/v1/verification/nin:
+    post:
+      summary: Submit NIN verification
+      tags: [Verification]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nin_number, nin_image]
+              properties:
+                nin_number:
+                  type: string
+                nin_image:
+                  type: string
+                  format: binary
+      responses:
+        '202':
+          description: Verification submitted for processing
+
+  /api/v1/verification/{id}:
+    get:
+      summary: Get verification status
+      tags: [Verification]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Verification status
+
+  # Admin endpoints (under /admin/api/v1)
+  /admin/api/v1/auth/login:
+    post:
+      summary: Admin login
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Admin login successful
+
+  /admin/api/v1/dashboard:
+    get:
+      summary: Admin dashboard metrics
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard stats
+
+  /admin/api/v1/helpers:
+    get:
+      summary: List all helpers (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: verification
+          in: query
+          schema:
+            type: string
+            enum: [verified, pending, rejected]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated helper list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Helper'
+                  meta:
+                    $ref: '#/components/schemas/Pagination'
+
+  /admin/api/v1/helpers/{id}/verify:
+    put:
+      summary: Verify helper profile
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [verified, rejected]
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Helper verification updated
+
+  /admin/api/v1/bookings:
+    get:
+      summary: List all bookings (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bookings list
+
+  /admin/api/v1/payments:
+    get:
+      summary: List all payments (admin)
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Payments list with totals
+
+  /admin/api/v1/verifications:
+    get:
+      summary: List pending verifications
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Verifications list
+
+  # Webhooks (no auth, use signature verification)
+  /api/webhooks/flutterwave:
+    post:
+      summary: Flutterwave payment webhook
+      tags: [Webhooks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Webhook processed
+
+  /api/webhooks/paystack:
+    post:
+      summary: Paystack payment webhook
+      tags: [Webhooks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Webhook processed
+
+# End of specification

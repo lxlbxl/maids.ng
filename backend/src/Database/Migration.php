@@ -73,6 +73,7 @@ class Migration
             '020_add_checkout_url_to_payments',
             '021_create_helper_availability_table',
             '022_create_service_requests_table',
+            '023_add_search_indexes',
         ];
     }
 
@@ -623,5 +624,28 @@ class Migration
         } catch (\Exception $e) {
             // Ignore if exists
         }
+    }
+
+    private function migrate_023_add_search_indexes(): void
+    {
+        // Optimize helper search and pagination queries
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_state ON helpers(location_state)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_lga ON helpers(location_lga)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_salary_range ON helpers(salary_min, salary_max)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_rating ON helpers(rating_avg DESC)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_created ON helpers(created_at DESC)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_helpers_work_status ON helpers(work_type, verification_status, status)");
+        
+        // Booking indexes
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_helper_id ON bookings(helper_id)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_employer_id ON bookings(employer_id)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(start_date, end_date)");
+        
+        // Payment indexes
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON payments(booking_id)");
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_payments_gateway_ref ON payments(gateway_ref)");
+        
+        // User lookup indexes
+        $this->pdo->exec("CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone)");
     }
 }

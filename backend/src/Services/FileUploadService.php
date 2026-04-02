@@ -153,16 +153,84 @@ class FileUploadService
             return "File too large. Maximum size is {$maxMb}MB";
         }
 
-        // Check file type
+        // Validate MIME type using finfo (more secure than extension check)
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file->getFile()->getPathname());
+        finfo_close($finfo);
+
+        $allowedMimeTypes = $this->getAllowedMimeTypes();
         $filename = $file->getClientFilename();
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-        if (!in_array($extension, $this->config['allowed_types'])) {
+        if (!in_array($mimeType, $allowedMimeTypes, true)) {
             $allowed = implode(', ', $this->config['allowed_types']);
-            return "Invalid file type. Allowed types: {$allowed}";
+            return "Invalid file type (MIME: {$mimeType}). Allowed types: {$allowed}";
         }
 
+        // Additional validation for images
+        if (str_starts_with($mimeType, 'image/')) {
+            $this->validateImage($file);
+        }
+
+        // TODO: Virus scanning (requires clamscan/ClamAV)
+        // if (extension_loaded('clamav')) {
+        //     $scanResult = $this->scanFile($file->getFile()->getPathname());
+        //     if (!$scanResult['clean']) {
+        //         return "File failed virus scan: " . $scanResult['virus'];
+        //     }
+        // }
+
         return null;
+    }
+
+    private function getAllowedMimeTypes(): array
+    {
+        $map = [];
+        foreach ($this->config['allowed_types'] as $type) {
+            match ($type) {
+                'jpg', 'jpeg' => $map[] = 'image/jpeg',
+                'png' => $map[] = 'image/png',
+                'gif' => $map[] = 'image/gif',
+                'webp' => $map[] = 'image/webp',
+                'pdf' => $map[] = 'application/pdf',
+            };
+        }
+        return array_unique($map);
+    }
+
+    private function validateImage(UploadedFileInterface $file): void
+    {
+        // Check image dimensions to prevent decompression bombs
+        $pathname = $file->getFile()->getPathname();
+        $size = getimagesize($pathname);
+        if ($size === false) {
+            throw new \RuntimeException('Invalid image file');
+        }
+
+        [$width, $height] = $size;
+
+        // Reject extremely large dimensions (e.g., > 10000px)
+        if ($width > 10000 || $height > 10000) {
+            throw new \RuntimeException('Image dimensions too large');
+        }
+
+        // Check file size vs dimensions (image bombs have small file but huge dimensions)
+        if ($file->getSize() < 1000 && ($width > 5000 || $height > 5000)) {
+            throw new \RuntimeException('Suspicious image file');
+        }
+    }
+
+    // Virus scanning method (requires clamav extension or clamscan binary)
+    private function scanFile(string $filepath): array
+    {
+        $output = [];
+        $returnVar = 0;
+        exec("clamscan " . escapeshellarg($filepath), $output, $returnVar);
+
+        $clean = ($returnVar === 0);
+        $virus = $clean ? null : implode(', ', array_filter($output, fn($line) => str_contains($line, 'FOUND')));
+
+        return ['clean' => $clean, 'virus' => $virus];
     }
 
     private function getUploadErrorMessage(int $error): string

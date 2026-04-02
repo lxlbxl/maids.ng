@@ -46,6 +46,12 @@ $errorMiddleware->setDefaultErrorHandler($errorHandler);
 // Add CORS Middleware
 $app->add(new App\Middleware\CorsMiddleware());
 
+// Add Security Headers Middleware (X-Frame-Options, CSP, HSTS, etc.)
+$app->add(new App\Middleware\SecurityHeadersMiddleware());
+
+// Add Response Format Middleware (standardize API responses)
+$app->add(new App\Middleware\ResponseFormatMiddleware());
+
 // Add Rate Limiting Middleware (60 requests per minute default, stricter for auth endpoints)
 $app->add(new App\Middleware\RateLimitMiddleware(60, 60));
 

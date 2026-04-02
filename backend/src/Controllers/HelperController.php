@@ -46,16 +46,24 @@ class HelperController
             'budget_min' => $params['budgetMin'] ?? $params['budget_min'] ?? null,
             'budget_max' => $params['budgetMax'] ?? $params['budget_max'] ?? null,
             'start_date' => $params['startDate'] ?? $params['start_date'] ?? null,
+            'skills' => $params['skills'] ?? null,
+            'gender' => $params['gender'] ?? null,
+            'languages' => $params['languages'] ?? null,
+            'experience_years_min' => $params['experienceYearsMin'] ?? $params['experience_years_min'] ?? null,
+            'sort' => $params['sort'] ?? 'rating_desc'
         ];
 
-        $limit = (int) ($params['limit'] ?? 3);
-        $helpers = $this->matchingService->findMatches($criteria, $limit);
+        $limit = (int) ($params['limit'] ?? $params['per_page'] ?? 12);
+        $page = (int) ($params['page'] ?? 1);
 
-        // Format response to match existing frontend expectations
+        $result = $this->matchingService->findMatches($criteria, $limit, $page);
+
         return $this->jsonResponse($response, [
             'success' => true,
-            'maids' => $helpers,
-            'count' => count($helpers)
+            'data' => $result['helpers'],
+            'meta' => [
+                'pagination' => $result['pagination']
+            ]
         ]);
     }
 
@@ -325,6 +333,48 @@ class HelperController
         return $this->jsonResponse($response, [
             'success' => true,
             'schedule' => $schedule
+        ]);
+    }
+
+    /**
+     * Admin/Staff: Get all helpers with filters and pagination
+     * GET /api/admin/helpers
+     */
+    public function getAll(Request $request, Response $response): Response
+    {
+        // AuthMiddleware should have set user_id and role
+        $userId = $request->getAttribute('user_id');
+        $role = $request->getAttribute('role');
+
+        // Only admin/agency can access
+        if (!in_array($role, ['admin', 'super_admin', 'agency'])) {
+            return $this->jsonResponse($response, [
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 403);
+        }
+
+        $params = $request->getQueryParams();
+        $criteria = [
+            'work_type' => $params['work_type'] ?? null,
+            'location' => $params['location'] ?? null,
+            'verification_status' => $params['verification_status'] ?? null,
+            'gender' => $params['gender'] ?? null,
+            'skills' => $params['skills'] ?? null,
+            'sort' => $params['sort'] ?? 'created_desc'
+        ];
+
+        $page = (int) ($params['page'] ?? 1);
+        $perPage = (int) ($params['per_page'] ?? 20);
+
+        $result = $this->matchingService->getAllHelpers($criteria, $page, $perPage);
+
+        return $this->jsonResponse($response, [
+            'success' => true,
+            'data' => $result['helpers'],
+            'meta' => [
+                'pagination' => $result['pagination']
+            ]
         ]);
     }
 

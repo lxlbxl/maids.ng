@@ -18,10 +18,13 @@ class MatchingService
         $this->logger = $logger;
     }
 
-    public function findMatches(array $criteria, int $limit = 3): array
+    public function findMatches(array $criteria, int $limit = 3, int $page = 1): array
     {
         $where = ["h.status = 'active'", "h.verification_status = 'verified'"];
         $params = [];
+
+        // Pagination
+        $offset = ($page - 1) * $limit;
 
         // Filter by work type
         if (!empty($criteria['help_type']) || !empty($criteria['work_type'])) {
@@ -88,8 +91,118 @@ class MatchingService
             $where[] = "h.availability = 'Immediately'";
         }
 
+        // Filter by work type
+        if (!empty($criteria['help_type']) || !empty($criteria['work_type'])) {
+            $workType = $criteria['help_type'] ?? $criteria['work_type'];
+
+            // Map frontend naming to DB values
+            $mapping = [
+                'Nanny / Childcare' => 'Nanny',
+                'House Cleaning' => ['Cleaner', 'Fulltime Maid'],
+                'Cook' => 'Cook',
+                'Driver' => 'Driver',
+                'Gardener' => 'Gardener'
+            ];
+
+            if (isset($mapping[$workType])) {
+                $mappedType = $mapping[$workType];
+                if (is_array($mappedType)) {
+                    $placeholders = implode(',', array_fill(0, count($mappedType), '?'));
+                    $where[] = "h.work_type IN ($placeholders)";
+                    foreach ($mappedType as $type) {
+                        $params[] = $type;
+                    }
+                } else {
+                    $where[] = "h.work_type = ?";
+                    $params[] = $mappedType;
+                }
+            } else {
+                // Fallback for direct matches (e.g. 'Fulltime Maid', 'Cleaner' passed directly)
+                $where[] = "h.work_type = ?";
+                $params[] = $workType;
+            }
+        }
+
+        // Filter by accommodation preference
+        if (!empty($criteria['accommodation'])) {
+            if ($criteria['accommodation'] !== 'Either') {
+                $where[] = "(h.accommodation = ? OR h.accommodation = 'Either')";
+                $params[] = $criteria['accommodation'];
+            }
+        }
+
+        // Filter by location (state/LGA/city)
+        if (!empty($criteria['location'])) {
+            $where[] = "(h.location LIKE ? OR h.location_state LIKE ? OR h.location_lga LIKE ?)";
+            $locationSearch = '%' . $criteria['location'] . '%';
+            $params[] = $locationSearch;
+            $params[] = $locationSearch;
+            $params[] = $locationSearch;
+        }
+
+        // Filter by salary budget
+        if (!empty($criteria['budget_min'])) {
+            $where[] = "h.salary_min >= ?";
+            $params[] = $this->parseBudget($criteria['budget_min']);
+        }
+
+        if (!empty($criteria['budget_max'])) {
+            $where[] = "h.salary_max <= ?";
+            $params[] = $this->parseBudget($criteria['budget_max']);
+        }
+
+        // Filter by availability
+        if (!empty($criteria['start_date'])) {
+            if ($criteria['start_date'] === 'Immediately') {
+                $where[] = "h.availability = 'Immediately'";
+            } else {
+                $where[] = "h.availability <= ?";
+                $params[] = $criteria['start_date'];
+            }
+        }
+
+        // Filter by experience years
+        if (!empty($criteria['experience_years_min'])) {
+            $where[] = "h.experience_years >= ?";
+            $params[] = (int)$criteria['experience_years_min'];
+        }
+
+        // Filter by gender
+        if (!empty($criteria['gender'])) {
+            $where[] = "h.gender = ?";
+            $params[] = $criteria['gender'];
+        }
+
+        // Filter by languages
+        if (!empty($criteria['languages'])) {
+            $langs = is_array($criteria['languages']) ? $criteria['languages'] : [$criteria['languages']];
+            foreach ($langs as $lang) {
+                $where[] = "h.languages LIKE ?";
+                $params[] = "%\"$lang\"%";
+            }
+        }
+
+        // Filter by skills (JSON contains)
+        if (!empty($criteria['skills'])) {
+            $skills = is_array($criteria['skills']) ? $criteria['skills'] : [$criteria['skills']];
+            foreach ($skills as $skill) {
+                $where[] = "h.skills LIKE ?";
+                $params[] = "%\"$skill\"%";
+            }
+        }
+
         $whereClause = implode(' AND ', $where);
 
+        // Build ORDER BY clause
+        $orderBy = $this->buildOrderBy($criteria['sort'] ?? 'rating_desc');
+
+        // Get total count for pagination
+        $countSql = "SELECT COUNT(*) as total FROM helpers h WHERE {$whereClause}";
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        // Main query with pagination
         $sql = "
             SELECT
                 h.id,
@@ -100,15 +213,18 @@ class MatchingService
                 h.accommodation,
                 h.location,
                 h.location_state,
+                h.location_lga,
                 h.salary_min,
                 h.salary_max,
-                '₦' || h.salary_min || ' - ₦' || h.salary_max as rate,
                 h.availability,
+                h.availability_date,
                 h.experience,
                 h.experience_years,
                 h.skills,
                 h.profile_photo as image,
                 h.bio,
+                h.languages,
+                h.gender,
                 h.rating_avg as rating,
                 h.rating_count,
                 h.badge_level as badge,
@@ -116,28 +232,26 @@ class MatchingService
                 h.created_at
             FROM helpers h
             WHERE {$whereClause}
-            ORDER BY
-                h.rating_avg DESC,
-                h.verification_status DESC,
-                h.jobs_completed DESC,
-                h.created_at DESC
-            LIMIT ?
+            {$orderBy}
+            LIMIT ? OFFSET ?
         ";
 
         $params[] = $limit;
+        $params[] = $offset;
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $helpers = $stmt->fetchAll();
 
-        // Parse skills JSON and format for frontend
+        // Format response
         foreach ($helpers as &$helper) {
             $helper['skills'] = json_decode($helper['skills'] ?? '[]', true) ?: [];
-            $helper['Rating'] = (string) $helper['rating'];
+            $helper['languages'] = json_decode($helper['languages'] ?? '[]', true) ?: [];
+            $helper['Rating'] = $helper['rating'] ? (string)round($helper['rating'], 1) : '0.0';
             $helper['Verification'] = $helper['verification'] === 'verified' ? 'Verified' : 'Pending';
             $helper['First_Name'] = $helper['first_name'] ?? explode(' ', $helper['name'])[0];
+            $helper['rate'] = '₦' . number_format($helper['salary_min']) . ' - ₦' . number_format($helper['salary_max']);
 
-            // Generate placeholder image if none exists
             if (empty($helper['image'])) {
                 $initials = $this->getInitials($helper['name']);
                 $helper['image'] = "https://ui-avatars.com/api/?name={$initials}&background=f59e0b&color=fff&size=200";
@@ -146,8 +260,127 @@ class MatchingService
 
         $this->logger->info("Found matches", [
             'criteria' => $criteria,
-            'count' => count($helpers)
+            'count' => count($helpers),
+            'total' => $total,
+            'page' => $page,
+            'pages' => ceil($total / $limit)
         ]);
+
+        return [
+            'helpers' => $helpers,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $limit,
+                'pages' => (int)ceil($total / $limit)
+            ]
+        ];
+    }
+
+    /**
+     * Get all helpers with pagination and filters (for admin/agency use)
+     */
+    public function getAllHelpers(array $criteria = [], int $page = 1, int $perPage = 20): array
+    {
+        $where = ["h.status != 'deleted'"];
+        $params = [];
+
+        // Apply same filters as findMatches but without verification requirement for admin view
+        if (!empty($criteria['work_type'])) {
+            $where[] = "h.work_type = ?";
+            $params[] = $criteria['work_type'];
+        }
+
+        if (!empty($criteria['location'])) {
+            $where[] = "(h.location LIKE ? OR h.location_state LIKE ? OR h.location_lga LIKE ?)";
+            $search = '%' . $criteria['location'] . '%';
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+        }
+
+        if (!empty($criteria['verification_status'])) {
+            $where[] = "h.verification_status = ?";
+            $params[] = $criteria['verification_status'];
+        }
+
+        if (!empty($criteria['gender'])) {
+            $where[] = "h.gender = ?";
+            $params[] = $criteria['gender'];
+        }
+
+        if (!empty($criteria['skills'])) {
+            $skills = is_array($criteria['skills']) ? $criteria['skills'] : [$criteria['skills']];
+            foreach ($skills as $skill) {
+                $where[] = "h.skills LIKE ?";
+                $params[] = "%\"$skill\"%";
+            }
+        }
+
+        $whereClause = implode(' AND ', $where);
+        $orderBy = $this->buildOrderBy($criteria['sort'] ?? 'created_desc');
+        $offset = ($page - 1) * $perPage;
+
+        // Total count
+        $countSql = "SELECT COUNT(*) as total FROM helpers h WHERE {$whereClause}";
+        $countStmt = $this->pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        // Fetch helpers
+        $sql = "
+            SELECT
+                h.*,
+                u.phone,
+                u.status as user_status
+            FROM helpers h
+            LEFT JOIN users u ON h.user_id = u.id
+            WHERE {$whereClause}
+            {$orderBy}
+            LIMIT ? OFFSET ?
+        ";
+
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $helpers = $stmt->fetchAll();
+
+        // Format
+        foreach ($helpers as &$helper) {
+            $helper['skills'] = json_decode($helper['skills'] ?? '[]', true) ?: [];
+            $helper['languages'] = json_decode($helper['languages'] ?? '[]', true) ?: [];
+            if (empty($helper['image'])) {
+                $initials = $this->getInitials($helper['full_name']);
+                $helper['image'] = "https://ui-avatars.com/api/?name={$initials}&background=f59e0b&color=fff&size=200";
+            }
+        }
+
+        return [
+            'helpers' => $helpers,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'pages' => (int)ceil($total / $perPage)
+            ]
+        ];
+    }
+
+    private function buildOrderBy(string $sort): string
+    {
+        return match ($sort) {
+            'rating_asc' => "ORDER BY h.rating_avg ASC, h.created_at DESC",
+            'price_asc' => "ORDER BY h.salary_min ASC, h.created_at DESC",
+            'price_desc' => "ORDER BY h.salary_max DESC, h.created_at DESC",
+            'exp_desc' => "ORDER BY h.experience_years DESC, h.created_at DESC",
+            'exp_asc' => "ORDER BY h.experience_years ASC, h.created_at DESC",
+            'newest' => "ORDER BY h.created_at DESC",
+            'oldest' => "ORDER BY h.created_at ASC",
+            default => "ORDER BY h.rating_avg DESC, h.verification_status DESC, h.created_at DESC"
+        };
+    }
 
         return $helpers;
     }
