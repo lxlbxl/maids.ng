@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maids.ng — Brand Guidelines v3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── BRAND TOKENS ─────────────────────────────────── */
+:root {
+  /* TRUE logo teal (extracted from logo.png) */
+  --teal:           #0F5556;
+  --teal-dark:      #083A3B;
+  --teal-deep:      #052829;
+  --teal-mid:       #1A7374;
+  --teal-light:     #2A9799;
+  --teal-pale:      #D0EAEA;
+  --teal-ghost:     #EAF4F4;
+
+  /* Warm accent — Heritage Copper (upgraded from v1.0 gold) */
+  --copper:         #B45309;
+  --copper-light:   #D4813A;
+  --copper-pale:    #FEF3E6;
+
+  /* Neutral surfaces */
+  --ivory:          #FAF7F2;
+  --linen:          #F1EAD7;
+  --espresso:       #1C1812;
+  --muted:          #6B7280;
+  --border:         #E5E7EB;
+  --border-dark:    rgba(15,85,86,0.12);
+  --white:          #FFFFFF;
+
+  /* Functional */
+  --success:        #0F7566;
+  --warning:        #E8A020;
+  --error:          #C8372D;
+  --info:           #1A6B8A;
+
+  /* Typography */
+  --font-display:   'Cormorant Garamond', Georgia, serif;
+  --font-body:      'DM Sans', system-ui, sans-serif;
+  --font-mono:      'DM Mono', monospace;
+
+  /* Spacing — 8pt grid */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 16px;
+  --space-4: 24px;  --space-5: 32px;  --space-6: 48px;
+  --space-7: 64px;  --space-8: 96px;  --space-9: 128px;
+
+  /* Radius */
+  --r-sm:   6px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   24px;
+  --r-full: 999px;
+
+  /* Shadows — teal-tinted */
+  --shadow-1: 0 1px 3px rgba(15,85,86,0.08), 0 1px 2px rgba(15,85,86,0.06);
+  --shadow-2: 0 4px 16px rgba(15,85,86,0.10), 0 2px 6px rgba(15,85,86,0.08);
+  --shadow-3: 0 12px 40px rgba(15,85,86,0.14), 0 4px 12px rgba(15,85,86,0.10);
+
+  /* Motion */
+  --ease-std:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter:  cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--ivory);
+  color: var(--espresso);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── PROGRESS BAR ─── */
+.progress-bar {
+  position: fixed; top: 0; left: 280px; right: 0;
+  height: 3px; background: var(--border); z-index: 200;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--teal), var(--copper));
+  width: 0%; transition: width 80ms;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: 0; left: 0;
+  width: 280px; height: 100vh;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 100;
+  padding: 0 0 40px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--teal-pale) transparent;
+}
+
+.sidebar-top {
+  padding: 32px 28px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.sidebar-top img {
+  width: 140px; height: auto;
+  display: block; margin-bottom: 12px;
+}
+
+.sidebar-top .version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.nav-group { padding: 0 16px; margin-bottom: 8px; }
+
+.nav-group-label {
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #C4C9D4; padding: 10px 12px 5px;
+}
+
+.nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: var(--r-sm);
+  text-decoration: none; color: var(--muted);
+  font-size: 13px; font-weight: 400;
+  transition: all 250ms var(--ease-std);
+}
+.nav-link:hover { color: var(--teal); background: var(--teal-ghost); transform: translateX(4px); }
+.nav-link.active { color: var(--teal); background: var(--teal-ghost); font-weight: 500; }
+.nav-link .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0;
+  transition: background 200ms;
+}
+.nav-link.active .dot { background: var(--teal); }
+
+/* ── MAIN ─────────────────────────────────────────── */
+.main { margin-left: 280px; }
+
+/* ── COVER ─────────────────────────────────────────── */
+.cover {
+  min-height: 100vh;
+  background: var(--espresso);
+  padding: 80px 10% 80px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  position: relative; overflow: hidden; border: none;
+}
+
+.cover-grid-pattern {
+  position: absolute; inset: 0; opacity: 0.04;
+  background-image:
+    repeating-linear-gradient(45deg, var(--ivory) 0, var(--ivory) 1px, transparent 0, transparent 50%),
+    repeating-linear-gradient(-45deg, var(--ivory) 0, var(--ivory) 1px, transparent 0, transparent 50%);
+  background-size: 28px 28px;
+}
+
+.cover-glow {
+  position: absolute; top: -300px; right: -200px;
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(15,85,86,0.35) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cover-tag {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--teal-light); margin-bottom: 20px;
+  position: relative;
+  animation: fadeUp 0.9s 0.1s var(--ease-enter) both;
+}
+
+.cover h1 {
+  font-family: var(--font-display);
+  font-size: clamp(56px, 7vw, 100px);
+  font-weight: 300; line-height: 1.0;
+  color: var(--ivory); margin-bottom: 24px;
+  position: relative;
+  animation: fadeUp 0.9s var(--ease-enter) both;
+}
+
+.cover h1 em { font-style: italic; color: var(--copper-light); }
+
+.cover .cover-sub {
+  font-family: var(--font-display); font-size: 20px;
+  font-style: italic; font-weight: 300;
+  color: rgba(250,247,242,0.5); max-width: 520px; line-height: 1.6;
+  position: relative;
+  animation: fadeUp 0.9s 0.2s var(--ease-enter) both;
+}
+
+.cover-meta {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 32px; margin-top: 64px;
+  padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+  animation: fadeUp 0.9s 0.35s var(--ease-enter) both;
+}
+
+.cover-meta-item label {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.3); font-family: var(--font-mono);
+  display: block; margin-bottom: 6px;
+}
+.cover-meta-item span { font-size: 13px; color: var(--ivory); font-weight: 500; }
+
+/* ── SECTIONS ────────────────────────────────────────── */
+.section {
+  padding: 96px 10%;
+  border-bottom: 1px solid var(--border);
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 700ms var(--ease-std), transform 700ms var(--ease-std);
+}
+.section.visible { opacity: 1; transform: translateY(0); }
+.section-linen { background: var(--linen); }
+.section-dark { background: var(--espresso); }
+.section-teal { background: var(--teal); }
+
+.section-tag {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 12px;
+}
+.section-dark .section-tag { color: var(--teal-light); }
+.section-teal .section-tag { color: rgba(255,255,255,0.5); }
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 4.5vw, 60px);
+  font-weight: 300; line-height: 1.05;
+  color: var(--espresso); margin-bottom: 16px;
+}
+.section-dark .section-title { color: var(--ivory); }
+.section-teal .section-title { color: var(--white); }
+
+.section-sub {
+  font-size: 17px; color: var(--muted);
+  max-width: 580px; line-height: 1.7;
+  margin-bottom: 56px;
+}
+.section-dark .section-sub { color: rgba(250,247,242,0.55); }
+.section-teal .section-sub { color: rgba(255,255,255,0.7); }
+
+.sub-label {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 18px;
+}
+.section-dark .sub-label { color: var(--teal-light); }
+
+.subsection { margin-bottom: 56px; }
+
+/* ── LOGO SECTION ─────────────────────────────────── */
+.logo-insight {
+  background: var(--white); border-radius: var(--r-xl);
+  padding: 48px 56px; border: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.logo-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px; margin-bottom: 32px;
+}
+
+.logo-card {
+  border-radius: var(--r-lg); padding: 40px 32px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px; min-height: 200px;
+  border: 1px solid var(--border);
+  transition: transform 250ms var(--ease-spring);
+}
+.logo-card:hover { transform: translateY(-4px); }
+.logo-card label {
+  font-size: 10px; font-family: var(--font-mono);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+}
+.logo-card img { height: 52px; width: auto; object-fit: contain; }
+
+.logo-anatomy {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 48px; align-items: center; margin-bottom: 32px;
+}
+
+.logo-anatomy-box {
+  background: var(--ivory); border-radius: var(--r-xl);
+  padding: 56px; display: flex; align-items: center;
+  justify-content: center; border: 1px solid var(--border);
+  position: relative;
+}
+
+.safe-zone-line {
+  position: absolute;
+  border: 1px dashed rgba(15,85,86,0.25);
+  border-radius: 4px;
+  inset: 20%;
+}
+
+.logo-rule {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.logo-rule:last-child { border-bottom: none; }
+.logo-rule .bullet {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--teal); margin-top: 8px; flex-shrink: 0;
+}
+.logo-rule p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.logo-rule p strong { color: var(--espresso); }
+
+/* ── COLOUR SYSTEM ─────────────────────────────────── */
+.color-hero {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 16px; margin-bottom: 16px;
+}
+
+.color-card { border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-1); }
+.color-swatch { height: 160px; }
+.color-info { background: var(--white); padding: 18px 20px; }
+.color-info strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.color-info .hex { font-family: var(--font-mono); font-size: 12px; color: var(--teal); margin-bottom: 4px; display: block; }
+.color-info p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+.color-secondary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.color-functional { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+
+.func-card { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
+.func-swatch { height: 52px; }
+.func-info { padding: 8px 10px; background: var(--white); }
+.func-info strong { font-size: 11px; font-weight: 700; display: block; }
+.func-info span { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+/* Colour pairings */
+.pairing-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.pairing { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
+.pairing-preview { height: 72px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.pairing-label { padding: 8px 10px; background: var(--white); font-size: 10px; font-family: var(--font-mono); color: var(--muted); }
+.pairing-label.bad { background: #FEF2F2; color: var(--error); }
+
+/* ── TYPOGRAPHY ─────────────────────────────────────── */
+.type-showcase {
+  background: var(--white); border-radius: var(--r-xl);
+  padding: 56px; border: 1px solid var(--border); margin-bottom: 24px;
+}
+
+.type-specimen {
+  padding-bottom: 40px; margin-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+.type-specimen:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.type-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+.type-meta .label { font-family: var(--font-mono); font-size: 10px; color: var(--teal); letter-spacing: 0.1em; }
+.type-meta .spec { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+.type-scale { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.type-row {
+  display: grid; grid-template-columns: 130px 1fr 110px;
+  align-items: center; padding: 14px 20px;
+  border-bottom: 1px solid var(--border); gap: 20px;
+}
+.type-row:last-child { border-bottom: none; }
+.type-row:nth-child(odd) { background: var(--ivory); }
+.type-row .level { font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
+.type-row .sz { font-family: var(--font-mono); font-size: 11px; color: var(--teal); text-align: right; }
+
+/* ── BRAND PILLARS ─────────────────────────────────── */
+.pillars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.pillar-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 36px 32px;
+  transition: transform 250ms var(--ease-spring), box-shadow 250ms var(--ease-std);
+}
+.pillar-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-2); }
+.pillar-card .icon { font-size: 26px; margin-bottom: 16px; }
+.pillar-card h4 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--teal); margin-bottom: 10px; }
+.pillar-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+/* ── VOICE ─────────────────────────────────────────── */
+.voice-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.voice-good { background: #EBF7F4; border: 1.5px solid var(--success); border-radius: var(--r-lg); padding: 22px 26px; }
+.voice-bad  { background: #FDF2F1; border: 1.5px solid var(--error); border-radius: var(--r-lg); padding: 22px 26px; }
+.voice-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.voice-good .voice-tag { color: var(--success); }
+.voice-bad  .voice-tag { color: var(--error); }
+.voice-good p, .voice-bad p { font-size: 15px; font-style: italic; line-height: 1.5; color: var(--espresso); }
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body); font-size: 15px; font-weight: 500;
+  padding: 13px 28px; border-radius: var(--r-md);
+  border: none; cursor: pointer; display: inline-flex;
+  align-items: center; gap: 8px;
+  transition: all 200ms var(--ease-std);
+}
+.btn-primary { background: var(--teal); color: var(--white); }
+.btn-primary:hover { background: var(--teal-dark); transform: scale(1.02); box-shadow: var(--shadow-2); }
+.btn-secondary { background: var(--copper); color: var(--white); }
+.btn-secondary:hover { transform: scale(1.02); box-shadow: var(--shadow-2); }
+.btn-ghost { background: transparent; color: var(--teal); border: 1.5px solid var(--teal); }
+.btn-ghost:hover { background: var(--teal-ghost); }
+.btn-outline-light { background: transparent; color: var(--ivory); border: 1.5px solid rgba(255,255,255,0.3); }
+.btn-outline-light:hover { background: rgba(255,255,255,0.08); }
+
+/* ── COMPONENTS ─────────────────────────────────────── */
+.helper-card {
+  background: var(--white); border-radius: var(--r-xl); padding: 28px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-1);
+  max-width: 280px;
+  transition: transform 250ms var(--ease-spring), box-shadow 250ms var(--ease-std);
+}
+.helper-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-3); }
+
+.helper-avatar {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-pale), var(--teal));
+  margin-bottom: 14px; position: relative;
+}
+.verified-dot {
+  position: absolute; bottom: 0; right: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--success); border: 2px solid var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: white;
+}
+
+.helper-name { font-weight: 700; font-size: 15px; color: var(--espresso); margin-bottom: 2px; }
+.helper-role { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.stars { color: var(--copper); font-size: 13px; margin-bottom: 12px; }
+
+.skill-tag {
+  background: var(--teal-ghost); color: var(--teal);
+  font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: var(--r-full);
+}
+
+.helper-rate { font-family: var(--font-mono); font-size: 18px; font-weight: 500; color: var(--espresso); margin: 14px 0; }
+.helper-rate span { font-size: 12px; color: var(--muted); font-family: var(--font-body); font-weight: 400; }
+
+/* Form elements */
+.form-label { display: block; font-size: 14px; font-weight: 500; color: var(--espresso); margin-bottom: 8px; }
+.form-input {
+  width: 100%; height: 52px; border: 1.5px solid var(--border);
+  border-radius: var(--r-md); padding: 0 16px;
+  font-family: var(--font-body); font-size: 15px; color: var(--espresso);
+  background: var(--white); outline: none;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+.form-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(15,85,86,0.12);
+}
+.form-input.error { border-color: var(--error); box-shadow: 0 0 0 3px rgba(200,55,45,0.10); }
+.form-error { font-size: 12px; color: var(--error); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+
+/* Shadow demo */
+.shadow-demo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.shadow-card { background: var(--white); border-radius: var(--r-lg); padding: 28px; text-align: center; }
+.shadow-card h4 { font-size: 14px; font-weight: 700; color: var(--espresso); margin-bottom: 4px; }
+.shadow-card p { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+
+/* Radius demo */
+.radius-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.r-chip {
+  background: var(--teal-ghost); border: 2px solid var(--teal);
+  width: 90px; height: 64px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: transform 200ms var(--ease-spring); cursor: default;
+}
+.r-chip:hover { transform: scale(1.06); }
+.r-chip span:first-child { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--teal); }
+.r-chip span:last-child  { font-family: var(--font-mono); font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* Spacing viz */
+.space-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.space-bar { background: var(--teal); height: 28px; border-radius: 4px; }
+.space-label { font-family: var(--font-mono); font-size: 11px; color: var(--espresso); min-width: 80px; }
+.space-token { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+
+/* Motion tokens */
+.motion-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.motion-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 18px; text-align: center; cursor: pointer;
+  transition: transform 200ms var(--ease-std);
+}
+.motion-card:hover { transform: scale(1.03); }
+.motion-dot { width: 28px; height: 28px; background: var(--teal); border-radius: 50%; margin: 0 auto 12px; }
+.motion-card:hover .motion-dot { animation: mpulse 0.6s var(--ease-spring); }
+@keyframes mpulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.5); background: var(--copper); }
+  100% { transform: scale(1); }
+}
+.motion-card h4 { font-family: var(--font-mono); font-size: 11px; color: var(--espresso); margin-bottom: 3px; }
+.motion-card p { font-size: 10px; color: var(--muted); }
+
+/* Checklist */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--r-sm); font-size: 13px; line-height: 1.5; }
+.check-item.do   { background: #EBF7F4; color: var(--espresso); }
+.check-item.dont { background: #FDF2F1; color: var(--espresso); }
+.check-item .ico { flex-shrink: 0; margin-top: 1px; }
+
+/* Social cards */
+.social-grid { display: grid; grid-template-columns: 1fr 1fr 9fr/16; gap: 16px; align-items: start; }
+
+/* WhatsApp preview */
+.whatsapp-preview {
+  background: var(--espresso); border-radius: var(--r-xl);
+  padding: 28px; max-width: 420px;
+}
+.wa-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.wa-icon { width: 38px; height: 38px; background: var(--teal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.wa-name { color: var(--ivory); font-weight: 700; font-size: 14px; }
+.wa-verified { color: var(--teal-light); font-size: 11px; }
+.wa-bubble { background: rgba(255,255,255,0.07); border-radius: 12px; padding: 18px; font-size: 14px; line-height: 1.8; color: var(--ivory); }
+
+/* Stats bar */
+.stats-bar {
+  background: var(--teal); border-radius: var(--r-xl);
+  padding: 40px 48px; display: grid;
+  grid-template-columns: repeat(3, 1fr); gap: 24px;
+  text-align: center; margin-bottom: 40px;
+}
+.stat-num { font-family: var(--font-mono); font-size: 42px; font-weight: 500; color: var(--white); display: block; }
+.stat-label { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+/* Position map */
+.pos-map {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-xl); height: 380px; position: relative; overflow: hidden;
+}
+.pos-axis-h { position: absolute; top: 50%; left: 40px; right: 40px; height: 1px; background: var(--border); }
+.pos-axis-v { position: absolute; left: 50%; top: 40px; bottom: 40px; width: 1px; background: var(--border); }
+.pos-label { position: absolute; font-size: 9px; font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.pos-point { position: absolute; transform: translate(-50%, -50%); text-align: center; }
+.pos-dot { width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 5px; }
+.pos-point.hero .pos-dot { width: 18px; height: 18px; background: var(--teal); box-shadow: 0 0 0 6px rgba(15,85,86,0.18); }
+.pos-point .name { font-size: 11px; font-weight: 600; color: var(--espresso); white-space: nowrap; }
+.pos-point .sub { font-size: 9px; color: var(--muted); }
+
+/* Code block */
+pre {
+  background: var(--espresso); color: var(--teal-light);
+  border-radius: var(--r-lg); padding: 28px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.8;
+}
+.c { color: rgba(255,255,255,0.25); }
+.p { color: #E8944A; }
+.v { color: #7EC8A4; }
+.s { color: var(--copper-light); }
+
+/* Callout */
+.callout {
+  background: var(--teal); color: var(--white);
+  border-radius: var(--r-xl); padding: 32px 40px; margin-bottom: 40px;
+}
+.callout p { font-family: var(--font-display); font-size: 22px; font-style: italic; font-weight: 300; line-height: 1.6; }
+.callout cite { display: block; margin-top: 10px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: rgba(255,255,255,0.5); font-style: normal; text-transform: uppercase; }
+
+/* Logo insight row */
+.insight-row { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.insight-row:last-child { border-bottom: none; }
+.insight-icon { width: 36px; height: 36px; background: var(--teal-ghost); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.insight-row h4 { font-size: 14px; font-weight: 700; color: var(--espresso); margin-bottom: 3px; }
+.insight-row p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* Photo principles */
+.photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.photo-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 22px; }
+.photo-card .ico { font-size: 24px; margin-bottom: 10px; }
+.photo-card h4 { font-size: 14px; font-weight: 700; color: var(--espresso); margin-bottom: 5px; }
+.photo-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- Progress -->
+<div class="progress-bar"><div class="progress-fill" id="pf"></div></div>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-top">
+    <img src="https://maids.ng/logo.png" alt="Maids.ng">
+    <span class="version">Brand Guidelines v3.0 · 2026</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Foundation</div>
+    <a class="nav-link active" href="#cover"><span class="dot"></span>Overview</a>
+    <a class="nav-link" href="#logo-section"><span class="dot"></span>Logo Identity</a>
+    <a class="nav-link" href="#foundation"><span class="dot"></span>Brand Foundation</a>
+    <a class="nav-link" href="#positioning"><span class="dot"></span>Positioning</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Visual Identity</div>
+    <a class="nav-link" href="#color"><span class="dot"></span>Colour System</a>
+    <a class="nav-link" href="#typography"><span class="dot"></span>Typography</a>
+    <a class="nav-link" href="#photography"><span class="dot"></span>Photography</a>
+    <a class="nav-link" href="#iconography"><span class="dot"></span>Iconography</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Design System</div>
+    <a class="nav-link" href="#spacing"><span class="dot"></span>Spacing & Grid</a>
+    <a class="nav-link" href="#components"><span class="dot"></span>Components</a>
+    <a class="nav-link" href="#motion"><span class="dot"></span>Motion</a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Brand Expression</div>
+    <a class="nav-link" href="#voice"><span class="dot"></span>Voice & Tone</a>
+    <a class="nav-link" href="#social"><span class="dot"></span>Social Media</a>
+    <a class="nav-link" href="#dosdonts"><span class="dot"></span>Do's & Don'ts</a>
+    <a class="nav-link" href="#tokens"><span class="dot"></span>Design Tokens</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+<!-- COVER -->
+<section class="cover" id="cover">
+  <div class="cover-grid-pattern"></div>
+  <div class="cover-glow"></div>
+  <div class="cover-tag">The Sanctuary Standard · Brand Guidelines v3.0</div>
+  <h1>Where <em>Trust</em><br>Begins<em>.</em></h1>
+  <p class="cover-sub">Building trust for Nigerian families. Building pride for every helper.</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><label>Brand Teal</label><span>#0F5556</span></div>
+    <div class="cover-meta-item"><label>Display Font</label><span>Cormorant Garamond</span></div>
+    <div class="cover-meta-item"><label>Body Font</label><span>DM Sans</span></div>
+    <div class="cover-meta-item"><label>Design Grid</label><span>8pt Baseline</span></div>
+  </div>
+</section>
+
+<!-- 01 LOGO IDENTITY -->
+<section class="section section-linen" id="logo-section">
+  <div class="section-tag">01 — Logo Identity</div>
+  <h2 class="section-title">The Mark We Carry</h2>
+  <p class="section-sub">The Maids.ng logo is a bubbly, rounded wordmark — warm, playful, and distinctly approachable. It is the single most important brand asset and must be treated with precision.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Logo Character Analysis</div>
+    <div class="logo-insight">
+      <div class="insight-row">
+        <div class="insight-icon">🔵</div>
+        <div><h4>Rounded, bubbly wordmark</h4><p>Thick custom letterforms with extreme rounding signal approachability, warmth, and friendliness — not corporate, not luxury. The logo sets the emotional register for the entire brand.</p></div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-icon">✨</div>
+        <div><h4>Sparkle / star details inside letterforms</h4><p>The sparkle motifs embedded in the "a", "i", and "d" letter counters introduce magic and delight — they signal cleanliness, freshness, and a hint of the premium without formality. This is a key brand equity element.</p></div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-icon">⚪</div>
+        <div><h4>White stroke outline</h4><p>The thick white border around the letterforms gives the logo strong legibility on any background and contributes to its sticker-like, tactile quality. Always preserve this stroke in applications.</p></div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-icon">🎨</div>
+        <div><h4>True brand colour: #0F5556 (Deep Teal)</h4><p>Extracted directly from the logo file via pixel sampling. Not the assumed #1A5C45 forest green, and not a cool navy. This dark teal anchors the entire colour system.</p></div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-icon">📝</div>
+        <div><h4>.ng in smaller, lighter weight</h4><p>The TLD sits visually subordinate but is essential — it signals Nigerian identity and domain ownership simultaneously. Never separate it from "maids".</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Logo Variations</div>
+    <div class="logo-grid">
+      <div class="logo-card" style="background:var(--ivory);">
+        <img src="https://maids.ng/logo.png" alt="Logo on light">
+        <label>On Ivory — Default</label>
+      </div>
+      <div class="logo-card" style="background:var(--white);border-color:var(--border);">
+        <img src="https://maids.ng/logo.png" alt="Logo on white">
+        <label>On White — UI Surfaces</label>
+      </div>
+      <div class="logo-card" style="background:var(--teal);">
+        <img src="https://maids.ng/logo.png" alt="Logo on teal" style="filter:brightness(0) invert(1);">
+        <label>Reversed — On Teal</label>
+      </div>
+      <div class="logo-card" style="background:var(--espresso);">
+        <img src="https://maids.ng/logo.png" alt="Logo on dark" style="filter:brightness(0) invert(1);">
+        <label>Reversed — On Dark</label>
+      </div>
+      <div class="logo-card" style="background:var(--linen);">
+        <img src="https://maids.ng/logo.png" alt="Logo on linen">
+        <label>On Linen — Editorial</label>
+      </div>
+      <div class="logo-card" style="background:var(--ivory);border:2px dashed var(--error);">
+        <img src="https://maids.ng/logo.png" alt="Wrong — distorted" style="transform:scaleX(1.5);filter:hue-rotate(180deg);opacity:0.6;">
+        <label style="color:var(--error);">Never Distort / Recolour ❌</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Clear Space & Minimum Sizes</div>
+    <div class="logo-anatomy">
+      <div class="logo-anatomy-box">
+        <div class="safe-zone-line"></div>
+        <img src="https://maids.ng/logo.png" alt="Logo clearspace" style="height:64px;width:auto;z-index:1;position:relative;">
+      </div>
+      <div>
+        <div class="logo-rule"><div class="bullet"></div><p><strong>Clear space:</strong> Minimum 25% of logo width on all sides. No text, images, or graphic elements within this zone.</p></div>
+        <div class="logo-rule"><div class="bullet"></div><p><strong>Minimum digital size:</strong> 120px wide. Below this the sparkle details and letterform curves degrade.</p></div>
+        <div class="logo-rule"><div class="bullet"></div><p><strong>Minimum print size:</strong> 30mm wide at 300dpi. Use vector source file for print.</p></div>
+        <div class="logo-rule"><div class="bullet"></div><p><strong>Light backgrounds only</strong> at natural colours. Use white-inverted version on teal, dark espresso, or photographic overlays.</p></div>
+        <div class="logo-rule"><div class="bullet"></div><p><strong>The sparkle motif</strong> is a brand equity element — never remove or obscure it. It is visible from 120px width and above.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 BRAND FOUNDATION -->
+<section class="section" id="foundation">
+  <div class="section-tag">02 — Brand Foundation</div>
+  <h2 class="section-title">The Belief Behind<br>the Business</h2>
+  <p class="section-sub">The core beliefs that guide every design decision, every line of copy, and every product choice.</p>
+
+  <div class="callout">
+    <p>"Every family deserves help they can trust. Every helper deserves work they can be proud of."</p>
+    <cite>— Maids.ng Brand Manifesto</cite>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Mission & Vision</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;">
+      <div style="background:var(--teal-ghost);border:1px solid var(--teal-pale);border-radius:var(--r-xl);padding:32px;">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;color:var(--teal);margin-bottom:12px;text-transform:uppercase;">Mission</div>
+        <p style="font-family:var(--font-display);font-size:20px;font-weight:400;line-height:1.5;color:var(--espresso);">To make trusted domestic help accessible to every Nigerian home — and dignified employment available to every domestic worker.</p>
+      </div>
+      <div style="background:var(--copper-pale);border:1px solid #FDE6C8;border-radius:var(--r-xl);padding:32px;">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;color:var(--copper);margin-bottom:12px;text-transform:uppercase;">Vision</div>
+        <p style="font-family:var(--font-display);font-size:20px;font-weight:400;line-height:1.5;color:var(--espresso);">To be the most trusted name in home staffing across Africa — where every helper is verified and every family is protected.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Brand Pillars — The Maids.ng Promise</div>
+    <div class="pillars-grid">
+      <div class="pillar-card">
+        <div class="icon">✨</div>
+        <h4>Unseen Excellence</h4>
+        <p>The best service is felt, not seen. We operate with quiet precision that leaves a home transformed — without the noise of process. Our sparkle motif is a symbol of this invisible magic.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="icon">🤝</div>
+        <h4>Dignified Labour</h4>
+        <p>We are elevating domestic work into a respected trade. Every helper is a professional partner — verified, skilled, and treated with the dignity their craft deserves.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="icon">🛡️</div>
+        <h4>Radical Integrity</h4>
+        <p>Trust is our currency. Absolute transparency in vetting, pricing, and communication. The 10-day replacement guarantee is not a policy — it is a promise.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="icon">🏘️</div>
+        <h4>Nigerian Community</h4>
+        <p>We are rooted in Lagos and building for Nigeria. Our brand speaks with the warmth of a trusted neighbour — not the coldness of a global corporate. Referrals, reputations, and real relationships matter here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Brand Personality</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+      <div style="background:var(--teal);color:var(--white);border-radius:var(--r-xl);padding:24px 18px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:8px;">🌡️</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Warm</div>
+        <div style="font-size:11px;opacity:0.7;">Human & approachable</div>
+      </div>
+      <div style="background:var(--espresso);color:var(--ivory);border-radius:var(--r-xl);padding:24px 18px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:8px;">⚡</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Sharp</div>
+        <div style="font-size:11px;opacity:0.6;">Fast & precise</div>
+      </div>
+      <div style="background:var(--copper);color:var(--white);border-radius:var(--r-xl);padding:24px 18px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:8px;">💪</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Confident</div>
+        <div style="font-size:11px;opacity:0.8;">Authority in staffing</div>
+      </div>
+      <div style="background:var(--teal-pale);color:var(--teal-dark);border-radius:var(--r-xl);padding:24px 18px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:8px;">🔒</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Protective</div>
+        <div style="font-size:11px;opacity:0.8;">Safety for all</div>
+      </div>
+      <div style="background:var(--linen);color:var(--espresso);border-radius:var(--r-xl);padding:24px 18px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:8px;">🇳🇬</div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">Nigerian</div>
+        <div style="font-size:11px;opacity:0.8;">Lagos energy, world-class</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 POSITIONING -->
+<section class="section section-linen" id="positioning">
+  <div class="section-tag">03 — Positioning</div>
+  <h2 class="section-title">Where We Stand</h2>
+  <p class="section-sub">Maids.ng owns the premium trust quadrant in Nigeria — more reliable than WhatsApp referrals, more human than enterprise HR, more modern than classifieds.</p>
+
+  <div class="subsection">
+    <div class="pos-map">
+      <div class="pos-axis-h"></div>
+      <div class="pos-axis-v"></div>
+      <span class="pos-label" style="top:14px;left:50%;transform:translateX(-50%);">PREMIUM TRUST</span>
+      <span class="pos-label" style="bottom:14px;left:50%;transform:translateX(-50%);">BASIC</span>
+      <span class="pos-label" style="left:12px;top:50%;transform:translateY(-50%) rotate(-90deg);">INFORMAL</span>
+      <span class="pos-label" style="right:12px;top:50%;transform:translateY(-50%) rotate(90deg);">FORMAL</span>
+      <div class="pos-point hero" style="top:24%;left:56%;">
+        <div class="pos-dot"></div>
+        <div class="name" style="color:var(--teal);">Maids.ng</div>
+        <div class="sub">Premium Trust · Accessible Price</div>
+      </div>
+      <div class="pos-point" style="top:72%;left:22%;">
+        <div class="pos-dot" style="background:var(--muted);"></div>
+        <div class="name" style="font-size:11px;">WhatsApp Groups</div>
+      </div>
+      <div class="pos-point" style="top:22%;left:80%;">
+        <div class="pos-dot" style="background:var(--muted);"></div>
+        <div class="name" style="font-size:11px;">Enterprise HR</div>
+      </div>
+      <div class="pos-point" style="top:65%;left:72%;">
+        <div class="pos-dot" style="background:var(--muted);"></div>
+        <div class="name" style="font-size:11px;">Classifieds</div>
+      </div>
+      <div class="pos-point" style="top:40%;left:78%;">
+        <div class="pos-dot" style="background:var(--muted);"></div>
+        <div class="name" style="font-size:11px;">Expat Agencies</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-bar" style="margin-top:32px;">
+    <div><span class="stat-num">2,500+</span><div class="stat-label">Verified Helpers</div></div>
+    <div><span class="stat-num">95%</span><div class="stat-label">Match Success Rate</div></div>
+    <div><span class="stat-num">4.8★</span><div class="stat-label">Average Rating</div></div>
+  </div>
+</section>
+
+<!-- 04 COLOUR SYSTEM -->
+<section class="section" id="color">
+  <div class="section-tag">04 — Colour System</div>
+  <h2 class="section-title">The Brand Palette</h2>
+  <p class="section-sub">Built from the actual logo — #0F5556 Deep Teal is the definitive brand anchor. Every colour decision flows from what the logo already established.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Primary Palette</div>
+    <div class="color-hero">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#0F5556;"></div>
+        <div class="color-info">
+          <span class="hex">#0F5556</span>
+          <strong>Deep Teal — Brand Anchor</strong>
+          <p>Extracted directly from the logo. The primary brand colour — every UI surface, CTA button, active state, and logo application.</p>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#FAF7F2;border:1px solid var(--border);"></div>
+        <div class="color-info">
+          <span class="hex">#FAF7F2</span>
+          <strong>Warm Ivory — Canvas</strong>
+          <p>Primary background. Not pure white — warm to match the logo's approachable character.</p>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#1C1812;"></div>
+        <div class="color-info">
+          <span class="hex">#1C1812</span>
+          <strong>Deep Espresso — Anchor Dark</strong>
+          <p>Primary text and dark backgrounds. Warmer than cold navy — stays consistent with the teal palette.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-secondary">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#B45309;height:120px;"></div>
+        <div class="color-info">
+          <span class="hex" style="font-size:11px;">#B45309</span>
+          <strong style="font-size:13px;">Heritage Copper</strong>
+          <p style="font-size:11px;">Warm accent. Secondary CTAs, badges, highlights, ratings.</p>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#D0EAEA;height:120px;border:1px solid #B8D8D8;"></div>
+        <div class="color-info">
+          <span class="hex" style="font-size:11px;">#D0EAEA</span>
+          <strong style="font-size:13px;">Teal Pale</strong>
+          <p style="font-size:11px;">Tag chips, card backgrounds, skill badges, subtle fills.</p>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#F1EAD7;height:120px;border:1px solid #E8DFC8;"></div>
+        <div class="color-info">
+          <span class="hex" style="font-size:11px;">#F1EAD7</span>
+          <strong style="font-size:13px;">Silk Linen</strong>
+          <p style="font-size:11px;">Editorial section backgrounds, secondary surface warmth.</p>
+        </div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#083A3B;height:120px;"></div>
+        <div class="color-info">
+          <span class="hex" style="font-size:11px;">#083A3B</span>
+          <strong style="font-size:13px;">Teal Dark</strong>
+          <p style="font-size:11px;">Hover states on CTAs, dark mode surfaces, deep accents.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Functional / System Palette</div>
+    <div class="color-functional">
+      <div class="func-card"><div class="func-swatch" style="background:#0F7566;"></div><div class="func-info"><strong>Verified Teal</strong><span>#0F7566 · Success</span></div></div>
+      <div class="func-card"><div class="func-swatch" style="background:#E8A020;"></div><div class="func-info"><strong>Amber Alert</strong><span>#E8A020 · Warning</span></div></div>
+      <div class="func-card"><div class="func-swatch" style="background:#C8372D;"></div><div class="func-info"><strong>Alert Red</strong><span>#C8372D · Error</span></div></div>
+      <div class="func-card"><div class="func-swatch" style="background:#1A6B8A;"></div><div class="func-info"><strong>Info Blue</strong><span>#1A6B8A · Info</span></div></div>
+      <div class="func-card"><div class="func-swatch" style="background:#BDBDBD;"></div><div class="func-info"><strong>Stone</strong><span>#BDBDBD · Disabled</span></div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Approved Colour Pairings</div>
+    <div class="pairing-row">
+      <div class="pairing">
+        <div class="pairing-preview" style="background:#0F5556;color:white;">Primary CTA</div>
+        <div class="pairing-label">Teal + White ✅</div>
+      </div>
+      <div class="pairing">
+        <div class="pairing-preview" style="background:#B45309;color:white;">Copper CTA</div>
+        <div class="pairing-label">Copper + White ✅</div>
+      </div>
+      <div class="pairing">
+        <div class="pairing-preview" style="background:#FAF7F2;color:#1C1812;">Body Text</div>
+        <div class="pairing-label">Espresso + Ivory ✅</div>
+      </div>
+      <div class="pairing">
+        <div class="pairing-preview" style="background:#D0EAEA;color:#B45309;font-size:12px;">Contrast Fail</div>
+        <div class="pairing-label bad">Copper + Teal Pale ❌</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 TYPOGRAPHY -->
+<section class="section section-linen" id="typography">
+  <div class="section-tag">05 — Typography</div>
+  <h2 class="section-title">The Voice Written</h2>
+  <p class="section-sub">Cormorant Garamond for editorial moments of beauty. DM Sans for human, readable UI. DM Mono for data precision. No substitutions.</p>
+
+  <div class="type-showcase">
+    <div class="type-specimen">
+      <div class="type-meta">
+        <span class="label">CORMORANT GARAMOND — Display & Headlines</span>
+        <span class="spec">Variable · 300/400/600/700 · Italic variant</span>
+      </div>
+      <div style="font-family:var(--font-display);font-size:64px;font-weight:300;line-height:1.0;color:var(--espresso);margin-bottom:12px;">Find Your Perfect<br><em style="color:var(--teal);">Helper.</em></div>
+      <div style="font-family:var(--font-display);font-size:28px;font-weight:400;font-style:italic;color:var(--copper);margin-bottom:14px;">Trusted. Verified. Guaranteed.</div>
+      <p style="font-size:12px;color:var(--muted);font-family:var(--font-mono);">Hero headlines · Campaign taglines · Pull quotes · Editorial moments · Section openings</p>
+    </div>
+
+    <div class="type-specimen">
+      <div class="type-meta">
+        <span class="label">DM SANS — Body & UI</span>
+        <span class="spec">300/400/500/700 · Primary UI typeface</span>
+      </div>
+      <div style="font-family:var(--font-body);font-size:18px;font-weight:400;line-height:1.75;color:var(--espresso);max-width:620px;margin-bottom:12px;">Maids.ng connects verified domestic helpers with Nigerian families. Every helper is ID-verified, skills-assessed, and matched using our AI engine — with a 10-day replacement guarantee.</div>
+      <div style="display:flex;gap:28px;margin-bottom:14px;">
+        <span style="font-family:var(--font-body);font-weight:300;font-size:15px;color:var(--muted);">Light 300</span>
+        <span style="font-family:var(--font-body);font-weight:400;font-size:15px;color:var(--espresso);">Regular 400</span>
+        <span style="font-family:var(--font-body);font-weight:500;font-size:15px;color:var(--espresso);">Medium 500</span>
+        <span style="font-family:var(--font-body);font-weight:700;font-size:15px;color:var(--espresso);">Bold 700</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);font-family:var(--font-mono);">Body copy · UI labels · Navigation · Buttons · Captions · Helper profiles</p>
+    </div>
+
+    <div class="type-specimen">
+      <div class="type-meta">
+        <span class="label">DM MONO — Data & Numbers</span>
+        <span class="spec">400/500 · Sparingly for data contexts</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:52px;font-weight:500;color:var(--espresso);margin-bottom:10px;">₦35,000<span style="font-size:18px;color:var(--muted)">/month</span></div>
+      <div style="display:flex;gap:32px;margin-bottom:14px;">
+        <span style="font-family:var(--font-mono);font-size:16px;color:var(--espresso);">ID: MNG-00421</span>
+        <span style="font-family:var(--font-mono);font-size:16px;color:var(--teal);">4.8 ★ Rating</span>
+        <span style="font-family:var(--font-mono);font-size:16px;color:var(--espresso);">v3.0.0</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);font-family:var(--font-mono);">Prices · Stats · Reference numbers · IDs · Tags · Badges · Code</p>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Type Scale</div>
+    <div class="type-scale">
+      <div class="type-row" style="background:var(--linen);"><span class="level">Display</span><span style="font-family:var(--font-display);font-size:44px;font-weight:300;line-height:1;">Hero Headline</span><span class="sz">64px · 300</span></div>
+      <div class="type-row"><span class="level">H1</span><span style="font-family:var(--font-display);font-size:34px;font-weight:400;line-height:1.1;">Page Title Here</span><span class="sz">48px · 400</span></div>
+      <div class="type-row" style="background:var(--linen);"><span class="level">H2</span><span style="font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.2;">Section Header</span><span class="sz">36px · 600</span></div>
+      <div class="type-row"><span class="level">H3</span><span style="font-family:var(--font-body);font-size:20px;font-weight:700;">Card Header</span><span class="sz">24px · 700</span></div>
+      <div class="type-row" style="background:var(--linen);"><span class="level">Body L</span><span style="font-family:var(--font-body);font-size:16px;font-weight:400;">Long-form body text for articles and descriptions.</span><span class="sz">18px · 400</span></div>
+      <div class="type-row"><span class="level">Body M</span><span style="font-family:var(--font-body);font-size:14px;font-weight:400;">Standard body copy for UI and content contexts.</span><span class="sz">16px · 400</span></div>
+      <div class="type-row" style="background:var(--linen);"><span class="level">Label</span><span style="font-family:var(--font-body);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--teal);">VERIFIED HELPER · BADGE · TAG</span><span class="sz">12px · 500</span></div>
+      <div class="type-row"><span class="level">Stat</span><span style="font-family:var(--font-mono);font-size:30px;font-weight:500;">₦10,000</span><span class="sz">DM Mono · 500</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 PHOTOGRAPHY -->
+<section class="section" id="photography">
+  <div class="section-tag">06 — Photography</div>
+  <h2 class="section-title">Visual Atmosphere</h2>
+  <p class="section-sub">Every image must make a viewer feel: "This is real, reliable, and safe." Real Nigerian faces, real Nigerian homes — not stock, not Western, never stereotyped.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Photography Principles</div>
+    <div class="photo-grid">
+      <div class="photo-card"><div class="ico">☀️</div><h4>Natural Light</h4><p>Warm, soft, flattering. Golden morning light through Lagos apartment windows. No harsh flash.</p></div>
+      <div class="photo-card"><div class="ico">🙏</div><h4>Dignity First</h4><p>Helpers portrayed with confidence and professional pride — never subservient, never stereotyped in cap-and-apron.</p></div>
+      <div class="photo-card"><div class="ico">🇳🇬</div><h4>Real & Nigerian</h4><p>Authentic Nigerian faces, real Lagos homes, Nigerian decor context. No generic Western stock imagery.</p></div>
+      <div class="photo-card"><div class="ico">🌡️</div><h4>Warm Grade</h4><p>Warm ivory highlights, slightly muted cool tones, lifted blacks. Film-emulation grade — never cold or clinical.</p></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Mood Boards — Approved Visual Language</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+      <div style="border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);">
+        <div style="height:120px;background:linear-gradient(135deg,#F5E6D3,#D4A879);display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--espresso);opacity:0.7;">Golden Morning</span>
+        </div>
+        <div style="padding:12px 14px;background:var(--white);font-size:11px;color:var(--muted);">Warm family moments</div>
+      </div>
+      <div style="border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);">
+        <div style="height:120px;background:linear-gradient(135deg,#D0EAEA,#0F5556);display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--white);opacity:0.8;">Professional Pride</span>
+        </div>
+        <div style="padding:12px 14px;background:var(--white);font-size:11px;color:var(--muted);">Helper portraits</div>
+      </div>
+      <div style="border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);">
+        <div style="height:120px;background:linear-gradient(135deg,var(--linen),#E8D8C0);display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--espresso);opacity:0.7;">Clean Home</span>
+        </div>
+        <div style="padding:12px 14px;background:var(--white);font-size:11px;color:var(--muted);">Interiors & lifestyle</div>
+      </div>
+      <div style="border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);">
+        <div style="height:120px;background:linear-gradient(135deg,#2A4040,#0F5556);display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:var(--font-display);font-style:italic;font-size:16px;color:var(--ivory);opacity:0.8;">Deep Trust</span>
+        </div>
+        <div style="padding:12px 14px;background:var(--white);font-size:11px;color:var(--muted);">Dark editorial moments</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 ICONOGRAPHY -->
+<section class="section section-linen" id="iconography">
+  <div class="section-tag">07 — Iconography</div>
+  <h2 class="section-title">Icons & Illustration</h2>
+  <p class="section-sub">The logo's sparkle motif is the brand's visual signature. Icons are rounded, warm, and approachable — matching the logo's character.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Brand Signature — The Sparkle</div>
+    <div style="background:var(--white);border-radius:var(--r-xl);padding:40px;border:1px solid var(--border);display:flex;align-items:center;gap:48px;margin-bottom:24px;">
+      <div style="font-size:72px;">✨</div>
+      <div>
+        <h4 style="font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--teal);margin-bottom:10px;">The Sparkle Motif</h4>
+        <p style="font-size:15px;color:var(--muted);max-width:500px;line-height:1.7;">The sparkle/star detail embedded in the logo letterforms is the brand's visual signature. It symbolises cleanliness, trust, and magic — the transformation of a home. This motif can be used as a standalone graphic element in marketing materials, social media, and UI micro-moments.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Icon Style — Rounded, Warm, Approachable</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
+      {['🏠','✅','⭐','🔒','📱','💳','🔔','👤','📍','⚡','🤝','📋'].map((e,i)=>`<div key="${i}" style="width:100%;aspect-ratio:1;background:var(--teal-ghost);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">${e}</div>`).join('')}
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 24px;">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7;"><strong style="color:var(--espresso);">Style rules:</strong> 24px base grid · 2px rounded stroke weight · Fully rounded end-caps · Never sharp or angular · Lucide Icons as primary library · Colour follows context (teal on light, ivory on dark) · Maximum 2 colours per icon</p>
+    </div>
+  </div>
+</section>
+
+<!-- 08 SPACING -->
+<section class="section" id="spacing">
+  <div class="section-tag">08 — Spacing & Grid</div>
+  <h2 class="section-title">The System Behind<br>the Beauty</h2>
+  <p class="section-sub">Everything on an 8pt grid. Every radius, every shadow, every spacing decision — systematic and consistent.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;">
+    <div class="subsection">
+      <div class="sub-label">Spacing — 8pt Grid</div>
+      <div class="space-row"><span class="space-label">--space-1</span><div class="space-bar" style="width:4px;"></div><span class="space-token">4px · Micro</span></div>
+      <div class="space-row"><span class="space-label">--space-2</span><div class="space-bar" style="width:8px;"></div><span class="space-token">8px · XS</span></div>
+      <div class="space-row"><span class="space-label">--space-3</span><div class="space-bar" style="width:16px;"></div><span class="space-token">16px · SM</span></div>
+      <div class="space-row"><span class="space-label">--space-4</span><div class="space-bar" style="width:24px;"></div><span class="space-token">24px · MD</span></div>
+      <div class="space-row"><span class="space-label">--space-5</span><div class="space-bar" style="width:32px;"></div><span class="space-token">32px · LG</span></div>
+      <div class="space-row"><span class="space-label">--space-6</span><div class="space-bar" style="width:48px;"></div><span class="space-token">48px · XL</span></div>
+      <div class="space-row"><span class="space-label">--space-7</span><div class="space-bar" style="width:64px;"></div><span class="space-token">64px · 2XL</span></div>
+      <div class="space-row"><span class="space-label">--space-8</span><div class="space-bar" style="width:96px;"></div><span class="space-token">96px · 3XL</span></div>
+      <div class="space-row"><span class="space-label">--space-9</span><div class="space-bar" style="width:128px;background:var(--copper);"></div><span class="space-token">128px · 4XL</span></div>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-label">Border Radius</div>
+      <div class="radius-row" style="flex-direction:column;gap:10px;">
+        <div class="r-chip" style="border-radius:var(--r-sm);width:100%;"><span>6px</span><span>--r-sm · Tags</span></div>
+        <div class="r-chip" style="border-radius:var(--r-md);width:100%;"><span>12px</span><span>--r-md · Buttons</span></div>
+        <div class="r-chip" style="border-radius:var(--r-lg);width:100%;"><span>16px</span><span>--r-lg · Cards</span></div>
+        <div class="r-chip" style="border-radius:var(--r-xl);width:100%;"><span>24px</span><span>--r-xl · Sections</span></div>
+        <div class="r-chip" style="border-radius:var(--r-full);width:100%;"><span>999px</span><span>--r-full · Pills</span></div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="sub-label">Shadow System — Teal-Tinted</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="shadow-card" style="box-shadow:0 1px 3px rgba(15,85,86,0.08),0 1px 2px rgba(15,85,86,0.06);">
+          <h4>Level 1</h4><p>Cards, subtle lift</p>
+        </div>
+        <div class="shadow-card" style="box-shadow:0 4px 16px rgba(15,85,86,0.10),0 2px 6px rgba(15,85,86,0.08);">
+          <h4>Level 2</h4><p>Hover, dropdowns</p>
+        </div>
+        <div class="shadow-card" style="box-shadow:0 12px 40px rgba(15,85,86,0.14),0 4px 12px rgba(15,85,86,0.10);">
+          <h4>Level 3</h4><p>Modals, panels</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 COMPONENTS -->
+<section class="section section-linen" id="components">
+  <div class="section-tag">09 — UI Components</div>
+  <h2 class="section-title">Live Components</h2>
+  <p class="section-sub">Hover every component to see interaction states. The system in action.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Button System</div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;">
+      <button class="btn btn-primary">Find Me a Maid</button>
+      <button class="btn btn-secondary">₦10,000 — Hire Now</button>
+      <button class="btn btn-ghost">View Profile</button>
+      <button class="btn" style="background:var(--error);color:white;">Cancel Request</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;padding:20px;background:var(--teal);border-radius:var(--r-lg);">
+      <button class="btn btn-outline-light">View Matches</button>
+      <button class="btn" style="background:rgba(255,255,255,0.15);color:var(--white);border:none;">Secondary on Teal</button>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Helper Profile Card</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div class="helper-card">
+        <div class="helper-avatar"><div class="verified-dot">✓</div></div>
+        <div class="helper-name">Chioma Okonkwo</div>
+        <div class="helper-role">Lagos Mainland · Cook & Nanny</div>
+        <div class="stars">★★★★★ <span style="font-size:12px;color:var(--muted);">New · Verified</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+          <span class="skill-tag">Cooking</span>
+          <span class="skill-tag">Childcare</span>
+          <span class="skill-tag">Cleaning</span>
+        </div>
+        <div class="helper-rate">₦35,000 <span>/month</span></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:14px;font-size:14px;padding:11px;">Hire Chioma</button>
+      </div>
+
+      <div class="helper-card" style="border:2px solid var(--copper);">
+        <div style="position:relative;margin-bottom:14px;">
+          <div style="position:absolute;top:-42px;left:0;background:var(--copper);color:white;font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.05em;">★ TOP RATED</div>
+          <div class="helper-avatar" style="background:linear-gradient(135deg,#FEF3E6,var(--copper));margin-bottom:0;margin-top:14px;"><div class="verified-dot">✓</div></div>
+        </div>
+        <div class="helper-name">Fatima Musa</div>
+        <div class="helper-role">Abuja · Full-time Housekeeper</div>
+        <div class="stars">★★★★★ <span style="font-size:12px;color:var(--muted);">4.9 · 24 hires</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+          <span class="skill-tag">Deep Clean</span>
+          <span class="skill-tag">Organising</span>
+          <span class="skill-tag">Cooking</span>
+        </div>
+        <div class="helper-rate">₦50,000 <span>/month</span></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:14px;font-size:14px;padding:11px;">Hire Fatima</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Form Elements</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+      <div style="background:var(--white);border-radius:var(--r-xl);padding:36px;box-shadow:var(--shadow-2);">
+        <div style="margin-bottom:20px;"><label class="form-label">Your Name</label><input class="form-input" type="text" value="Adaeze Okafor"></div>
+        <div style="margin-bottom:20px;"><label class="form-label">WhatsApp Number</label><input class="form-input" type="tel" placeholder="+234 800 000 0000"></div>
+        <div style="margin-bottom:20px;"><label class="form-label">Location</label><input class="form-input error" type="text" value="Lag"><div class="form-error">⚠️ Please enter a full location</div></div>
+        <button class="btn btn-primary" style="width:100%;">Find My Match ✨</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">✅</span>
+          <div><div style="font-weight:600;font-size:14px;color:var(--success);">Match found!</div><div style="font-size:12px;color:var(--muted);">Details sent to your WhatsApp</div></div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">⏳</span>
+          <div><div style="font-weight:600;font-size:14px;color:var(--warning);">Searching for matches...</div><div style="font-size:12px;color:var(--muted);">We'll notify you on WhatsApp</div></div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">❌</span>
+          <div><div style="font-weight:600;font-size:14px;color:var(--error);">Payment failed</div><div style="font-size:12px;color:var(--muted);">No charge made — please try again</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 MOTION -->
+<section class="section" id="motion">
+  <div class="section-tag">10 — Motion</div>
+  <h2 class="section-title">Purposeful Animation</h2>
+  <p class="section-sub">Motion should feel like the natural rhythm of a well-run home — purposeful, organic, and never gratuitous. Hover the cards to preview.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Duration Tokens — Hover to Preview</div>
+    <div class="motion-grid">
+      <div class="motion-card"><div class="motion-dot"></div><h4>Instant</h4><p>100ms · Hover</p></div>
+      <div class="motion-card"><div class="motion-dot"></div><h4>Fast</h4><p>200ms · Toggles</p></div>
+      <div class="motion-card"><div class="motion-dot"></div><h4>Normal</h4><p>300ms · Cards</p></div>
+      <div class="motion-card"><div class="motion-dot"></div><h4>Slow</h4><p>500ms · Modals</p></div>
+      <div class="motion-card"><div class="motion-dot" style="background:var(--copper);"></div><h4>Emphasis</h4><p>700ms · Hero</p></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Easing Curves</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--espresso);margin-bottom:4px;">Standard</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:12px;">Most UI transitions</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal);">cubic-bezier(0.4, 0, 0.2, 1)</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--espresso);margin-bottom:4px;">Enter</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:12px;">Elements appearing</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal);">cubic-bezier(0, 0, 0.2, 1)</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--espresso);margin-bottom:4px;">Exit</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:12px;">Elements leaving</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal);">cubic-bezier(0.4, 0, 1, 1)</div>
+      </div>
+      <div style="background:var(--teal-ghost);border:1.5px solid var(--teal-pale);border-radius:var(--r-lg);padding:20px;">
+        <div style="font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--teal);margin-bottom:4px;">Spring ✨</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:12px;">Celebratory moments</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--teal);">cubic-bezier(0.34, 1.56, 0.64, 1)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 VOICE -->
+<section class="section section-linen" id="voice">
+  <div class="section-tag">11 — Voice & Tone</div>
+  <h2 class="section-title">The Concierge Persona</h2>
+  <p class="section-sub">Warm but not gushing. Confident but not cold. Direct but never corporate. We speak like a trusted, knowledgeable friend — who happens to run a brilliant service.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Voice in Action</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px;">
+      <div class="voice-pair">
+        <div class="voice-good"><div class="voice-tag">✅ We say</div><p>"Find your perfect helper — in minutes."</p></div>
+        <div class="voice-bad"><div class="voice-tag">❌ Not this</div><p>"Explore our range of domestic staffing solutions."</p></div>
+      </div>
+      <div class="voice-pair">
+        <div class="voice-good"><div class="voice-tag">✅ We say</div><p>"Something went wrong — no charges made. Let's try again."</p></div>
+        <div class="voice-bad"><div class="voice-tag">❌ Not this</div><p>"Error 402: Payment processing failure."</p></div>
+      </div>
+      <div class="voice-pair">
+        <div class="voice-good"><div class="voice-tag">✅ We say</div><p>"We've got you covered. ✨"</p></div>
+        <div class="voice-bad"><div class="voice-tag">❌ Not this</div><p>"Your request has been received and is being processed."</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">WhatsApp Communication Template</div>
+    <div class="whatsapp-preview">
+      <div class="wa-header">
+        <div class="wa-icon">🏠</div>
+        <div><div class="wa-name">Maids.ng</div><div class="wa-verified">✓ Verified Business</div></div>
+      </div>
+      <div class="wa-bubble">
+        Hi <strong>Adaeze</strong> 👋<br><br>
+        Great news! We've found your perfect match 🏠✨<br><br>
+        <strong>Helper:</strong> Chioma Okonkwo<br>
+        <strong>Skills:</strong> Cooking, Childcare, Cleaning<br>
+        <strong>Rating:</strong> ⭐⭐⭐⭐⭐ Verified<br>
+        <strong>Available:</strong> From Monday<br><br>
+        Confirm and pay here:<br>
+        <span style="color:var(--teal-light);text-decoration:underline;">maids.ng/confirm/TX-0042</span><br><br>
+        <span style="opacity:0.5;font-size:12px;">— Team Maids.ng</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 SOCIAL -->
+<section class="section" id="social">
+  <div class="section-tag">12 — Social Media</div>
+  <h2 class="section-title">Brand in the Feed</h2>
+  <p class="section-sub">Consistent presence across every platform — 2 lifestyle posts for every 1 promotional post. Helper dignity is non-negotiable in every creative.</p>
+
+  <div class="subsection">
+    <div class="sub-label">Social Template Previews</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start;">
+
+      <!-- Feed Post -->
+      <div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px;">Feed · 1080×1080px</div>
+        <div style="background:var(--ivory);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-2);aspect-ratio:1;display:flex;flex-direction:column;">
+          <div style="background:var(--teal);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
+            <img src="https://maids.ng/logo.png" alt="logo" style="height:24px;filter:brightness(0) invert(1);">
+            <span style="font-size:18px;">✨</span>
+          </div>
+          <div style="padding:24px;flex:1;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:400;line-height:1.3;color:var(--espresso);margin-bottom:12px;">"Finally found someone I can actually trust."</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">— Adaeze, Lagos Mainland</div>
+            <div style="background:var(--teal-ghost);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--teal);font-weight:500;">★★★★★ Verified Review</div>
+          </div>
+          <div style="padding:0 24px 20px;">
+            <button class="btn btn-primary" style="width:100%;font-size:13px;padding:10px;">Find Your Match →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helper Spotlight -->
+      <div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px;">Spotlight · 1080×1080px</div>
+        <div style="background:var(--espresso);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-2);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;position:relative;">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,var(--teal),var(--copper));"></div>
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--teal-pale),var(--teal));margin-bottom:14px;border:3px solid var(--copper);"></div>
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--ivory);margin-bottom:4px;">Chioma Okonkwo</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px;">Nanny & Cook · Lagos</div>
+          <div style="color:var(--copper-light);font-size:16px;margin-bottom:14px;">★★★★★</div>
+          <div style="display:flex;gap:6px;justify-content:center;margin-bottom:20px;">
+            <span style="background:rgba(15,85,86,0.4);color:var(--teal-light);font-size:10px;padding:4px 10px;border-radius:20px;">Childcare</span>
+            <span style="background:rgba(15,85,86,0.4);color:var(--teal-light);font-size:10px;padding:4px 10px;border-radius:20px;">Cooking</span>
+          </div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.2);font-family:var(--font-mono);">maids.ng · Verified Helper</div>
+        </div>
+      </div>
+
+      <!-- Story -->
+      <div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px;">Story · 9:16 (preview)</div>
+        <div style="background:var(--teal-deep);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-2);aspect-ratio:9/16;display:flex;flex-direction:column;">
+          <div style="background:var(--teal);padding:14px 18px;">
+            <img src="https://maids.ng/logo.png" alt="logo" style="height:22px;filter:brightness(0) invert(1);">
+          </div>
+          <div style="flex:1;padding:22px 18px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-family:var(--font-display);font-size:26px;font-weight:300;font-style:italic;color:var(--ivory);line-height:1.3;margin-bottom:14px;">Need trusted home help?</div>
+            <div style="font-size:13px;color:rgba(250,247,242,0.6);line-height:1.7;margin-bottom:20px;">2,500+ verified helpers. Found in minutes. Guaranteed.</div>
+            <button class="btn btn-secondary" style="font-size:13px;padding:11px 22px;width:fit-content;">Find My Helper ✨</button>
+          </div>
+          <div style="background:rgba(15,85,86,0.4);padding:12px 18px;text-align:center;">
+            <span style="font-size:11px;color:var(--teal-light);font-weight:600;">maids.ng · Free to browse</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 DO'S & DON'TS -->
+<section class="section section-dark" id="dosdonts">
+  <div class="section-tag">13 — Do's & Don'ts</div>
+  <h2 class="section-title">The Rules We Live By</h2>
+  <p class="section-sub">Non-negotiable. These protect everything the brand stands for.</p>
+
+  <div class="check-grid">
+    <div class="check-item do"><span class="ico">✅</span>Always use #0F5556 as the primary brand teal — derived from the actual logo</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never substitute a different green, navy, or teal that doesn't match the logo</div>
+    <div class="check-item do"><span class="ico">✅</span>Use Cormorant Garamond for all hero headlines and emotional display moments</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never mix typefaces outside the defined trio (Cormorant / DM Sans / DM Mono)</div>
+    <div class="check-item do"><span class="ico">✅</span>Show real, diverse Nigerian faces — helpers AND families authentically</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never use stock photography that could be set anywhere in the world</div>
+    <div class="check-item do"><span class="ico">✅</span>Treat helpers as professionals — confident, skilled, proud in all imagery</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never depict helpers in cap-and-apron uniforms, subservient poses, or stereotyped roles</div>
+    <div class="check-item do"><span class="ico">✅</span>Preserve the sparkle/star motif in all logo applications — it's brand equity</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never distort, recolour, rotate, or recreate the logo</div>
+    <div class="check-item do"><span class="ico">✅</span>Use green-tinted shadows (rgba(15,85,86,…)) — never grey box-shadows</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never use gradient backgrounds — flat design only throughout the UI</div>
+    <div class="check-item do"><span class="ico">✅</span>Write ₦10,000 (naira symbol, no space) — always for Nigerian prices</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never write NGN or add a space between the symbol and number</div>
+    <div class="check-item do"><span class="ico">✅</span>Follow the 8pt grid for all spacing decisions on every layout</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never use random spacing values outside the defined scale</div>
+    <div class="check-item do"><span class="ico">✅</span>Keep WhatsApp messages warm, personal, and brief — include sparkle emoji ✨</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never use cold, corporate language in any customer-facing communication</div>
+    <div class="check-item do"><span class="ico">✅</span>Test every mobile layout at 375px minimum before finalising</div>
+    <div class="check-item dont"><span class="ico">❌</span>Never design desktop-first when 70%+ of Nigerian users are on mobile</div>
+  </div>
+</section>
+
+<!-- 14 TOKENS -->
+<section class="section section-dark" id="tokens">
+  <div class="section-tag">14 — Design Tokens</div>
+  <h2 class="section-title">The Single Source<br>of Truth</h2>
+  <p class="section-sub">Copy this CSS into every project. All values flow from the actual logo colour.</p>
+
+<pre><span class="c">/* ── Maids.ng Design Tokens v3.0 ──────────────────── */</span>
+<span class="c">/* Brand teal extracted from logo.png pixel sampling   */</span>
+:root {
+
+  <span class="c">/* CORE BRAND — from logo */</span>
+  <span class="p">--teal</span>:           <span class="v">#0F5556</span>; <span class="c">/* Primary — logo teal */</span>
+  <span class="p">--teal-dark</span>:      <span class="v">#083A3B</span>; <span class="c">/* Hover state */</span>
+  <span class="p">--teal-deep</span>:      <span class="v">#052829</span>; <span class="c">/* Dark hero bg */</span>
+  <span class="p">--teal-mid</span>:       <span class="v">#1A7374</span>;
+  <span class="p">--teal-light</span>:     <span class="v">#2A9799</span>;
+  <span class="p">--teal-pale</span>:      <span class="v">#D0EAEA</span>;
+  <span class="p">--teal-ghost</span>:     <span class="v">#EAF4F4</span>;
+
+  <span class="c">/* ACCENT */</span>
+  <span class="p">--copper</span>:         <span class="v">#B45309</span>; <span class="c">/* Heritage Copper */</span>
+  <span class="p">--copper-light</span>:   <span class="v">#D4813A</span>;
+  <span class="p">--copper-pale</span>:    <span class="v">#FEF3E6</span>;
+
+  <span class="c">/* SURFACES */</span>
+  <span class="p">--ivory</span>:          <span class="v">#FAF7F2</span>; <span class="c">/* Primary bg */</span>
+  <span class="p">--linen</span>:          <span class="v">#F1EAD7</span>; <span class="c">/* Secondary bg */</span>
+  <span class="p">--espresso</span>:       <span class="v">#1C1812</span>; <span class="c">/* Dark anchor */</span>
+  <span class="p">--muted</span>:          <span class="v">#6B7280</span>;
+  <span class="p">--border</span>:         <span class="v">#E5E7EB</span>;
+
+  <span class="c">/* FUNCTIONAL */</span>
+  <span class="p">--success</span>:        <span class="v">#0F7566</span>;
+  <span class="p">--warning</span>:        <span class="v">#E8A020</span>;
+  <span class="p">--error</span>:          <span class="v">#C8372D</span>;
+  <span class="p">--info</span>:           <span class="v">#1A6B8A</span>;
+
+  <span class="c">/* TYPOGRAPHY */</span>
+  <span class="p">--font-display</span>:   <span class="s">'Cormorant Garamond'</span>, Georgia, serif;
+  <span class="p">--font-body</span>:      <span class="s">'DM Sans'</span>, system-ui, sans-serif;
+  <span class="p">--font-mono</span>:      <span class="s">'DM Mono'</span>, monospace;
+
+  <span class="c">/* SPACING — 8pt grid */</span>
+  <span class="p">--space-1</span>: <span class="v">4px</span>;   <span class="p">--space-2</span>: <span class="v">8px</span>;   <span class="p">--space-3</span>: <span class="v">16px</span>;
+  <span class="p">--space-4</span>: <span class="v">24px</span>;  <span class="p">--space-5</span>: <span class="v">32px</span>;  <span class="p">--space-6</span>: <span class="v">48px</span>;
+  <span class="p">--space-7</span>: <span class="v">64px</span>;  <span class="p">--space-8</span>: <span class="v">96px</span>;  <span class="p">--space-9</span>: <span class="v">128px</span>;
+
+  <span class="c">/* RADIUS */</span>
+  <span class="p">--r-sm</span>: <span class="v">6px</span>; <span class="p">--r-md</span>: <span class="v">12px</span>; <span class="p">--r-lg</span>: <span class="v">16px</span>;
+  <span class="p">--r-xl</span>: <span class="v">24px</span>; <span class="p">--r-full</span>: <span class="v">999px</span>;
+
+  <span class="c">/* SHADOWS — teal-tinted */</span>
+  <span class="p">--shadow-1</span>: <span class="v">0 1px 3px rgba(15,85,86,0.08), 0 1px 2px rgba(15,85,86,0.06)</span>;
+  <span class="p">--shadow-2</span>: <span class="v">0 4px 16px rgba(15,85,86,0.10), 0 2px 6px rgba(15,85,86,0.08)</span>;
+  <span class="p">--shadow-3</span>: <span class="v">0 12px 40px rgba(15,85,86,0.14), 0 4px 12px rgba(15,85,86,0.10)</span>;
+
+  <span class="c">/* MOTION */</span>
+  <span class="p">--ease-std</span>:    <span class="v">cubic-bezier(0.4, 0, 0.2, 1)</span>;
+  <span class="p">--ease-enter</span>:  <span class="v">cubic-bezier(0, 0, 0.2, 1)</span>;
+  <span class="p">--ease-spring</span>: <span class="v">cubic-bezier(0.34, 1.56, 0.64, 1)</span>;
+}</pre>
+
+  <div style="background:rgba(255,255,255,0.05);border-radius:var(--r-lg);padding:24px 28px;border:1px solid rgba(255,255,255,0.08);margin-top:24px;">
+    <div style="font-size:10px;font-family:var(--font-mono);color:var(--teal-light);margin-bottom:10px;letter-spacing:0.1em;">GOOGLE FONTS — Add to &lt;head&gt;</div>
+    <pre style="background:transparent;padding:0;font-size:12px;color:rgba(250,247,242,0.6);">&lt;link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&amp;family=DM+Sans:wght@300;400;500;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet"&gt;</pre>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:#000;padding:64px 10%;text-align:center;border-top:none;">
+  <img src="https://maids.ng/logo.png" alt="Maids.ng" style="height:40px;filter:brightness(0) invert(1);margin-bottom:28px;display:block;margin-left:auto;margin-right:auto;">
+  <p style="font-family:var(--font-display);font-size:22px;font-style:italic;font-weight:300;color:rgba(250,247,242,0.55);line-height:1.6;max-width:560px;margin:0 auto 40px;">"Every family deserves help they can trust.<br>Every helper deserves work they can be proud of."</p>
+  <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.4em;color:rgba(255,255,255,0.18);">BRAND GUIDELINES v3.0 · 2026 · MAIDS.NG · THE SANCTUARY STANDARD</div>
+</footer>
+
+</main>
+
+<script>
+const pf = document.getElementById('pf');
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  pf.style.width = pct + '%';
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-link');
+const navObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => navObs.observe(s));
+</script>
+</body>
+</html>

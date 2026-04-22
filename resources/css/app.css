@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Brand Design Tokens ── */
+:root {
+    --teal: #0F5556;
+    --teal-dark: #083A3B;
+    --teal-deep: #052829;
+    --teal-mid: #1A7374;
+    --teal-light: #2A9799;
+    --teal-pale: #D0EAEA;
+    --teal-ghost: #EAF4F4;
+    --copper: #B45309;
+    --copper-light: #D4813A;
+    --copper-pale: #FEF3E6;
+    --ivory: #FAF7F2;
+    --linen: #F1EAD7;
+    --espresso: #1C1812;
+    --muted: #6B7280;
+}
+
+/* ── Base typography ── */
+body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background-color: var(--ivory);
+    color: var(--espresso);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── Smooth transitions ── */
+*, *::before, *::after {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--teal-pale); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal-light); }
