@@ -23,18 +23,17 @@ class ScoutAgent extends AgentService
         $maxScore = 100;
         $breakdown = [];
 
-        // 1. Help Type Match (Max 35 points)
-        $employerHelpTypes = is_array($preferences->help_types) 
-            ? $preferences->help_types 
-            : json_decode($preferences->help_types, true) ?? [];
-            
-        $maidSkills = is_array($maid->skills) 
-            ? $maid->skills 
-            : json_decode($maid->skills, true) ?? [];
+        // 1. Help Type Match (Max 35 points) - attributes are already arrays due to model casts
+        $employerHelpTypes = array_map('strtolower', (array)($preferences->help_types ?? []));
+        $maidHelpTypes = array_map('strtolower', (array)($maid->help_types ?? []));
+        
+        if (empty($maidHelpTypes)) {
+            $maidHelpTypes = array_map('strtolower', (array)($maid->skills ?? []));
+        }
 
-        $matchingSkills = array_intersect($employerHelpTypes, $maidSkills);
+        $matchingTypes = array_intersect($employerHelpTypes, $maidHelpTypes);
         $helpScore = count($employerHelpTypes) > 0 
-            ? (count($matchingSkills) / count($employerHelpTypes)) * 35 
+            ? (count($matchingTypes) / count($employerHelpTypes)) * 35 
             : 35;
         $score += $helpScore;
         $breakdown['help_type'] = $helpScore;
@@ -46,45 +45,53 @@ class ScoutAgent extends AgentService
         if ($maidRate <= $employerBudget) {
             $budgetScore = 25;
         } elseif ($maidRate <= ($employerBudget * 1.2)) {
-            $budgetScore = 15; // 20% over budget is acceptable but penalized
+            $budgetScore = 15; 
         } else {
             $budgetScore = 0;
         }
         $score += $budgetScore;
         $breakdown['budget'] = $budgetScore;
 
-        // 3. Location Match / Willingness to Travel (Max 25 points)
+        // 3. Location Match / Proximity (Max 25 points)
         $locationScore = 0;
-        $maidState = $maid->state ?? '';
-        $prefState = $preferences->state ?? '';
-        $maidCity = $maid->city ?? '';
-        $prefCity = $preferences->city ?? '';
+        $maidLoc = strtolower(trim($maid->location ?? ''));
+        $prefLoc = strtolower(trim($preferences->location ?? ''));
+        $prefCity = strtolower(trim($preferences->city ?? ''));
+        $prefState = strtolower(trim($preferences->state ?? ''));
+        
+        if (!empty($prefLoc) && !empty($maidLoc) && (str_contains($maidLoc, $prefLoc) || str_contains($prefLoc, $maidLoc))) {
+            $locationScore = 25;
+        } elseif (!empty($prefCity) && !empty($maidLoc) && str_contains($maidLoc, $prefCity)) {
+            $locationScore = 25;
+        } elseif (!empty($prefState) && !empty($maidLoc) && str_contains($maidLoc, $prefState)) {
+            $locationScore = 20;
+        } else {
+            // State/City explicit fields check
+            $maidState = strtolower(trim($maid->state ?? ''));
+            $maidCity = strtolower(trim($maid->city ?? ''));
 
-        if (!empty($maidState) && !empty($prefState) && strtolower($maidState) === strtolower($prefState)) {
-            $locationScore = 15;
-            if (!empty($maidCity) && !empty($prefCity) && strtolower($maidCity) === strtolower($prefCity)) {
-                $locationScore = 25;
+            if (!empty($maidState) && !empty($prefState) && $maidState === $prefState) {
+                $locationScore = 15;
+                if (!empty($maidCity) && !empty($prefCity) && $maidCity === $prefCity) {
+                    $locationScore = 25;
+                }
             }
         }
         $score += $locationScore;
         $breakdown['location'] = $locationScore;
 
         // 4. Quality & Sentinel adjustment (Max 15 points)
-        $ratingScore = ($maid->rating / 5) * 15;
+        $ratingScore = (($maid->rating ?? 0) / 5) * 15;
         $score += $ratingScore;
         $breakdown['quality'] = $ratingScore;
 
-        // Confidence calculation based on data completeness
-        $confidence = ($maid->isVerified() ? 50 : 20) + (count($maidSkills) > 0 ? 50 : 0);
+        $confidence = ($maid->isVerified() ? 50 : 20) + (count($maidHelpTypes) > 0 ? 50 : 0);
 
-        // Record the background decision periodically (we wouldn't log every single match in a loop for perf, 
-        // but for high-scoring ones we might). Let's just return the score block for the controller to use.
         return [
             'score' => round($score),
             'confidence' => $confidence,
             'breakdown' => $breakdown,
             'agent' => $this->getName(),
-            // The controller can trigger logDecision if they proceed with this match
         ];
     }
 }

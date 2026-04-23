@@ -12,6 +12,7 @@ class EmployerPreference extends Model
         'schedule',
         'urgency',
         'location',
+        'city',
         'state',
         'budget_min',
         'budget_max',

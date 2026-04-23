@@ -68,7 +68,7 @@ class SentinelAgent extends AgentService
                    Helper Profile JSON: " . json_encode([
                        'name' => $maid->user->name,
                        'bio' => $maid->bio,
-                       'skills' => json_decode($maid->skills, true) ?? [],
+                       'skills' => $maid->skills ?? [],
                        'is_verified' => $maid->nin_verified,
                        'experience' => $maid->experience_years,
                        'current_score' => $maid->rating
