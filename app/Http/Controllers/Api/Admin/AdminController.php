@@ -466,4 +466,73 @@ class AdminController extends ApiController
 
         return $this->success($health, 'System health retrieved successfully');
     }
+
+    /**
+     * Fetch AI Models from Provider API
+     * 
+     * Dynamically fetch available models from OpenAI or OpenRouter API.
+     * 
+     * @param Request $request
+     * @param string $provider
+     * @return JsonResponse
+     */
+    public function fetchAiModels(Request $request, string $provider): JsonResponse
+    {
+        // Properly check role and abort if unauthorized
+        $roleCheck = $this->requireRole('admin');
+        if ($roleCheck) {
+            return $roleCheck;
+        }
+
+        $validProviders = ['openai', 'openrouter'];
+
+        if (!in_array($provider, $validProviders)) {
+            return $this->validationError(['provider' => 'Invalid provider. Must be openai or openrouter']);
+        }
+
+        // Clear cache if refresh is requested
+        if ($request->boolean('refresh')) {
+            \Illuminate\Support\Facades\Cache::forget("{$provider}_models_list");
+        }
+
+        $aiService = new \App\Services\Ai\AiService();
+        $result = $aiService->fetchModels($provider);
+
+        if (isset($result['error'])) {
+            return $this->error($result['error'], 400);
+        }
+
+        $models = $result['models'] ?? [];
+
+        // Get search query if provided
+        $search = $request->get('search', '');
+
+        // Filter models if search query provided
+        if ($search) {
+            $filtered = [];
+            foreach ($models as $id => $name) {
+                if (stripos($id, $search) !== false || stripos($name, $search) !== false) {
+                    $filtered[$id] = $name;
+                }
+            }
+            $models = $filtered;
+        }
+
+        $totalAvailable = count($models);
+
+        // Only limit to 10 for initial load (no search). Return all results when searching.
+        if (!$search && $totalAvailable > 10) {
+            $displayModels = array_slice($models, 0, 10, true);
+        } else {
+            $displayModels = $models;
+        }
+
+        return $this->success([
+            'provider' => $provider,
+            'models' => $displayModels,
+            'total_available' => $totalAvailable,
+            'showing' => count($displayModels),
+            'has_more' => $totalAvailable > count($displayModels),
+        ], 'Models retrieved successfully');
+    }
 }

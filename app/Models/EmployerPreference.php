@@ -21,6 +21,7 @@ class EmployerPreference extends Model
         'contact_email',
         'selected_maid_id',
         'matching_status',
+        'guarantee_deadline',
         'notes',
     ];
 
@@ -30,6 +31,7 @@ class EmployerPreference extends Model
             'help_types' => 'array',
             'budget_min' => 'integer',
             'budget_max' => 'integer',
+            'guarantee_deadline' => 'datetime',
         ];
     }
 

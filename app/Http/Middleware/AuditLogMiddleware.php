@@ -46,7 +46,7 @@ class AuditLogMiddleware
                     'status_code' => $response->getStatusCode(),
                     'data_keys' => array_keys($data),
                 ]),
-                'result' => $response->getStatusCode() < 400 ? 'success' : 'failure',
+                'decision' => $response->getStatusCode() < 400 ? 'success' : 'failure',
             ]);
         } catch (\Throwable $e) {
             // Silently fail — audit logging should never break the app

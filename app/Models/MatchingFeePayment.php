@@ -13,6 +13,7 @@ class MatchingFeePayment extends Model
         'reference',
         'gateway',
         'status',
+        'payment_type',
         'paid_at',
         'refunded_at',
         'gateway_response',

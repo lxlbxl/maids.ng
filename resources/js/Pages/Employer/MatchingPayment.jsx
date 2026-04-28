@@ -13,9 +13,49 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                 body: JSON.stringify({ preference_id: preference.id }),
             });
             const data = await resp.json();
-            // In production, open Paystack popup. For now, redirect to verify.
-            window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
+            
+            if (data.success) {
+                if (data.gateway === 'flutterwave') {
+                    window.FlutterwaveCheckout({
+                        public_key: data.key,
+                        tx_ref: data.reference,
+                        amount: data.amount,
+                        currency: "NGN",
+                        payment_options: "card, banktransfer, ussd",
+                        customer: {
+                            email: data.email,
+                            name: data.name,
+                            phone_number: data.phone,
+                        },
+                        callback: function (response) {
+                            window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
+                        },
+                        onclose: function() {
+                            setLoading(false);
+                        }
+                    });
+                } else {
+                    const handler = window.PaystackPop.setup({
+                        key: data.key,
+                        email: data.email,
+                        amount: data.amount * 100, // Paystack requires kobo
+                        ref: data.reference,
+                        callback: function(response) {
+                            window.location.href = `/employer/matching-fee/verify?reference=${response.reference}`;
+                        },
+                        onClose: function() {
+                            setLoading(false);
+                        }
+                    });
+                    handler.openIframe();
+                }
+            } else {
+                alert('Failed to initialize payment. Please try again.');
+                setLoading(false);
+            }
         } catch (e) {
+            console.error(e);
+            alert('An error occurred. Please check your connection.');
             setLoading(false);
         }
     };

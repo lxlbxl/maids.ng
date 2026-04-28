@@ -3,6 +3,7 @@
 namespace App\Services\Agents;
 
 use App\Models\Booking;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\AgentService;
 
@@ -29,13 +30,13 @@ class TreasurerAgent extends AgentService
         }
 
         $gross = $booking->amount; // e.g. 50000
-        $commissionPercent = config('appSettings.commission_percent', 10);
-        
+        $commissionPercent = (float) Setting::get('commission_percent', 10);
+
         $commissionAmount = ($gross * $commissionPercent) / 100;
         $netPayout = $gross - $commissionAmount;
 
         $confidence = 100;
-        
+
         // Sanity Check: Is target payout extraordinarily large?
         if ($netPayout > 200000) {
             $confidence = 30; // Suspiciously large
@@ -44,7 +45,7 @@ class TreasurerAgent extends AgentService
         if ($confidence >= 90) {
             // Initiate real bank transfer via Paystack/Flutterwave API
             // ... API logic here ...
-            
+
             // Mark paid locally
             $booking->update(['payment_status' => 'paid_out']);
 

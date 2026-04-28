@@ -20,6 +20,8 @@
         @routes
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        <script src="https://js.paystack.co/v1/inline.js"></script>
+        <script src="https://checkout.flutterwave.com/v3.js"></script>
         @inertiaHead
     </head>
     <body class="font-body antialiased bg-ivory text-espresso">

@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
 
 class OpenRouterDriver implements AiProvider
@@ -57,5 +58,48 @@ class OpenRouterDriver implements AiProvider
             'meta-llama/llama-3.1-405b' => 'Llama 3.1 405B',
             'mistralai/mistral-large-2407' => 'Mistral Large 2',
         ];
+    }
+
+    /**
+     * Fetch available models from OpenRouter API.
+     * The /api/v1/models endpoint is PUBLIC — no API key required.
+     */
+    public function fetchModelsFromApi(): array
+    {
+        try {
+            // Build request — no auth required for model listing
+            $response = Http::timeout(15)
+                ->withHeaders([
+                    'HTTP-Referer' => config('app.url', 'https://maids.ng'),
+                    'X-Title' => 'Maids.ng Mission Control',
+                ])
+                ->get('https://openrouter.ai/api/v1/models');
+
+            if ($response->failed()) {
+                $errorMsg = $response->json('error.message', $response->body());
+                Log::warning('OpenRouter model fetch failed', ['status' => $response->status(), 'error' => $errorMsg]);
+                return ['error' => 'Failed to fetch models from OpenRouter (HTTP ' . $response->status() . ')'];
+            }
+
+            $models = $response->json('data', []);
+            $formattedModels = [];
+
+            foreach ($models as $model) {
+                $id = $model['id'] ?? '';
+                if (empty($id)) continue;
+
+                $description = $model['name'] ?? $id;
+                $formattedModels[$id] = $description;
+            }
+
+            // Sort alphabetically by display name
+            asort($formattedModels);
+
+            return $formattedModels;
+
+        } catch (\Exception $e) {
+            Log::error('OpenRouter model fetch exception', ['message' => $e->getMessage()]);
+            return ['error' => 'Connection error while fetching OpenRouter models: ' . $e->getMessage()];
+        }
     }
 }

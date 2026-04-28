@@ -38,6 +38,7 @@ class AiService
 
     /**
      * Get all providers and their respective models for configuration UI.
+     * Returns the hardcoded fallback models (used as initial page data).
      */
     public function getProviderManifest(): array
     {
@@ -51,5 +52,45 @@ class AiService
                 'models' => (new OpenRouterDriver())->getModels(),
             ],
         ];
+    }
+
+    /**
+     * Fetch models dynamically from the provider's API.
+     * Returns ['models' => [...]] on success, or ['error' => '...'] on failure.
+     */
+    public function fetchModels(string $provider): array
+    {
+        try {
+            $driver = match ($provider) {
+                'openai' => new OpenAiDriver(),
+                'openrouter' => new OpenRouterDriver(),
+                default => null,
+            };
+
+            if (!$driver) {
+                return ['error' => "Unknown provider: {$provider}. Supported providers: openai, openrouter"];
+            }
+
+            if (!method_exists($driver, 'fetchModelsFromApi')) {
+                return ['error' => "Provider '{$provider}' does not support dynamic model fetching"];
+            }
+
+            $result = $driver->fetchModelsFromApi();
+
+            // If the result has an 'error' key, it's an error response from the driver
+            if (isset($result['error'])) {
+                return $result;
+            }
+
+            // Otherwise the result IS the models array
+            return ['models' => $result];
+
+        } catch (\Exception $e) {
+            Log::error("AiService fetchModels error for provider {$provider}", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return ['error' => 'Unexpected error fetching models: ' . $e->getMessage()];
+        }
     }
 }

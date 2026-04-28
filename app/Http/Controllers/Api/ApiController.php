@@ -106,35 +106,53 @@ abstract class ApiController extends Controller
      * Standard pagination structure for list endpoints.
      * Compatible with Laravel's LengthAwarePaginator.
      * 
-     * @param mixed $data Paginated data
-     * @param string $message Success message
+     * Supports two calling patterns:
+     *   paginated($paginator, 'message')
+     *   paginated($resourceCollection, $paginator, 'message')
+     * 
+     * @param mixed $data Resource collection or paginator
+     * @param mixed $paginatorOrMessage Paginator instance or success message string
+     * @param string $message Success message (when 3-arg pattern used)
      * @param int $code HTTP status code
      * @return JsonResponse
      */
     protected function paginated(
         mixed $data,
+        mixed $paginatorOrMessage = 'Success',
         string $message = 'Success',
         int $code = Response::HTTP_OK
     ): JsonResponse {
+        // Determine calling pattern
+        if (is_object($paginatorOrMessage) && method_exists($paginatorOrMessage, 'currentPage')) {
+            // 3-arg pattern: paginated($collection, $paginator, $message)
+            $paginator = $paginatorOrMessage;
+            $items = $data;
+        } else {
+            // 2-arg pattern: paginated($paginator, $message)
+            $paginator = $data;
+            $items = $data->items();
+            $message = is_string($paginatorOrMessage) ? $paginatorOrMessage : 'Success';
+        }
+
         $pagination = [
-            'current_page' => $data->currentPage(),
-            'last_page' => $data->lastPage(),
-            'per_page' => $data->perPage(),
-            'total' => $data->total(),
-            'from' => $data->firstItem(),
-            'to' => $data->lastItem(),
-            'has_more' => $data->hasMorePages(),
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+            'has_more' => $paginator->hasMorePages(),
         ];
 
         $links = [
-            'first' => $data->url(1),
-            'last' => $data->url($data->lastPage()),
-            'prev' => $data->previousPageUrl(),
-            'next' => $data->nextPageUrl(),
+            'first' => $paginator->url(1),
+            'last' => $paginator->url($paginator->lastPage()),
+            'prev' => $paginator->previousPageUrl(),
+            'next' => $paginator->nextPageUrl(),
         ];
 
         return $this->success(
-            $data->items(),
+            $items,
             $message,
             [
                 'pagination' => $pagination,

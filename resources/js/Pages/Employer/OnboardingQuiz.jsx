@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const STEPS = [
     { id: 'help_type', title: 'What type of help do you need?', subtitle: 'Select all that apply', multi: true,
@@ -32,15 +32,21 @@ const STEPS = [
     { id: 'contact_email', title: 'Your email address?', subtitle: 'For your match results and receipts', type: 'input', placeholder: 'e.g. you@email.com' },
 ];
 
-export default function OnboardingQuiz() {
+export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     const [step, setStep] = useState(0);
     const [answers, setAnswers] = useState({ help_types: [], schedule: '', urgency: '', location: '', budget_min: 15000, budget_max: 80000, contact_name: '', contact_phone: '', contact_email: '' });
     const [matches, setMatches] = useState(null);
     const [preferenceId, setPreferenceId] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const [accountCreated, setAccountCreated] = useState(false);
+    const [accountMessage, setAccountMessage] = useState('');
+    const [guaranteeLoading, setGuaranteeLoading] = useState(false);
 
     const current = STEPS[step];
     const progress = ((step + 1) / STEPS.length) * 100;
+
+    const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     const handleOptionSelect = (value) => {
         if (current.multi) {
@@ -60,6 +66,34 @@ export default function OnboardingQuiz() {
         setAnswers(prev => ({ ...prev, [field]: value }));
     };
 
+    /**
+     * Auto-create account once all contact fields are filled (after email step).
+     * This happens in the background while the user sees the "Finding Matches..." state.
+     */
+    const createAccountIfNeeded = async () => {
+        if (accountCreated || !answers.contact_name || !answers.contact_email) return null;
+
+        try {
+            const response = await fetch('/onboarding/create-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    contact_name: answers.contact_name,
+                    contact_email: answers.contact_email,
+                    contact_phone: answers.contact_phone,
+                }),
+            });
+            const data = await response.json();
+            setUserId(data.user_id);
+            setAccountCreated(true);
+            setAccountMessage(data.message);
+            return data.user_id;
+        } catch (err) {
+            console.warn('Account creation failed:', err);
+            return null;
+        }
+    };
+
     const nextStep = () => {
         if (step < STEPS.length - 1) {
             setStep(step + 1);
@@ -73,10 +107,17 @@ export default function OnboardingQuiz() {
     const submitQuiz = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/employer/matching/find', {
+            // Create account first (if not already done), then search
+            const createdUserId = await createAccountIfNeeded();
+            const effectiveUserId = createdUserId || userId;
+
+            const response = await fetch('/onboarding/find-matches', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '', 'Accept': 'application/json' },
-                body: JSON.stringify(answers),
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    ...answers,
+                    user_id: effectiveUserId,
+                }),
             });
             const data = await response.json();
             setMatches(data.matches || []);
@@ -96,69 +137,204 @@ export default function OnboardingQuiz() {
         router.post('/employer/matching/select', { preference_id: preferenceId, maid_id: maidId });
     };
 
+    /**
+     * Activate Guarantee Match — redirects to the payment page.
+     */
+    const handleGuaranteeMatch = async () => {
+        if (!preferenceId) return;
+        setGuaranteeLoading(true);
+        try {
+            const response = await fetch('/onboarding/guarantee-match', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json' },
+                body: JSON.stringify({ preference_id: preferenceId }),
+            });
+
+            if (response.status === 422) {
+                const errors = await response.json();
+                alert(Object.values(errors.errors || {})[0]?.[0] || 'Validation failed.');
+                setGuaranteeLoading(false);
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Server error');
+            }
+
+            const data = await response.json();
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                setGuaranteeLoading(false);
+                alert('Could not start payment. Please try again.');
+            }
+        } catch (err) {
+            console.error('Guarantee match error:', err);
+            alert('An error occurred. Please check your connection.');
+            setGuaranteeLoading(false);
+        }
+    };
+
     // ── Matches Results View ──
     if (matches) {
+        // Has matches — show them
+        if (matches.length > 0) {
+            return (
+                <>
+                    <Head title="Your Matches" />
+                    <div className="min-h-screen bg-ivory py-12 px-6">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="text-center mb-12">
+                                <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-2">Your Matches</p>
+                                <h1 className="font-display text-4xl md:text-5xl font-light text-espresso mb-3">
+                                    We Found <em className="italic text-copper">{matches.length}</em> Helpers For You
+                                </h1>
+                                <p className="text-muted">Select a helper to proceed with booking</p>
+                                {accountMessage && (
+                                    <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost text-teal text-sm font-medium px-4 py-2 rounded-full">
+                                        <span>✓</span> {accountMessage}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid gap-5">
+                                {matches.map((maid) => (
+                                    <div key={maid.id} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row md:items-center gap-6">
+                                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-pale to-teal flex-shrink-0 flex items-center justify-center text-white text-xl font-bold relative">
+                                            {maid.name.charAt(0)}
+                                            {maid.verified && (
+                                                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-success rounded-full border-2 border-white text-[9px] flex items-center justify-center">✓</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h3 className="font-semibold text-espresso text-lg">{maid.name}</h3>
+                                                    <p className="text-muted text-sm">{maid.role} · {maid.location}</p>
+                                                </div>
+                                                <div className="bg-teal-ghost text-teal font-mono text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0">
+                                                    {maid.match}% match
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4 mt-3">
+                                                <span className="text-copper text-sm">{'★'.repeat(Math.round(maid.rating))} {maid.rating}</span>
+                                                <span className="font-mono text-espresso font-medium">₦{maid.rate?.toLocaleString()}<span className="text-muted text-xs font-normal">/mo</span></span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5 mt-3">
+                                                {(maid.skills || []).slice(0, 4).map(s => (
+                                                    <span key={s} className="bg-teal-ghost text-teal text-[11px] font-medium px-2.5 py-1 rounded-full">{s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button onClick={() => selectMaid(maid.id)} className="bg-teal text-white px-6 py-3 rounded-brand-md font-medium text-sm hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1 flex-shrink-0">
+                                            Select & Continue →
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        // ── Zero Results: Guarantee Match Upsell ──
         return (
             <>
-                <Head title="Your Matches" />
+                <Head title="Guarantee Match — Maids.ng" />
                 <div className="min-h-screen bg-ivory py-12 px-6">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="text-center mb-12">
-                            <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-2">Your Matches</p>
-                            <h1 className="font-display text-4xl md:text-5xl font-light text-espresso mb-3">
-                                We Found <em className="italic text-copper">{matches.length}</em> Helpers For You
+                    <div className="max-w-3xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-10" style={{animation: 'fade-up 0.5s ease both'}}>
+                            <a href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto mb-6" /></a>
+                            <p className="text-5xl mb-4">🔍</p>
+                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-3">
+                                We Don't Have an Exact Match <em className="italic text-copper">Yet</em>
                             </h1>
-                            <p className="text-muted">Select a helper to proceed with booking</p>
+                            <p className="text-muted max-w-lg mx-auto">
+                                No worries — our <strong className="text-espresso">Guarantee Match</strong> service means
+                                we'll personally find and assign a verified helper for you, or your money back.
+                            </p>
+                            {accountMessage && (
+                                <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost text-teal text-sm font-medium px-4 py-2 rounded-full">
+                                    <span>✓</span> {accountMessage}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid gap-5">
-                            {matches.map((maid) => (
-                                <div key={maid.id} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row md:items-center gap-6">
-                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-pale to-teal flex-shrink-0 flex items-center justify-center text-white text-xl font-bold relative">
-                                        {maid.name.charAt(0)}
-                                        {maid.verified && (
-                                            <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-success rounded-full border-2 border-white text-[9px] flex items-center justify-center">✓</span>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div>
-                                                <h3 className="font-semibold text-espresso text-lg">{maid.name}</h3>
-                                                <p className="text-muted text-sm">{maid.role} · {maid.location}</p>
-                                            </div>
-                                            <div className="bg-teal-ghost text-teal font-mono text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0">
-                                                {maid.match}% match
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 mt-3">
-                                            <span className="text-copper text-sm">{'★'.repeat(Math.round(maid.rating))} {maid.rating}</span>
-                                            <span className="font-mono text-espresso font-medium">₦{maid.rate?.toLocaleString()}<span className="text-muted text-xs font-normal">/mo</span></span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5 mt-3">
-                                            {(maid.skills || []).slice(0, 4).map(s => (
-                                                <span key={s} className="bg-teal-ghost text-teal text-[11px] font-medium px-2.5 py-1 rounded-full">{s}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <button onClick={() => selectMaid(maid.id)} className="bg-teal text-white px-6 py-3 rounded-brand-md font-medium text-sm hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1 flex-shrink-0">
-                                        Select & Continue →
-                                    </button>
+                        {/* Value Proposition Cards */}
+                        <div className="grid sm:grid-cols-2 gap-4 mb-8" style={{animation: 'fade-up 0.5s 0.1s ease both'}}>
+                            {[
+                                { icon: '🔍', title: 'We Search For You', desc: 'Our team actively sources helpers matching your exact preferences, location, and budget.' },
+                                { icon: '⏱️', title: '14-Day Guarantee', desc: 'If we can\'t find a match within 14 days, you get a full refund — no questions asked.' },
+                                { icon: '💰', title: 'No Double Payment', desc: 'Once matched, you won\'t pay the regular matching fee again. This covers everything.' },
+                                { icon: '✅', title: 'Fully Verified', desc: 'Every matched helper undergoes full background verification before being assigned to you.' },
+                            ].map(card => (
+                                <div key={card.title} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1 hover:shadow-brand-2 transition-shadow">
+                                    <span className="text-2xl mb-3 block">{card.icon}</span>
+                                    <h3 className="font-semibold text-espresso text-sm mb-1">{card.title}</h3>
+                                    <p className="text-muted text-xs leading-relaxed">{card.desc}</p>
                                 </div>
                             ))}
                         </div>
 
-                        {matches.length === 0 && (
-                            <div className="text-center py-16">
-                                <p className="text-5xl mb-4">😔</p>
-                                <h3 className="font-display text-2xl text-espresso mb-2">No matches found</h3>
-                                <p className="text-muted mb-6">Try adjusting your preferences for better results.</p>
-                                <button onClick={() => { setMatches(null); setStep(0); }} className="bg-teal text-white px-6 py-3 rounded-brand-md font-medium">
-                                    Try Again
-                                </button>
+                        {/* CTA Section */}
+                        <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-2 text-center mb-6" style={{animation: 'fade-up 0.5s 0.2s ease both'}}>
+                            <div className="flex items-center justify-center gap-2 mb-4">
+                                <span className="text-2xl">🛡️</span>
+                                <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-copper font-bold">Guarantee Match Service</p>
                             </div>
-                        )}
+
+                            <div className="mb-6">
+                                <div className="flex items-baseline justify-center gap-1 mb-1">
+                                    <span className="font-mono text-4xl font-bold text-espresso">₦{guaranteeFee.toLocaleString()}</span>
+                                    <span className="text-muted text-sm">one-time</span>
+                                </div>
+                                <p className="text-muted text-xs">Includes matching fee • No extra charges when assigned</p>
+                            </div>
+
+                            <button
+                                onClick={handleGuaranteeMatch}
+                                disabled={guaranteeLoading}
+                                className="w-full max-w-md mx-auto bg-gradient-to-r from-copper to-copper/90 text-white py-4 rounded-brand-md font-medium text-base hover:opacity-90 transition-all hover:scale-[1.01] shadow-brand-2 disabled:opacity-50 block"
+                            >
+                                {guaranteeLoading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Activating...
+                                    </span>
+                                ) : `Activate Guarantee Match — ₦${guaranteeFee.toLocaleString()}`}
+                            </button>
+                            <p className="text-center text-[11px] text-muted mt-3">🔒 Secured by Paystack · Full refund if no match in 14 days</p>
+                        </div>
+
+                        {/* Money-back guarantee notice */}
+                        <div className="bg-gradient-to-br from-copper/5 to-copper/10 rounded-brand-xl p-6 border border-copper/20 mb-6" style={{animation: 'fade-up 0.5s 0.3s ease both'}}>
+                            <div className="flex items-start gap-3">
+                                <span className="text-3xl flex-shrink-0">💯</span>
+                                <div>
+                                    <h4 className="font-semibold text-espresso text-sm mb-1">100% Money-Back Guarantee</h4>
+                                    <p className="text-muted text-xs leading-relaxed">
+                                        We're confident we'll find your perfect helper. But if we can't match you within 14 days of your payment,
+                                        you'll receive a full, automatic refund — no forms, no hassle, no questions asked.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Secondary: Try Again */}
+                        <div className="text-center" style={{animation: 'fade-up 0.5s 0.4s ease both'}}>
+                            <p className="text-muted text-sm mb-3">Or adjust your preferences:</p>
+                            <button onClick={() => { setMatches(null); setStep(0); }} className="text-teal hover:text-teal-dark font-medium text-sm transition-colors">
+                                ← Try Again with Different Preferences
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <style>{`
+                    @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+                `}</style>
             </>
         );
     }

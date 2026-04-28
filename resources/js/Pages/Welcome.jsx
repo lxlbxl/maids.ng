@@ -14,6 +14,7 @@ export default function Welcome({ auth }) {
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#how" className="text-sm text-gray-500 hover:text-teal transition-colors">How It Works</a>
                         <a href="#services" className="text-sm text-gray-500 hover:text-teal transition-colors">Services</a>
+                        <Link href="/verify-service" className="text-sm text-teal font-medium hover:text-teal-dark transition-colors">Verify a Maid</Link>
                         <a href="#trust" className="text-sm text-gray-500 hover:text-teal transition-colors">Trust & Safety</a>
                     </div>
                     <div className="flex items-center gap-3">
@@ -117,12 +118,44 @@ export default function Welcome({ auth }) {
                         { title: 'Live-in Helpers', desc: 'Full-time household management and support.', icon: '🏡' },
                         { title: 'Drivers', desc: 'School runs, errands, and family transportation.', icon: '🚗' },
                     ].map((s) => (
-                        <div key={s.title} className="bg-white rounded-brand-lg p-6 border border-gray-200 hover:shadow-brand-2 hover:-translate-y-1 transition-all duration-300">
-                            <div className="text-2xl mb-3">{s.icon}</div>
-                            <h3 className="font-semibold text-espresso mb-1">{s.title}</h3>
-                            <p className="text-muted text-sm">{s.desc}</p>
+                        <div key={s.title} className="bg-white rounded-brand-xl p-8 border border-espresso/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                            <div className="text-3xl mb-4">{s.icon}</div>
+                            <h3 className="font-semibold text-lg text-espresso mb-2">{s.title}</h3>
+                            <p className="text-espresso/60 text-sm leading-relaxed">{s.desc}</p>
                         </div>
                     ))}
+                </div>
+
+                {/* Standalone Verification Highlight */}
+                <div className="max-w-5xl mx-auto mt-20 p-8 md:p-12 bg-espresso rounded-brand-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-teal/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-teal/20 transition-all duration-500" />
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                        <div className="flex-1 text-center md:text-left">
+                            <span className="inline-block px-3 py-1 bg-teal/20 text-teal-light rounded-full text-[10px] font-mono uppercase tracking-widest mb-4">New Service</span>
+                            <h2 className="font-display text-3xl md:text-4xl text-white mb-4">
+                                Already Have a <em className="italic text-copper-light">Helper?</em>
+                            </h2>
+                            <p className="text-ivory/60 text-lg mb-8 leading-relaxed max-w-xl">
+                                Don't leave your family's safety to chance. Use our <strong>Gatekeeper AI</strong> to verify your existing helper's identity against the National Database in seconds.
+                            </p>
+                            <Link href="/verify-service" className="inline-flex items-center gap-2 bg-teal text-white px-8 py-4 rounded-brand-md text-base font-medium hover:bg-teal-dark transition-all hover:scale-[1.05] shadow-lg">
+                                Verify Your Helper Now <span className="text-xl">🛡️</span>
+                            </Link>
+                        </div>
+                        <div className="w-full md:w-1/3 grid grid-cols-2 gap-4">
+                            {[
+                                { label: 'Instant', value: 'Verification' },
+                                { label: 'NIMC', value: 'Direct Link' },
+                                { label: 'Secure', value: 'PDF Report' },
+                                { label: 'Peace of', value: 'Mind' },
+                            ].map((badge) => (
+                                <div key={badge.value} className="bg-white/5 border border-white/10 p-4 rounded-brand-lg backdrop-blur-sm text-center">
+                                    <p className="text-[10px] text-white/30 uppercase tracking-tighter">{badge.label}</p>
+                                    <p className="text-white font-medium text-xs">{badge.value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </section>
 

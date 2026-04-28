@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
@@ -17,10 +19,47 @@ class Setting extends Model
      */
     public static function get($key, $default = null)
     {
-        $setting = self::where('key', $key)->first();
-        if (!$setting) return $default;
+        $settings = self::getAllCached();
+        return $settings[$key] ?? $default;
+    }
 
-        return $setting->is_encrypted ? \Illuminate\Support\Facades\Crypt::decryptString($setting->value) : $setting->value;
+    /**
+     * Get all settings mapped by key => decrypted value
+     */
+    public static function getAllCached()
+    {
+        try {
+            // Attempt to use cache
+            return Cache::rememberForever('app_settings_cache', function () {
+                return self::fetchAllFromDb();
+            });
+        } catch (\Throwable $e) {
+            // Fallback: If cache table is missing or DB connection fails, fetch directly
+            return self::fetchAllFromDb();
+        }
+    }
+
+    /**
+     * Internal helper to fetch all settings directly from DB
+     */
+    private static function fetchAllFromDb()
+    {
+        try {
+            $settings = self::all();
+            $mapped = [];
+            foreach ($settings as $setting) {
+                try {
+                    $mapped[$setting->key] = $setting->is_encrypted 
+                        ? Crypt::decryptString($setting->value) 
+                        : $setting->value;
+                } catch (\Exception $e) {
+                    $mapped[$setting->key] = null;
+                }
+            }
+            return $mapped;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**
@@ -28,13 +67,17 @@ class Setting extends Model
      */
     public static function set($key, $value, $group = 'general', $shouldEncrypt = false)
     {
-        return self::updateOrCreate(
+        $setting = self::updateOrCreate(
             ['key' => $key],
             [
-                'value' => $shouldEncrypt ? \Illuminate\Support\Facades\Crypt::encryptString($value) : $value,
+                'value' => $shouldEncrypt ? Crypt::encryptString($value) : $value,
                 'is_encrypted' => $shouldEncrypt,
                 'group' => $group
             ]
         );
+
+        Cache::forget('app_settings_cache');
+
+        return $setting;
     }
 }

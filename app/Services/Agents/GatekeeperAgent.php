@@ -78,6 +78,56 @@ class GatekeeperAgent extends AgentService
     }
 
     /**
+     * Standalone NIN verification without profile requirement.
+     */
+    public function verifyNinStandalone(string $nin, string $firstName, string $lastName): array
+    {
+        $action = "standalone_verification";
+
+        try {
+            // Mocking API call to QoreID/NIMC
+            // In reality, this would use guzzle to call the API
+            
+            $confidence = rand(80, 100);
+            $success = $confidence > 85;
+
+            $verificationData = [
+                'status' => $success ? 'verified' : 'failed',
+                'confidence' => $confidence,
+                'data' => [
+                    'nin' => $nin,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'dob' => '1990-01-01',
+                    'gender' => 'female',
+                    'photo' => 'https://api.dicebear.com/7.x/avataaars/svg?seed=' . $nin,
+                    'verified_at' => now()->toDateTimeString(),
+                ]
+            ];
+
+            $this->logDecision(
+                action: $action,
+                decision: $success ? "success" : "failed",
+                confidenceScore: $confidence,
+                reasoning: "Standalone verification request for NIN: {$nin}",
+                subject: null
+            );
+
+            return [
+                'success' => $success,
+                'data' => $verificationData,
+                'confidence' => $confidence
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'reason' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Record a manual verification made by an administrator.
      */
     public function recordManualApproval(MaidProfile $maid, User $admin): void

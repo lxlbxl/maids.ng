@@ -10,6 +10,8 @@ export default function AdminLayout({ children }) {
         { name: 'Escalations', href: '/admin/escalations', icon: '⚖️' },
         { name: 'Verification Hub', href: '/admin/verifications', icon: '🛡️' },
         { name: 'People Management', href: '/admin/users', icon: '👥' },
+        { name: 'Matching Queue', href: '/admin/matching', icon: '🤖' },
+        { name: 'Salary Ops', href: '/admin/salary', icon: '💸' },
         { name: 'Financial Control', href: '/admin/payments', icon: '💰' },
         { name: 'System Settings', href: '/admin/settings', icon: '⚙️' },
     ];
