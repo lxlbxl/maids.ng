@@ -1,0 +1,7 @@
+{
+    "require": {
+        "inertiajs/inertia-laravel": "^3.0",
+        "laravel/sanctum": "^4.3",
+        "spatie/laravel-permission": "^7.3"
+    }
+}

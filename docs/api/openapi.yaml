@@ -1,0 +1,1462 @@
+openapi: 3.0.3
+info:
+  title: Maids.ng API
+  description: |
+    # Maids.ng API - Agentic Era Ready
+    
+    A comprehensive REST API for domestic help matching and management, designed for the "Agentic Era" with AI-friendly structured responses.
+    
+    ## Key Features
+    - **Standardized Response Format**: All responses follow a consistent envelope structure
+    - **AI-Optimized**: Clear schemas, metadata, and request IDs for agent consumption
+    - **Role-Based Access**: Separate endpoints for Employers, Maids, and Admins
+    - **Comprehensive Coverage**: Authentication, Profiles, Bookings, Payments, and Admin operations
+    
+    ## Authentication
+    This API uses Laravel Sanctum for token-based authentication. 
+    
+    1. Obtain a token via `POST /api/v1/auth/login`
+    2. Include the token in the Authorization header: `Authorization: Bearer {token}`
+    
+    ## Response Format
+    All responses follow this structure:
+    ```json
+    {
+      "success": true,
+      "message": "Operation completed",
+      "data": { ... },
+      "meta": {
+        "timestamp": "2024-01-15T10:30:00Z",
+        "request_id": "uuid",
+        "api_version": "1.0.0"
+      }
+    }
+    ```
+    
+    ## Rate Limiting
+    - Public endpoints: 60 requests per minute
+    - Authenticated endpoints: 1000 requests per minute
+    
+  version: 1.0.0
+  contact:
+    name: Maids.ng API Support
+    email: api@maids.ng
+  license:
+    name: Proprietary
+    url: https://maids.ng/terms
+
+servers:
+  - url: https://api.maids.ng/v1
+    description: Production server
+  - url: https://staging-api.maids.ng/v1
+    description: Staging server
+  - url: http://localhost:8000/api/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Health Check
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health Check
+      description: Check API health status
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: Maids.ng API
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # Authentication
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new employer or maid account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation error
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      description: Authenticate and receive access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Retrieve authenticated user details
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout
+      description: Revoke current access token
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/logout-all:
+    post:
+      tags:
+        - Authentication
+      summary: Logout all sessions
+      description: Revoke all access tokens
+      responses:
+        '200':
+          description: All sessions logged out
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh token
+      description: Get a new access token
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  # Maids (Public)
+  /maids:
+    get:
+      tags:
+        - Maids
+      summary: List maids
+      description: Retrieve paginated list of available maids
+      security: []
+      parameters:
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: availability_status
+          in: query
+          schema:
+            type: string
+            enum: [available, busy, unavailable]
+        - name: min_rating
+          in: query
+          schema:
+            type: number
+        - name: verified_only
+          in: query
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Maids retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMaidResponse'
+
+  /maids/search:
+    get:
+      tags:
+        - Maids
+      summary: Search maids
+      description: Search maids by name, skills, or location
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Search results retrieved
+
+  /maids/{id}:
+    get:
+      tags:
+        - Maids
+      summary: Get maid profile
+      description: Retrieve detailed maid profile
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Maid profile retrieved
+        '404':
+          description: Maid not found
+
+  /maids/top-rated:
+    get:
+      tags:
+        - Maids
+      summary: Top rated maids
+      description: Get top-rated maids
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Top rated maids retrieved
+
+  /maids/verified:
+    get:
+      tags:
+        - Maids
+      summary: Verified maids
+      description: Get fully verified maids
+      security: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Verified maids retrieved
+
+  # Maid Profile (Authenticated)
+  /maid/profile:
+    get:
+      tags:
+        - Maid Profile
+      summary: Get my profile
+      description: Retrieve authenticated maid's profile
+      responses:
+        '200':
+          description: Profile retrieved
+    put:
+      tags:
+        - Maid Profile
+      summary: Update profile
+      description: Update maid profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMaidProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+
+  /maid/bank-details:
+    put:
+      tags:
+        - Maid Profile
+      summary: Update bank details
+      description: Update bank account information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankDetailsRequest'
+      responses:
+        '200':
+          description: Bank details updated
+
+  /maid/bookings:
+    get:
+      tags:
+        - Maid Bookings
+      summary: Get my bookings
+      description: Retrieve all bookings for the maid
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Bookings retrieved
+
+  /maid/bookings/{id}/confirm:
+    post:
+      tags:
+        - Maid Bookings
+      summary: Confirm booking
+      description: Confirm a pending booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking confirmed
+
+  # Employer
+  /employer/preferences:
+    get:
+      tags:
+        - Employer Preferences
+      summary: Get preferences
+      description: Retrieve employer's job preferences
+      responses:
+        '200':
+          description: Preferences retrieved
+    post:
+      tags:
+        - Employer Preferences
+      summary: Create preference
+      description: Create a new job preference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePreferenceRequest'
+      responses:
+        '201':
+          description: Preference created
+
+  /employer/preferences/{id}:
+    put:
+      tags:
+        - Employer Preferences
+      summary: Update preference
+      description: Update an existing preference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferenceRequest'
+      responses:
+        '200':
+          description: Preference updated
+    delete:
+      tags:
+        - Employer Preferences
+      summary: Delete preference
+      description: Delete a job preference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Preference deleted
+
+  /employer/bookings:
+    get:
+      tags:
+        - Employer Bookings
+      summary: Get my bookings
+      description: Retrieve all bookings for the employer
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Bookings retrieved
+
+  /employer/reviews:
+    get:
+      tags:
+        - Employer Reviews
+      summary: Get my reviews
+      description: Retrieve reviews given by employer
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Reviews retrieved
+    post:
+      tags:
+        - Employer Reviews
+      summary: Create review
+      description: Create a review for a completed booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Review created
+
+  /employer/dashboard:
+    get:
+      tags:
+        - Employer Dashboard
+      summary: Dashboard stats
+      description: Retrieve employer dashboard statistics
+      responses:
+        '200':
+          description: Dashboard stats retrieved
+
+  # Bookings
+  /bookings:
+    get:
+      tags:
+        - Bookings
+      summary: List bookings
+      description: Retrieve bookings with filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: payment_status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Bookings retrieved
+    post:
+      tags:
+        - Bookings
+      summary: Create booking
+      description: Create a new booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created
+
+  /bookings/statistics:
+    get:
+      tags:
+        - Bookings
+      summary: Booking statistics
+      description: Get booking statistics
+      responses:
+        '200':
+          description: Statistics retrieved
+
+  /bookings/{id}:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking
+      description: Retrieve specific booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking retrieved
+        '404':
+          description: Booking not found
+
+  /bookings/{id}/start:
+    post:
+      tags:
+        - Bookings
+      summary: Start booking
+      description: Mark booking as active
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking started
+
+  /bookings/{id}/complete:
+    post:
+      tags:
+        - Bookings
+      summary: Complete booking
+      description: Mark booking as completed
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking completed
+
+  /bookings/{id}/cancel:
+    post:
+      tags:
+        - Bookings
+      summary: Cancel booking
+      description: Cancel a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking cancelled
+
+  # Payments
+  /payments:
+    get:
+      tags:
+        - Payments
+      summary: List payments
+      description: Retrieve payments with filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: payment_method
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Payments retrieved
+
+  /payments/initialize:
+    post:
+      tags:
+        - Payments
+      summary: Initialize payment
+      description: Create a new payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializePaymentRequest'
+      responses:
+        '201':
+          description: Payment initialized
+
+  /payments/verify/{reference}:
+    get:
+      tags:
+        - Payments
+      summary: Verify payment
+      description: Check payment status
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status retrieved
+
+  /payments/statistics:
+    get:
+      tags:
+        - Payments
+      summary: Payment statistics
+      description: Get payment statistics
+      responses:
+        '200':
+          description: Statistics retrieved
+
+  /payments/{id}:
+    get:
+      tags:
+        - Payments
+      summary: Get payment
+      description: Retrieve specific payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payment retrieved
+
+  /payments/{id}/retry:
+    post:
+      tags:
+        - Payments
+      summary: Retry payment
+      description: Retry a failed payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payment retry initialized
+
+  /payments/webhook:
+    post:
+      tags:
+        - Payments
+      summary: Payment webhook
+      description: Webhook for payment provider
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhookRequest'
+      responses:
+        '200':
+          description: Webhook processed
+
+  # Reference Data
+  /reference/skills:
+    get:
+      tags:
+        - Reference Data
+      summary: Get skills
+      description: Retrieve available skills list
+      security: []
+      responses:
+        '200':
+          description: Skills retrieved
+
+  /reference/help-types:
+    get:
+      tags:
+        - Reference Data
+      summary: Get help types
+      description: Retrieve available help types
+      security: []
+      responses:
+        '200':
+          description: Help types retrieved
+
+  /reference/payment-methods:
+    get:
+      tags:
+        - Reference Data
+      summary: Get payment methods
+      description: Retrieve available payment methods
+      security: []
+      responses:
+        '200':
+          description: Payment methods retrieved
+
+  # Admin
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: Admin dashboard
+      description: Retrieve comprehensive dashboard statistics
+      responses:
+        '200':
+          description: Dashboard stats retrieved
+
+  /admin/system-health:
+    get:
+      tags:
+        - Admin
+      summary: System health
+      description: Check system health status
+      responses:
+        '200':
+          description: System health retrieved
+
+  /admin/users:
+    get:
+      tags:
+        - Admin Users
+      summary: List users
+      description: Retrieve all users with filtering
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Users retrieved
+
+  /admin/users/{id}:
+    get:
+      tags:
+        - Admin Users
+      summary: Get user
+      description: Retrieve specific user details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User retrieved
+
+  /admin/users/{id}/status:
+    put:
+      tags:
+        - Admin Users
+      summary: Update user status
+      description: Update user account status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, inactive, suspended]
+      responses:
+        '200':
+          description: User status updated
+
+  /admin/maids:
+    get:
+      tags:
+        - Admin Maids
+      summary: List maids
+      description: Retrieve all maids with filtering
+      parameters:
+        - name: verification_status
+          in: query
+          schema:
+            type: string
+        - name: availability_status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Maids retrieved
+
+  /admin/maids/{id}/verify:
+    put:
+      tags:
+        - Admin Maids
+      summary: Verify maid
+      description: Update maid verification status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nin_verified:
+                  type: boolean
+                background_verified:
+                  type: boolean
+      responses:
+        '200':
+          description: Maid verification updated
+
+  /admin/bookings:
+    get:
+      tags:
+        - Admin Bookings
+      summary: List bookings
+      description: Retrieve all bookings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: payment_status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Bookings retrieved
+
+  /admin/payments:
+    get:
+      tags:
+        - Admin Payments
+      summary: List payments
+      description: Retrieve all payments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Payments retrieved
+
+  /admin/revenue-report:
+    get:
+      tags:
+        - Admin Reports
+      summary: Revenue report
+      description: Get revenue statistics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: monthly
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Revenue report retrieved
+
+  /admin/reviews:
+    get:
+      tags:
+        - Admin Reviews
+      summary: List reviews
+      description: Retrieve all reviews
+      parameters:
+        - name: min_rating
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: Reviews retrieved
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+        - password
+        - password_confirmation
+        - role
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          maxLength: 20
+        password:
+          type: string
+          minLength: 8
+        password_confirmation:
+          type: string
+        role:
+          type: string
+          enum: [employer, maid]
+        location:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        device_name:
+          type: string
+
+    UpdateMaidProfileRequest:
+      type: object
+      properties:
+        bio:
+          type: string
+          maxLength: 1000
+        skills:
+          type: array
+          items:
+            type: string
+        experience_years:
+          type: integer
+          minimum: 0
+          maximum: 50
+        help_types:
+          type: array
+          items:
+            type: string
+            enum: [live-in, nanny, cooking, elderly-care, driver, cleaning, laundry]
+        schedule_preference:
+          type: string
+          enum: [full-time, part-time, weekends, flexible]
+        expected_salary:
+          type: integer
+          minimum: 10000
+          maximum: 500000
+        location:
+          type: string
+        state:
+          type: string
+        lga:
+          type: string
+        availability_status:
+          type: string
+          enum: [available, busy, unavailable]
+
+    BankDetailsRequest:
+      type: object
+      required:
+        - bank_name
+        - account_number
+        - account_name
+      properties:
+        bank_name:
+          type: string
+          maxLength: 100
+        account_number:
+          type: string
+          pattern: '^[0-9]{10}$'
+        account_name:
+          type: string
+          maxLength: 255
+
+    CreatePreferenceRequest:
+      type: object
+      required:
+        - help_type
+        - location
+        - state
+        - schedule_type
+        - salary_budget
+      properties:
+        help_type:
+          type: string
+          enum: [live-in, nanny, cooking, elderly-care, driver, cleaning, laundry]
+        location:
+          type: string
+        state:
+          type: string
+        lga:
+          type: string
+        schedule_type:
+          type: string
+          enum: [full-time, part-time, weekends, flexible]
+        salary_budget:
+          type: integer
+        required_skills:
+          type: array
+          items:
+            type: string
+        num_children:
+          type: integer
+        children_ages:
+          type: array
+          items:
+            type: integer
+        has_elderly:
+          type: boolean
+        elderly_condition:
+          type: string
+        special_requirements:
+          type: string
+        start_date:
+          type: string
+          format: date
+        urgency:
+          type: string
+          enum: [immediate, within_week, within_month, flexible]
+
+    UpdatePreferenceRequest:
+      type: object
+      properties:
+        help_type:
+          type: string
+        location:
+          type: string
+        state:
+          type: string
+        schedule_type:
+          type: string
+        salary_budget:
+          type: integer
+        status:
+          type: string
+          enum: [active, paused, closed]
+
+    CreateReviewRequest:
+      type: object
+      required:
+        - booking_id
+        - rating
+      properties:
+        booking_id:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+        categories:
+          type: object
+          properties:
+            punctuality:
+              type: integer
+            cleanliness:
+              type: integer
+            communication:
+              type: integer
+            professionalism:
+              type: integer
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - preference_id
+        - maid_id
+        - start_date
+        - schedule_type
+        - agreed_salary
+      properties:
+        preference_id:
+          type: integer
+        maid_id:
+          type: integer
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        schedule_type:
+          type: string
+          enum: [full-time, part-time, weekends, flexible]
+        agreed_salary:
+          type: integer
+        notes:
+          type: string
+
+    InitializePaymentRequest:
+      type: object
+      required:
+        - booking_id
+        - amount
+        - payment_method
+        - payment_type
+      properties:
+        booking_id:
+          type: integer
+        amount:
+          type: integer
+        payment_method:
+          type: string
+          enum: [card, bank_transfer, ussd, mobile_money]
+        payment_type:
+          type: string
+          enum: [booking_fee, deposit, full_payment, subscription]
+        metadata:
+          type: object
+
+    PaymentWebhookRequest:
+      type: object
+      required:
+        - reference
+        - status
+        - amount
+      properties:
+        reference:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, pending]
+        amount:
+          type: integer
+        transaction_id:
+          type: string
+
+    # Response Schemas
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+            token_type:
+              type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/User'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    PaginatedMaidResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaidProfile'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        avatar:
+          type: string
+        status:
+          type: string
+        location:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        maid_profile:
+          $ref: '#/components/schemas/MaidProfile'
+        employer_preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployerPreference'
+        created_at:
+          type: string
+          format: date-time
+
+    MaidProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        bio:
+          type: string
+        role:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        work_type:
+          type: string
+        schedule_preference:
+          type: string
+        availability_status:
+          type: string
+        location:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        expected_salary:
+          type: integer
+        salary_currency:
+          type: string
+        experience_years:
+          type: integer
+        rating:
+          type: number
+        total_reviews:
+          type: integer
+        total_bookings:
+          type: integer
+        verification:
+          type: object
+          properties:
+            nin_verified:
+              type: boolean
+            background_verified:
+              type: boolean
+            fully_verified:
+              type: boolean
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            avatar:
+              type: string
+
+    EmployerPreference:
+      type: object
+      properties:
+        id:
+          type: integer
+        employer_id:
+          type: integer
+        help_type:
+          type: string
+        location:
+          type: string
+        state:
+          type: string
+        schedule_type:
+          type: string
+        salary_budget:
+          type: integer
+        required_skills:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+
+    Meta:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+        api_version:
+          type: string
+
+    PaginationMeta:
+      allOf:
+        - $ref: '#/components/schemas/Meta'
+        - type: object
+          properties:
+            pagination:
+              type: object
+              properties:
+                current_page:
+                  type: integer
+                last_page:
+                  type: integer
+                per_page:
+                  type: integer
+                total:
+                  type: integer
+                from:
+                  type: integer
+                to:
+                  type: integer

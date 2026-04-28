@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="icon" type="image/png" href="https://maids.ng/favicon.png">
+    <link rel="apple-touch-icon" href="https://maids.ng/favicon.png">
+
+    <title>Maids.ng - Trusted Domestic Workers in Nigeria</title>
+    <meta name="description" content="Find verified domestic workers, maids, and nannies in Nigeria. AI-powered matching for trusted household help.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4',
+                            100: '#D0EAEA',
+                            200: '#A3D5D6',
+                            300: '#6BB8B9',
+                            400: '#2A9799',
+                            500: '#1A7374',
+                            600: '#0F5556',
+                            700: '#083A3B',
+                            800: '#052829',
+                            900: '#031A1B'
+                        },
+                        copper: {
+                            50: '#FEF3E6',
+                            100: '#FDE6C8',
+                            200: '#F5C88A',
+                            300: '#D4813A',
+                            400: '#B45309',
+                            500: '#9A4508',
+                            600: '#7A3606',
+                            700: '#5A2804'
+                        },
+                        ivory: {
+                            DEFAULT: '#FAF7F2',
+                            50: '#FDFCFA',
+                            100: '#FAF7F2',
+                            200: '#F1EAD7'
+                        },
+                        espresso: {
+                            DEFAULT: '#1C1812',
+                            light: '#2D2820',
+                            muted: '#6B7280'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+                        body: ['DM Sans', 'system-ui', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    animation: {
+                        'fade-up': 'fadeUp 0.7s cubic-bezier(0, 0, 0.2, 1) both',
+                        'fade-up-1': 'fadeUp 0.7s 0.1s cubic-bezier(0, 0, 0.2, 1) both',
+                        'fade-up-2': 'fadeUp 0.7s 0.2s cubic-bezier(0, 0, 0.2, 1) both',
+                        'fade-up-3': 'fadeUp 0.7s 0.35s cubic-bezier(0, 0, 0.2, 1) both',
+                        'fade-up-4': 'fadeUp 0.7s 0.5s cubic-bezier(0, 0, 0.2, 1) both',
+                        'sparkle': 'sparkle 2.4s ease-in-out infinite',
+                        'sparkle-delayed': 'sparkle 2.4s 0.8s ease-in-out infinite',
+                        'pulse-gentle': 'pulseGentle 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeUp: {
+                            '0%': { opacity: '0', transform: 'translateY(24px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        sparkle: {
+                            '0%, 100%': { opacity: '0.3', transform: 'scale(0.8) rotate(0deg)' },
+                            '50%': { opacity: '1', transform: 'scale(1.2) rotate(180deg)' }
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '0.6' },
+                            '50%': { opacity: '1' }
+                        }
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08), 0 1px 2px rgba(15,85,86,0.06)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10), 0 2px 6px rgba(15,85,86,0.08)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14), 0 4px 12px rgba(15,85,86,0.10)',
+                        'copper-glow': '0 8px 32px rgba(180,83,9,0.20)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            overscroll-behavior: none;
+            background: #FAF7F2;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Sparkle Motif (Brand Signature) ── */
+        .sparkle {
+            position: relative;
+            display: inline-block;
+        }
+        .sparkle::before,
+        .sparkle::after {
+            content: '✦';
+            position: absolute;
+            color: #B45309;
+            font-size: 10px;
+            pointer-events: none;
+        }
+        .sparkle::before {
+            top: -4px;
+            right: -12px;
+            animation: sparkle 2.4s ease-in-out infinite;
+        }
+        .sparkle::after {
+            bottom: 2px;
+            left: -10px;
+            font-size: 7px;
+            animation: sparkle 2.4s 1s ease-in-out infinite;
+        }
+
+        /* ── Textured Background ── */
+        .bg-texture {
+            background-image: radial-gradient(circle, rgba(15,85,86,0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* ── Surfaces ── */
+        .surface {
+            background: #FFFFFF;
+            border: 1px solid rgba(15,85,86,0.08);
+            box-shadow: 0 1px 3px rgba(15,85,86,0.08), 0 1px 2px rgba(15,85,86,0.06);
+        }
+
+        .surface-elevated {
+            background: #FFFFFF;
+            border: 1px solid rgba(15,85,86,0.06);
+            box-shadow: 0 4px 16px rgba(15,85,86,0.10), 0 2px 6px rgba(15,85,86,0.08);
+        }
+
+        /* ── Page System ── */
+        .page {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .page.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+
+        /* ── Service Cards ── */
+        .service-card {
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(15,85,86,0.14), 0 4px 12px rgba(15,85,86,0.10);
+        }
+        .service-card:active {
+            transform: scale(0.97);
+        }
+
+        /* ── Maid Result Cards ── */
+        .maid-card {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .maid-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(15,85,86,0.16);
+        }
+
+        /* ── Option Cards (Questionnaire) ── */
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:hover {
+            border-color: #0F5556;
+            background: #EAF4F4;
+        }
+        .option-card.selected {
+            border-color: #0F5556;
+            background: linear-gradient(135deg, #EAF4F4, #D0EAEA);
+            box-shadow: 0 0 0 3px rgba(15,85,86,0.12);
+        }
+
+        /* ── CTA Shine Effect ── */
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 50%;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+        }
+        .btn-shine:hover::after {
+            left: 150%;
+        }
+
+        /* ── Image Hover ── */
+        .img-zoom { overflow: hidden; }
+        .img-zoom img {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .service-card:hover .img-zoom img,
+        .maid-card:hover .img-zoom img {
+            transform: scale(1.08);
+        }
+
+        /* ── Progress Fill ── */
+        .progress-fill {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Custom Scrollbar ── */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ── Responsive Layout ── */
+        @media (max-width: 767px) {
+            .mobile-nav { display: flex !important; }
+            .desktop-nav { display: none !important; }
+            .app-container {
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav { display: none !important; }
+            .desktop-nav { display: flex !important; }
+            .app-container {
+                max-width: 480px;
+                border-radius: 24px;
+                box-shadow: 0 25px 50px -12px rgba(15,85,86,0.18), 0 0 0 1px rgba(15,85,86,0.06);
+            }
+        }
+
+        /* ── Decorative Cross-hatch ── */
+        .crosshatch {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image:
+                repeating-linear-gradient(45deg, #0F5556 0, #0F5556 1px, transparent 0, transparent 50%),
+                repeating-linear-gradient(-45deg, #0F5556 0, #0F5556 1px, transparent 0, transparent 50%);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        /* ── Glow Accent ── */
+        .teal-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(15,85,86,0.15) 0%, transparent 65%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-texture">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <!-- Center Nav Links -->
+            <div class="flex items-center gap-7">
+                <a href="index-merge.html" class="text-teal-600 font-body font-semibold text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <!-- Right CTA -->
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm hover:shadow-teal-md">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- App Container -->
+    <div id="app" class="app-container mx-auto bg-white min-h-screen relative pb-24 md:pb-0 md:overflow-hidden">
+
+        <!-- Mobile Header -->
+        <header class="md:hidden px-5 py-4 flex items-center justify-between border-b border-teal-600/8">
+            <div class="flex items-center gap-3">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-8">
+            </div>
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+        </header>
+
+        <!-- ========== HOME PAGE ========== -->
+        <div id="page-home" class="page active px-5 md:px-8 py-6 md:py-10">
+
+            <!-- Hero Section -->
+            <div class="relative mb-10 md:mb-14 animate-fade-up">
+                <div class="bg-espresso rounded-3xl p-7 md:p-10 text-white relative overflow-hidden">
+                    <!-- Decorative elements -->
+                    <div class="crosshatch rounded-3xl"></div>
+                    <div class="teal-glow -top-48 -right-32"></div>
+
+                    <!-- Sparkle decorations -->
+                    <div class="absolute top-6 right-8 text-copper-300 text-xs animate-sparkle">✦</div>
+                    <div class="absolute top-16 right-16 text-copper-200 text-[8px] animate-sparkle-delayed">✦</div>
+                    <div class="absolute bottom-12 left-8 text-copper-300 text-[7px] animate-sparkle">✦</div>
+
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center gap-2 bg-teal-600/30 backdrop-blur-sm px-4 py-1.5 rounded-full mb-5 animate-fade-up-1">
+                            <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse-gentle"></span>
+                            <span class="text-xs font-mono font-medium tracking-wide uppercase text-teal-100">2,500+ Verified Workers</span>
+                        </div>
+
+                        <h2 class="text-3xl md:text-4xl font-display font-light mb-3 leading-[1.1] animate-fade-up-2">
+                            Where <em class="italic text-copper-300">Trust</em><br>
+                            Begins<span class="text-copper-300">.</span>
+                        </h2>
+                        <p class="text-ivory-200/70 text-sm md:text-base mb-7 max-w-sm leading-relaxed font-body font-light animate-fade-up-3">
+                            Nigeria's most trusted domestic staffing platform. Verified helpers matched to your home.
+                        </p>
+
+                        <button onclick="navigateTo('find')" class="btn-shine bg-copper-400 text-white px-7 py-3.5 rounded-xl font-body font-bold text-sm shadow-copper-glow hover:bg-copper-500 transition-all active:scale-95 flex items-center gap-3 group animate-fade-up-4">
+                            <span>I Need a Maid</span>
+                            <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Strip -->
+                <div class="flex gap-3 mt-4">
+                    <div class="flex-1 surface rounded-2xl p-4 text-center">
+                        <div class="text-xl font-display font-semibold text-teal-600">98%</div>
+                        <div class="text-[10px] text-espresso-muted font-mono uppercase tracking-wider">Match Rate</div>
+                    </div>
+                    <div class="flex-1 surface rounded-2xl p-4 text-center">
+                        <div class="text-xl font-display font-semibold text-teal-600">10K+</div>
+                        <div class="text-[10px] text-espresso-muted font-mono uppercase tracking-wider">Families</div>
+                    </div>
+                    <div class="flex-1 surface rounded-2xl p-4 text-center">
+                        <div class="text-xl font-display font-semibold text-teal-600">4.9</div>
+                        <div class="text-[10px] text-espresso-muted font-mono uppercase tracking-wider">Rating</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services Grid -->
+            <div class="mb-10">
+                <div class="flex justify-between items-baseline mb-5">
+                    <div>
+                        <h3 class="text-lg md:text-xl font-display font-semibold text-espresso">Popular Services</h3>
+                        <p class="text-xs text-espresso-muted font-body mt-0.5">Tap to start matching</p>
+                    </div>
+                    <span class="text-copper-400 text-xs font-mono font-medium tracking-wide uppercase">
+                        ✦ All verified
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Fulltime Maid -->
+                    <div onclick="startFlowWithService('Fulltime Maid')" class="service-card cursor-pointer">
+                        <div class="relative overflow-hidden rounded-2xl img-zoom">
+                            <div class="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent z-10"></div>
+                            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+                                 class="w-full h-36 object-cover" alt="Fulltime Maid">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                <div class="w-9 h-9 bg-teal-600/40 backdrop-blur-sm rounded-xl flex items-center justify-center mb-2">
+                                    <i class="fas fa-home text-white text-sm"></i>
+                                </div>
+                                <h4 class="font-body font-bold text-white text-sm">Fulltime Maid</h4>
+                                <p class="text-white/60 text-[10px] font-mono uppercase tracking-wider mt-0.5">Live-in · Live-out</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nanny -->
+                    <div onclick="startFlowWithService('Nanny / Childcare')" class="service-card cursor-pointer">
+                        <div class="relative overflow-hidden rounded-2xl img-zoom">
+                            <div class="absolute inset-0 bg-gradient-to-t from-teal-800/85 via-teal-800/30 to-transparent z-10"></div>
+                            <img src="https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=300&fit=crop"
+                                 class="w-full h-36 object-cover" alt="Nanny">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                <div class="w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center mb-2">
+                                    <i class="fas fa-child text-white text-sm"></i>
+                                </div>
+                                <h4 class="font-body font-bold text-white text-sm">Nanny</h4>
+                                <p class="text-white/60 text-[10px] font-mono uppercase tracking-wider mt-0.5">Childcare Experts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cook -->
+                    <div onclick="startFlowWithService('Cook / Chef')" class="service-card cursor-pointer">
+                        <div class="relative overflow-hidden rounded-2xl img-zoom">
+                            <div class="absolute inset-0 bg-gradient-to-t from-espresso/85 via-espresso/30 to-transparent z-10"></div>
+                            <img src="https://images.unsplash.com/photo-1556910103-1c02745a30bf?w=400&h=300&fit=crop"
+                                 class="w-full h-36 object-cover" alt="Cook">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                <div class="w-9 h-9 bg-copper-400/40 backdrop-blur-sm rounded-xl flex items-center justify-center mb-2">
+                                    <i class="fas fa-utensils text-white text-sm"></i>
+                                </div>
+                                <h4 class="font-body font-bold text-white text-sm">Cook / Chef</h4>
+                                <p class="text-white/60 text-[10px] font-mono uppercase tracking-wider mt-0.5">Professional</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Elderly Care -->
+                    <div onclick="startFlowWithService('Elderly Care')" class="service-card cursor-pointer">
+                        <div class="relative overflow-hidden rounded-2xl img-zoom">
+                            <div class="absolute inset-0 bg-gradient-to-t from-teal-800/85 via-teal-800/30 to-transparent z-10"></div>
+                            <img src="https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=400&h=300&fit=crop"
+                                 class="w-full h-36 object-cover" alt="Elderly Care">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 z-20">
+                                <div class="w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center mb-2">
+                                    <i class="fas fa-hands-helping text-white text-sm"></i>
+                                </div>
+                                <h4 class="font-body font-bold text-white text-sm">Elderly Care</h4>
+                                <p class="text-white/60 text-[10px] font-mono uppercase tracking-wider mt-0.5">Compassionate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works -->
+            <div class="surface-elevated rounded-3xl p-6 md:p-8 mb-8">
+                <h3 class="font-display font-semibold text-espresso text-lg mb-6 flex items-center gap-3">
+                    <span class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                        <span class="text-copper-400 text-xs">✦</span>
+                    </span>
+                    How It Works
+                </h3>
+
+                <div class="space-y-6">
+                    <div class="flex gap-4 items-start group">
+                        <div class="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white font-display font-semibold text-lg shadow-teal-sm group-hover:scale-110 transition-transform">
+                            1
+                        </div>
+                        <div class="flex-1 pt-0.5">
+                            <h4 class="font-body font-bold text-espresso text-sm">Tell us your needs</h4>
+                            <p class="text-espresso-muted text-xs mt-1 leading-relaxed">Answer a few questions about the type of help, your location, and budget.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 items-start group">
+                        <div class="w-10 h-10 rounded-xl bg-copper-400 flex items-center justify-center text-white font-display font-semibold text-lg shadow-sm group-hover:scale-110 transition-transform">
+                            2
+                        </div>
+                        <div class="flex-1 pt-0.5">
+                            <h4 class="font-body font-bold text-espresso text-sm">Review verified profiles</h4>
+                            <p class="text-espresso-muted text-xs mt-1 leading-relaxed">Browse vetted candidates with NIN verification and background checks.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 items-start group">
+                        <div class="w-10 h-10 rounded-xl bg-espresso flex items-center justify-center text-white font-display font-semibold text-lg group-hover:scale-110 transition-transform">
+                            3
+                        </div>
+                        <div class="flex-1 pt-0.5">
+                            <h4 class="font-body font-bold text-espresso text-sm">Hire & connect on WhatsApp</h4>
+                            <p class="text-espresso-muted text-xs mt-1 leading-relaxed">Pay a small service fee and get instant access to full biodata and direct contact.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Banner -->
+            <div class="bg-teal-600 rounded-3xl p-6 text-center relative overflow-hidden mb-6">
+                <div class="crosshatch rounded-3xl"></div>
+                <div class="absolute top-0 right-0 w-40 h-40 bg-teal-400/20 rounded-full blur-3xl"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-copper-300 text-xl"></i>
+                    </div>
+                    <h4 class="text-white font-display font-semibold text-xl mb-2 italic">Verified & Trusted</h4>
+                    <p class="text-teal-100/70 text-sm font-body max-w-xs mx-auto leading-relaxed">
+                        Every worker is NIN-verified, background-checked, and personally interviewed. 10-day replacement guarantee.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Desktop CTA -->
+            <div class="hidden md:block mt-10 text-center">
+                <p class="text-espresso-muted text-sm mb-4 font-body">Ready to find your perfect match?</p>
+                <button onclick="navigateTo('find')" class="px-8 py-4 bg-teal-600 text-white rounded-xl font-body font-bold shadow-teal-md hover:shadow-teal-lg hover:bg-teal-700 transition-all active:scale-95">
+                    Get Started Now
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== QUESTIONNAIRE PAGE ========== -->
+        <div id="page-find" class="page px-5 md:px-8 py-6 md:py-10">
+            <header class="flex items-center gap-4 mb-8">
+                <button onclick="goBackFromFind()" class="w-10 h-10 rounded-xl bg-ivory-200 flex items-center justify-center text-espresso hover:bg-teal-50 hover:text-teal-600 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="flex-1">
+                    <h1 class="text-xl font-display font-semibold text-espresso leading-tight italic">Finding Your Match</h1>
+                    <p class="text-[10px] text-espresso-muted font-mono uppercase tracking-widest" id="step-indicator">Step 1 of 6</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-copper-50 flex items-center justify-center">
+                    <span class="text-copper-400 text-sm animate-sparkle">✦</span>
+                </div>
+            </header>
+
+            <!-- Progress Bar -->
+            <div class="h-1 bg-teal-50 rounded-full mb-10 overflow-hidden">
+                <div id="progress-bar" class="progress-fill h-full bg-gradient-to-r from-teal-600 via-teal-500 to-copper-400 rounded-full" style="width: 16%"></div>
+            </div>
+
+            <!-- Question State -->
+            <div id="question-container" class="animate-fade-up">
+                <h2 id="question-title" class="text-2xl font-display font-light text-espresso mb-2 leading-tight italic">What kind of help?</h2>
+                <p id="question-subtitle" class="text-sm text-espresso-muted mb-8 leading-relaxed font-body">We'll use this to find the best match for your home.</p>
+
+                <div id="options-container" class="space-y-3">
+                    <!-- Options injected dynamically -->
+                </div>
+            </div>
+
+            <div id="question-loading" class="hidden text-center py-20">
+                 <div class="w-14 h-14 border-4 border-teal-100 border-t-teal-600 rounded-full animate-spin mx-auto mb-5"></div>
+                 <p class="text-espresso-muted text-sm font-body">Finding perfect matches...</p>
+            </div>
+        </div>
+
+        <!-- ========== SUMMARY PAGE ========== -->
+        <div id="page-summary" class="page px-5 md:px-8 py-6 md:py-10">
+            <header class="flex items-center gap-4 mb-10">
+                <button onclick="navigateTo('find')" class="w-10 h-10 rounded-xl bg-ivory-200 flex items-center justify-center text-espresso">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-xl font-display font-semibold text-espresso italic">Review Request</h1>
+            </header>
+
+            <div class="surface-elevated rounded-3xl p-6 md:p-8 mb-8">
+                <div class="flex items-center gap-4 mb-8 pb-6 border-b border-teal-600/8">
+                    <div class="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-body font-bold text-espresso">Service Request</h3>
+                        <p class="text-[10px] text-espresso-muted font-mono uppercase tracking-wider">Review your requirements</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-briefcase text-teal-600 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Service</span>
+                        </div>
+                        <span id="sum-service" class="font-body font-bold text-espresso text-sm">-</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-home text-teal-600 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Accommodation</span>
+                        </div>
+                        <span id="sum-accommodation" class="font-body font-bold text-espresso text-sm">-</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-teal-600 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Location</span>
+                        </div>
+                        <span id="sum-location" class="font-body font-bold text-espresso text-sm">-</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-copper-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-wallet text-copper-400 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Monthly Budget</span>
+                        </div>
+                        <span id="sum-budget" class="font-body font-bold text-copper-400 text-sm">-</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user text-teal-600 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Your Name</span>
+                        </div>
+                        <span id="sum-name" class="font-body font-bold text-espresso text-sm">-</span>
+                    </div>
+
+                    <div class="flex justify-between items-center p-3 rounded-xl hover:bg-ivory transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-phone text-teal-600 text-xs"></i>
+                            </div>
+                            <span class="text-espresso-muted text-sm font-body">Phone</span>
+                        </div>
+                        <span id="sum-phone" class="font-body font-bold text-espresso text-sm">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="findMatches()" class="w-full bg-teal-600 text-white py-4 rounded-xl font-body font-bold text-base shadow-teal-md transition-all active:scale-95 flex items-center justify-center gap-3 hover:shadow-teal-lg hover:bg-teal-700">
+                <i class="fas fa-search"></i>
+                Find Me A Match
+            </button>
+        </div>
+
+        <!-- ========== RESULTS PAGE ========== -->
+        <div id="page-results" class="page px-5 md:px-8 py-6 md:py-10">
+            <header class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <button onclick="navigateTo('summary')" class="w-10 h-10 rounded-xl bg-ivory-200 flex items-center justify-center text-espresso">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-xl font-display font-semibold text-espresso italic leading-tight">Best Matches</h1>
+                        <p class="text-[10px] text-espresso-muted font-mono uppercase tracking-widest">Based on your requirements</p>
+                    </div>
+                </div>
+                <span class="bg-teal-50 text-teal-600 px-3 py-1.5 rounded-full text-[10px] font-mono font-medium uppercase tracking-wider">
+                    ✦ Top 3
+                </span>
+            </header>
+
+            <div id="results-container" class="space-y-5">
+                <!-- Matches injected here -->
+            </div>
+
+            <!-- Service Fee Note -->
+            <div class="mt-8 p-5 bg-copper-50 rounded-2xl border border-copper-100 flex items-start gap-4">
+                 <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-copper-400 shadow-teal-sm shrink-0">
+                    <i class="fas fa-info-circle"></i>
+                 </div>
+                 <div>
+                     <p class="text-sm text-espresso leading-relaxed font-body">
+                         Hiring requires a <span class="font-bold text-copper-400">₦10,000</span> service fee. This covers NIN verification, background check, and our 10-day replacement guarantee.
+                     </p>
+                 </div>
+            </div>
+        </div>
+
+        <!-- ========== MOBILE BOTTOM NAVIGATION ========== -->
+        <nav class="mobile-nav fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom">
+            <div class="flex justify-around items-center max-w-md mx-auto">
+                <!-- Home -->
+                <button onclick="navigateTo('home')" id="mob-nav-home" class="nav-item flex flex-col items-center gap-0.5 py-1.5 px-3 text-teal-600 transition-colors">
+                    <i class="fas fa-home text-lg"></i>
+                    <span class="text-[9px] font-body font-semibold">Home</span>
+                </button>
+                <!-- Find Help -->
+                <button onclick="navigateTo('find')" id="mob-nav-find" class="nav-item flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted transition-colors">
+                    <i class="fas fa-search text-lg"></i>
+                    <span class="text-[9px] font-body font-semibold">Find Help</span>
+                </button>
+                <!-- Center CTA: Hire -->
+                <button onclick="startFlowWithService('Fulltime Maid')" class="flex flex-col items-center gap-0.5 px-3">
+                    <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                        <i class="fas fa-plus text-white text-lg"></i>
+                    </div>
+                    <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+                </button>
+                <!-- Jobs -->
+                <a href="job.html" class="nav-item flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted transition-colors">
+                    <i class="fas fa-briefcase text-lg"></i>
+                    <span class="text-[9px] font-body font-semibold">Jobs</span>
+                </a>
+                <!-- Account -->
+                <a href="employer.html" class="nav-item flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted transition-colors">
+                    <i class="fas fa-user-circle text-lg"></i>
+                    <span class="text-[9px] font-body font-semibold">Account</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-4 md:top-8 left-1/2 -translate-x-1/2 bg-espresso/95 backdrop-blur text-white px-6 py-3 rounded-xl shadow-teal-lg z-50 text-sm font-body font-medium transition-all transform scale-90 opacity-0 pointer-events-none flex items-center gap-2">
+            <span class="text-copper-300">✦</span>
+            <span>Notification message</span>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api-service.js"></script>
+    <script>
+        const api = new ApiService();
+        let currentStep = 0;
+        let serviceRequestId = null;
+        let userData = {
+            service_type: '',
+            accommodation: '',
+            location: '',
+            salary_budget: '',
+            start_date: '',
+            name: '',
+            phone: ''
+        };
+
+        const householdFlow = [
+            {
+                id: 'service_type',
+                title: "What kind of help do you need?",
+                subtitle: "Select the most relevant service for your household.",
+                type: 'select',
+                options: ['Fulltime Maid', 'Part-time Cleaner', 'Nanny / Childcare', 'Cook / Chef', 'Elderly Care']
+            },
+            {
+                id: 'accommodation',
+                title: "Where should the worker stay?",
+                subtitle: "This affects matching and monthly salary expectations.",
+                type: 'select',
+                options: ['Live-in (Stay at home)', 'Live-out (Comes daily)']
+            },
+            {
+                id: 'location',
+                title: "Which city or area are you in?",
+                subtitle: "We match helpers closest to your location.",
+                type: 'select',
+                options: ['Lagos Island / Lekki', 'Lagos Mainland / Ikeja', 'Abuja (FCT)', 'Port Harcourt', 'Other Location']
+            },
+            {
+                id: 'salary_budget',
+                title: "What's your monthly budget?",
+                subtitle: "Total salary you plan to pay per month (₦).",
+                type: 'select',
+                options: ['₦30k – ₦50k', '₦50k – ₦70k', '₦70k – ₦100k', '₦100k+']
+            },
+            {
+                id: 'start_date',
+                title: "When do you need them?",
+                subtitle: "Workers available sooner will be prioritised.",
+                type: 'select',
+                options: ['Immediately', 'Within a week', 'Within a month', 'Just browsing']
+            },
+            {
+                id: 'contact',
+                title: "How do we reach you?",
+                subtitle: "So we can send you matched profiles and updates.",
+                type: 'input'
+            }
+        ];
+
+        // --- Navigation ---
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`page-${pageId}`);
+            if (target) {
+                target.classList.add('active');
+            }
+            window.scrollTo(0, 0);
+
+            // Update mobile bottom nav active states
+            const homeBtn = document.getElementById('mob-nav-home');
+            const findBtn = document.getElementById('mob-nav-find');
+            if (homeBtn) { homeBtn.classList.remove('text-teal-600'); homeBtn.classList.add('text-espresso-muted'); }
+            if (findBtn) { findBtn.classList.remove('text-teal-600'); findBtn.classList.add('text-espresso-muted'); }
+
+            if (pageId === 'home' && homeBtn) {
+                homeBtn.classList.add('text-teal-600');
+                homeBtn.classList.remove('text-espresso-muted');
+            } else if (['find', 'summary', 'results'].includes(pageId) && findBtn) {
+                findBtn.classList.add('text-teal-600');
+                findBtn.classList.remove('text-espresso-muted');
+            }
+
+            if (pageId === 'find' && currentStep === 0) {
+                renderStep();
+            }
+        }
+
+        function startFlowWithService(service) {
+            userData.service_type = service;
+            currentStep = 1;
+            navigateTo('find');
+            renderStep();
+        }
+
+        function goBackFromFind() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+            } else {
+                navigateTo('home');
+            }
+        }
+
+        // --- Questionnaire Logic ---
+        function renderStep() {
+            const step = householdFlow[currentStep];
+            if (!step) {
+                showSummary();
+                return;
+            }
+
+            document.getElementById('step-indicator').innerText = `Step ${currentStep + 1} of ${householdFlow.length}`;
+            const progress = ((currentStep + 1) / householdFlow.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            document.getElementById('question-title').innerText = step.title;
+            document.getElementById('question-subtitle').innerText = step.subtitle;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            if (step.type === 'input') {
+                // Contact capture step
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-body font-medium text-espresso mb-2">Your Full Name</label>
+                            <input type="text" id="input-name" placeholder="e.g. Adaeze Okonkwo"
+                                class="w-full border border-teal-600/15 rounded-xl px-4 py-3.5 font-body text-sm text-espresso bg-white focus:ring-2 focus:ring-teal-600/15 focus:border-teal-600 outline-none transition-all placeholder-espresso-muted/50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-body font-medium text-espresso mb-2">Phone Number (WhatsApp)</label>
+                            <input type="tel" id="input-phone" placeholder="e.g. 08012345678"
+                                class="w-full border border-teal-600/15 rounded-xl px-4 py-3.5 font-body text-sm text-espresso bg-white focus:ring-2 focus:ring-teal-600/15 focus:border-teal-600 outline-none transition-all placeholder-espresso-muted/50">
+                        </div>
+                        <button onclick="submitContact()" class="w-full bg-teal-600 text-white py-4 rounded-xl font-body font-bold text-sm shadow-teal-md hover:bg-teal-700 transition-all active:scale-95 mt-2">
+                            Continue to Review →
+                        </button>
+                    </div>
+                `;
+            } else {
+                step.options.forEach(opt => {
+                    const card = document.createElement('div');
+                    card.className = "option-card p-4 bg-white border border-teal-600/10 rounded-xl cursor-pointer active:scale-[0.98]";
+                    card.onclick = () => selectOption(card, opt);
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <p class="font-body font-semibold text-espresso text-sm">${opt}</p>
+                            <div class="w-5 h-5 rounded-full border-2 border-teal-600/20 flex items-center justify-center">
+                                <div class="check-dot w-2.5 h-2.5 rounded-full bg-teal-600 scale-0 transition-transform"></div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        function submitContact() {
+            const name = document.getElementById('input-name').value.trim();
+            const phone = document.getElementById('input-phone').value.trim();
+
+            if (!name || !phone) {
+                showToast('Please enter your name and phone number');
+                return;
+            }
+            if (phone.length < 10) {
+                showToast('Please enter a valid phone number');
+                return;
+            }
+
+            userData.name = name;
+            userData.phone = phone;
+            showSummary();
+        }
+
+        function selectOption(clickedCard, val) {
+            const stepId = householdFlow[currentStep].id;
+            userData[stepId] = val;
+
+            // Only highlight the clicked card
+            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+            clickedCard.classList.add('selected');
+            clickedCard.querySelector('.check-dot').style.transform = 'scale(1)';
+
+            setTimeout(() => {
+                currentStep++;
+                renderStep();
+            }, 250);
+        }
+
+        function showSummary() {
+            document.getElementById('sum-service').innerText = userData.service_type || '-';
+            document.getElementById('sum-accommodation').innerText = userData.accommodation || '-';
+            document.getElementById('sum-location').innerText = userData.location || '-';
+            document.getElementById('sum-budget').innerText = userData.salary_budget || '-';
+            document.getElementById('sum-name').innerText = userData.name || '-';
+            document.getElementById('sum-phone').innerText = userData.phone || '-';
+
+            navigateTo('summary');
+        }
+
+        // --- Matching & Results ---
+        async function findMatches() {
+            navigateTo('results');
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div class="space-y-4">
+                    ${[1, 2, 3].map(() => `
+                        <div class="h-44 bg-ivory-200 rounded-2xl animate-pulse"></div>
+                    `).join('')}
+                </div>
+            `;
+
+            try {
+                const budgetNumbers = userData.salary_budget.match(/\d+/g) || [];
+                const payload = {
+                    help_type: userData.service_type,
+                    accommodation: userData.accommodation,
+                    location: userData.location,
+                    budget_min: budgetNumbers[0] ? budgetNumbers[0] + '000' : null,
+                    budget_max: budgetNumbers[1] ? budgetNumbers[1] + '000' : null,
+                    start_date: userData.start_date || new Date().toISOString().split('T')[0],
+                    phone: userData.phone,
+                    name: userData.name
+                };
+
+                const response = await api.post('/client-requests', payload);
+                if (response.success) {
+                    serviceRequestId = response.service_record_id || response.service_request_id;
+                    console.log("Service Request Created:", serviceRequestId);
+                }
+            } catch (err) {
+                console.warn("Backend unavailable, using local mock data", err);
+            }
+
+            setTimeout(() => {
+                renderMockResults();
+            }, 1500);
+        }
+
+        function renderMockResults() {
+            const container = document.getElementById('results-container');
+            const mocks = [
+                { id: 1, name: "Blessing Okafor", role: "Fulltime Maid", location: "Lekki Phase 1", rating: 4.9, bio: "6 years experience in luxury homes. Expert cleaner with a warm, humble personality.", age: 28, image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&h=200&fit=crop&crop=face" },
+                { id: 2, name: "Comfort Sunday", role: "Nanny / Caretaker", location: "Victoria Island", rating: 4.7, bio: "Motherly care for children and infants. Holds a verified medical certificate.", age: 34, image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face" },
+                { id: 3, name: "Janet Akpan", role: "Chef / Cook", location: "Ikoyi", rating: 5.0, bio: "Masters local Nigerian and continental dishes. Available for live-in positions.", age: 25, image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face" }
+            ];
+
+            container.innerHTML = mocks.map((maid, index) => `
+                <div class="maid-card surface-elevated rounded-2xl p-5 relative overflow-hidden animate-fade-up" style="animation-delay: ${index * 0.12}s">
+                    <!-- Sparkle decoration -->
+                    <span class="absolute top-4 right-5 text-copper-200 text-[8px] animate-sparkle-delayed">✦</span>
+
+                    <div class="flex items-start gap-4 relative z-10">
+                        <div class="relative">
+                            <div class="w-16 h-16 rounded-2xl overflow-hidden img-zoom">
+                                <img src="${maid.image}" class="w-full h-full object-cover" alt="${maid.name}">
+                            </div>
+                            <div class="absolute -bottom-1.5 -right-1.5 bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                                <i class="fas fa-check text-[8px]"></i>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-body font-bold text-espresso text-base">${maid.name}</h4>
+                                    <p class="text-[10px] text-copper-400 font-mono font-medium uppercase tracking-wider mt-0.5">${maid.role}</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-copper-50 px-2 py-1 rounded-full">
+                                    <i class="fas fa-star text-copper-400 text-[10px]"></i>
+                                    <span class="text-[10px] font-mono font-medium text-copper-400">${maid.rating}</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-espresso-muted mt-2 leading-relaxed font-body line-clamp-2">${maid.bio}</p>
+
+                            <div class="flex flex-wrap gap-1.5 mt-3">
+                                <span class="bg-ivory-200 text-espresso px-2.5 py-1 rounded-full text-[10px] font-body font-medium">
+                                    <i class="fas fa-map-marker-alt mr-1 text-teal-600"></i>${maid.location}
+                                </span>
+                                <span class="bg-ivory-200 text-espresso px-2.5 py-1 rounded-full text-[10px] font-body font-medium">
+                                    ${maid.age} years
+                                </span>
+                                <span class="bg-teal-50 text-teal-600 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium uppercase tracking-wider">
+                                    ✦ NIN Verified
+                                </span>
+                            </div>
+
+                            <button onclick="hireHelper('${maid.name}', ${maid.id})" class="w-full mt-4 bg-espresso text-white py-3 rounded-xl font-body font-bold text-xs transition-all active:scale-95 hover:bg-espresso-light flex items-center justify-center gap-2 group shadow-teal-sm">
+                                <span>Hire ${maid.name.split(' ')[0]}</span>
+                                <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- Payment Logic ---
+        async function hireHelper(name, id) {
+            showToast("Initialising secure payment...");
+
+            try {
+                const initResponse = await api.post('/payments/initialize', {
+                    service_request_id: serviceRequestId,
+                    type: 'service_fee',
+                    gateway: 'flutterwave'
+                });
+
+                if (!initResponse.success) {
+                    throw new Error(initResponse.error || "Failed to initialise payment");
+                }
+
+                const paymentData = initResponse.payment;
+
+                FlutterwaveCheckout({
+                    public_key: paymentData.public_key,
+                    tx_ref: paymentData.tx_ref,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency,
+                    payment_options: "card, mobilemoney, ussd",
+                    customer: {
+                        email: userData.phone + "@maids.ng",
+                        phone_number: userData.phone,
+                        name: userData.name,
+                    },
+                    customizations: {
+                        title: "Maids.ng Service Fee",
+                        description: `Matching fee for ${name}`,
+                        logo: "https://maids.ng/favicon.png",
+                    },
+                    callback: function (data) {
+                        if (data.status === "successful") {
+                            showToast("Payment Successful! ✦");
+                            triggerHiringFeedback(name, paymentData.tx_ref);
+                        }
+                    },
+                    onclose: function () {
+                        showToast("Payment window closed.");
+                    }
+                });
+            } catch (err) {
+                console.error("Payment Error:", err);
+                showToast("Payment system offline. Please contact support.");
+            }
+        }
+
+        // --- Hiring Feedback ---
+        function triggerHiringFeedback(maidName, txRef) {
+            setTimeout(() => {
+                const phone = "2349012345678"; // TODO: Replace with real Maids.ng WhatsApp Business number
+                const message = encodeURIComponent(`Hi Maids.ng! I just paid my booking fee for ${maidName} (Ref: ${txRef}). Please share the full biodata and connect us. — ${userData.name}, ${userData.phone}`);
+                window.location.href = `https://wa.me/${phone}?text=${message}`;
+            }, 2000);
+        }
+
+        // --- Utilities ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.querySelector('span:last-child').innerText = msg;
+            toast.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'scale-100', 'pointer-events-auto');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'scale-90', 'pointer-events-none');
+                toast.classList.remove('opacity-100', 'scale-100', 'pointer-events-auto');
+            }, 4000);
+        }
+    </script>
+</body>
+
+</html>
