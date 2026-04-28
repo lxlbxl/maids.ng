@@ -1,0 +1,374 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Report | Maids.ng</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4', 100: '#D0EAEA', 200: '#A3D5D6', 300: '#6BB8B9', 400: '#2A9799',
+                            500: '#1A7374', 600: '#0F5556', 700: '#083A3B'
+                        },
+                        copper: {
+                            50: '#FEF3E6', 100: '#FDE6C8', 200: '#F5C88A', 400: '#B45309', 500: '#9A4508'
+                        },
+                        ivory: { DEFAULT: '#FAF7F2', 50: '#FDFCFA', 100: '#FAF7F2', 200: '#F1EAD7' },
+                        espresso: { DEFAULT: '#1C1812', light: '#2D2820', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            .print-border { border: 1px solid #e5e7eb !important; padding: 20px !important; }
+            .shadow-teal-md { box-shadow: none !important; }
+        }
+        /* Page System */
+        .page {
+            opacity: 1;
+            position: relative;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8 no-print hidden md:block">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-teal-600 font-body font-semibold text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-body font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40 no-print">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden no-print">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white/70 italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white/70 italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white italic text-teal-400">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <a href="employer.html" class="block w-full py-4 bg-teal-600 text-white text-center rounded-2xl font-bold">Hire a Maid</a>
+                    <a href="login.html" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Staff Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-3xl mx-auto px-4 pt-12 md:pt-32 pb-32">
+        <div class="flex justify-between items-center mb-10 no-print">
+            <a href="index.html" class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-arrow-left text-[8px]"></i> Back to Portal
+            </a>
+            <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-teal-sm transition-all flex items-center gap-2">
+                <i class="fas fa-print"></i> Print Official Report
+            </button>
+        </div>
+
+        <!-- Report Card -->
+        <div id="reportCard" class="brand-surface p-8 md:p-14 shadow-teal-md print-border hidden relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-8 text-teal-600/5 italic text-[120px] pointer-events-none">✦</div>
+            
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-teal-600/10 pb-10 mb-10 gap-8 relative z-10">
+                <div>
+                    <h1 class="text-4xl font-display font-bold text-espresso italic">Official Verification</h1>
+                    <div class="mt-4 flex flex-col gap-1">
+                        <p class="text-[10px] font-mono font-bold text-espresso-muted uppercase tracking-[0.2em]">Node Ref: <span id="r-reference" class="text-teal-600">---</span></p>
+                        <p class="text-[10px] font-mono font-bold text-espresso-muted uppercase tracking-[0.2em]">Timestamp: <span id="r-date">---</span></p>
+                    </div>
+                </div>
+                <div class="shrink-0">
+                    <img src="images/logo.png" alt="Maids.ng" class="h-10">
+                </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="matchStatusBanner" class="rounded-2xl p-8 mb-10 text-center flex items-center justify-center gap-6 border-2 relative z-10">
+                <!-- Dynamically assigned classes and content -->
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10 border-b border-teal-600/10 pb-12 relative z-10">
+                <!-- Target (Provided) Data -->
+                <div>
+                    <h4 class="text-[10px] font-bold text-espresso-muted uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                        <span class="w-1 h-1 bg-espresso-muted rounded-full"></span>
+                        Input Sequence
+                    </h4>
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-[9px] font-bold text-espresso-muted uppercase tracking-tighter mb-1">Personnel First Name</p>
+                            <p class="text-lg font-display font-bold text-espresso italic" id="r-given-first">---</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-espresso-muted uppercase tracking-tighter mb-1">Personnel Surname</p>
+                            <p class="text-lg font-display font-bold text-espresso italic" id="r-given-last">---</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-espresso-muted uppercase tracking-tighter mb-1">National ID Token</p>
+                            <p class="font-mono text-sm bg-teal-50/50 text-teal-700 px-3 py-1.5 rounded-lg border border-teal-600/5 inline-block tracking-widest" id="r-given-nin">---</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NIMC Returned Data -->
+                <div class="bg-teal-50/30 rounded-3xl p-8 border border-teal-600/5 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 text-teal-600/5 italic text-4xl">✦</div>
+                    <h4 class="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                        <span class="w-1 h-1 bg-teal-600 rounded-full"></span>
+                        Federal Registry Match
+                    </h4>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[9px] font-bold text-teal-600/60 uppercase tracking-tighter mb-1">Global First Name</p>
+                                <p class="text-sm font-bold text-espresso" id="r-actual-first">---</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-teal-600/60 uppercase tracking-tighter mb-1">Global Surname</p>
+                                <p class="text-sm font-bold text-espresso" id="r-actual-last">---</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[9px] font-bold text-teal-600/60 uppercase tracking-tighter mb-1">Birth Registry</p>
+                                <p class="text-sm font-bold text-espresso" id="r-actual-dob">---</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-teal-600/60 uppercase tracking-tighter mb-1">Gender Class</p>
+                                <p class="text-sm font-bold text-espresso" id="r-actual-gender">---</p>
+                            </div>
+                        </div>
+                        <div id="photoContainer" class="hidden mt-6 pt-6 border-t border-teal-600/10">
+                            <p class="text-[9px] font-bold text-teal-600/60 uppercase tracking-tighter mb-3">Federal Biometric Image</p>
+                            <div class="w-32 h-40 bg-ivory rounded-2xl overflow-hidden border-2 border-white shadow-teal-sm">
+                                <img id="r-photo" src="" alt="Identity Photo" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="text-[10px] text-espresso-muted leading-relaxed italic opacity-50 relative z-10 px-4 py-4 bg-ivory rounded-xl border border-teal-600/5">
+                <span class="font-bold">Protocol Disclaimer:</span> This report is cryptographically generated via direct bridge to the National Identity Management Commission archives. Maids.ng serves as a secure gateway and makes no warranties regarding government data accuracy. This document remains valid as an identity cross-reference token only at the recorded timestamp.
+            </div>
+            
+        </div>
+
+        <!-- Upsell Banner (Hidden in Print) -->
+        <div class="mt-12 bg-espresso text-white rounded-[32px] p-10 md:p-14 text-center relative overflow-hidden group no-print">
+            <div class="crosshatch rounded-[32px]"></div>
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-teal-600/20 rounded-full blur-3xl group-hover:bg-teal-600/30 transition-all duration-700"></div>
+            
+            <div class="relative z-10">
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full mb-8">
+                    <span class="text-copper-300">âœ¦</span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-teal-100 italic">Managed Advantage</span>
+                    <span class="text-copper-300">âœ¦</span>
+                </div>
+                <h5 class="text-4xl font-display font-bold italic mb-6">Why screen when you can <em class="text-copper-300">delegate</em>?</h5>
+                <p class="text-ivory/60 text-base mb-10 max-w-xl mx-auto leading-relaxed font-light">
+                    Move beyond independent verification. Hire domestic professionals from our managed pool — where background checks, medical screening, and federal vetting are already completed.
+                </p>
+                <a href="index.html" class="inline-block px-10 py-4 bg-copper-400 text-white font-bold rounded-2xl shadow-copper hover:bg-copper-500 transition-all active:scale-95">
+                    Explore Managed Pool
+                </a>
+            </div>
+        </div>
+
+        <!-- Loader -->
+        <div id="loadingIndicator" class="text-center py-32">
+            <div class="w-16 h-16 border-4 border-teal-100 border-t-teal-600 rounded-full animate-spin mx-auto mb-8 shadow-teal-sm"></div>
+            <h3 class="text-2xl font-display font-bold text-espresso italic">Decrypting Registry...</h3>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted mt-2">Connecting to Federal Archives</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden text-center py-32">
+            <div class="w-20 h-20 bg-copper-50 text-copper-500 rounded-3xl mx-auto flex items-center justify-center text-3xl mb-8 border border-copper-400/10">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-2xl font-display font-bold text-espresso italic mb-2">Registry Link Failure</h3>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted" id="errorMsg">The requested report could not be located in our secure node.</p>
+            <a href="index.html" class="mt-8 inline-block px-8 py-3 bg-white text-teal-600 font-bold text-sm rounded-xl border border-teal-600/10 hover:bg-teal-50 transition-all">Back to Safety</a>
+       </div>
+
+    </div>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+        
+        async function loadReport() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+
+            if(!ref) {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('errorState').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const req = await fetch(`${API_BASE}/standalone-verification/report/${ref}`);
+                const response = await req.json();
+
+                document.getElementById('loadingIndicator').classList.add('hidden');
+
+                if(!req.ok || !response.success) {
+                    throw new Error(response.error || 'Failed to load report');
+                }
+
+                const data = response.data;
+                const matchData = data.match_data || {};
+
+                // UI mappings
+                document.getElementById('r-reference').textContent = data.reference;
+                document.getElementById('r-date').textContent = new Date(data.created_at).toLocaleString();
+                
+                document.getElementById('r-given-first').textContent = data.query_first_name;
+                document.getElementById('r-given-last').textContent = data.query_last_name;
+                document.getElementById('r-given-nin').textContent = data.query_nin;
+
+                // NIMC mappings
+                document.getElementById('r-actual-first').textContent = matchData.firstname || 'Not Available';
+                document.getElementById('r-actual-last').textContent = matchData.surname || 'Not Available';
+                document.getElementById('r-actual-dob').textContent = matchData.birthdate || 'Not Available';
+                document.getElementById('r-actual-gender').textContent = matchData.gender || 'Not Available';
+
+                if(matchData.photo) {
+                    const img = document.getElementById('r-photo');
+                    // QoreID usually returns base64
+                    img.src = `data:image/jpeg;base64,${matchData.photo}`;
+                    document.getElementById('photoContainer').classList.remove('hidden');
+                }
+
+                const banner = document.getElementById('matchStatusBanner');
+                if (data.status === 'verified') {
+                    banner.classList.add('bg-teal-50', 'border-teal-600/10', 'text-teal-700');
+                    banner.innerHTML = `<i class="fas fa-check-circle text-5xl text-teal-600"></i>
+                                        <div class="text-left">
+                                            <h3 class="text-2xl font-display font-bold uppercase tracking-tight italic">Protocol Verified</h3>
+                                            <p class="text-[10px] font-bold uppercase tracking-widest text-teal-600/60 mt-1">Full Identity Match Documented</p>
+                                        </div>`;
+                } else {
+                    banner.classList.add('bg-copper-50', 'border-copper-400/10', 'text-copper-600');
+                    banner.innerHTML = `<i class="fas fa-shield-virus text-5xl text-copper-400"></i>
+                                        <div class="text-left">
+                                            <h3 class="text-2xl font-display font-bold uppercase tracking-tight italic text-copper-500">Identity Mismatch</h3>
+                                            <p class="text-[10px] font-bold uppercase tracking-widest text-copper-400/60 mt-1">Secure Discrepancy Detected</p>
+                                        </div>`;
+                }
+
+                document.getElementById('reportCard').classList.remove('hidden');
+
+            } catch(e) {
+                document.getElementById('errorMsg').textContent = e.message;
+                document.getElementById('errorState').classList.remove('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadReport);
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom no-print">
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <a href="index.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Home</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Find Help</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 px-3">
+                <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+            </a>
+            <a href="job.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Jobs</span>
+            </a>
+            <a href="login.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Account</span>
+            </a>
+        </div>
+    </nav>
+</body>
+</html>

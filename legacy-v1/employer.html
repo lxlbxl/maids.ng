@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employer Dashboard - Maids.ng</title>
+    <meta name="robots" content="noindex, nofollow">
+    
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script src="js/api-service.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4', 100: '#D0EAEA', 200: '#A3D5D6', 300: '#6BB8B9', 400: '#2A9799',
+                            500: '#1A7374', 600: '#0F5556', 700: '#083A3B'
+                        },
+                        copper: {
+                            50: '#FEF3E6', 100: '#FDE6C8', 200: '#F5C88A', 400: '#B45309', 500: '#9A4508'
+                        },
+                        ivory: { DEFAULT: '#FAF7F2', 50: '#FDFCFA', 100: '#FAF7F2', 200: '#F1EAD7' },
+                        espresso: { DEFAULT: '#1C1812', light: '#2D2820', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-teal {
+            background: linear-gradient(45deg, #0F5556, #1A7374);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .metric-card {
+            background: white;
+            border: 1px solid rgba(15, 85, 86, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(15, 85, 86, 0.2);
+            box-shadow: 0 12px 24px -8px rgba(15, 85, 86, 0.1);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-active { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        .status-pending { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+        .helper-avatar { border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso pb-32 md:pb-0">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white/70 italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white/70 italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white/70 italic">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <button onclick="logout()" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employer Sub-Header -->
+    <div class="bg-white border-b border-teal-600/5 sticky top-[72px] md:top-[80px] z-30">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-6 overflow-x-auto no-scrollbar">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-teal-600/60 whitespace-nowrap">Household Dashboard</span>
+                <div class="h-4 w-px bg-teal-600/10"></div>
+                <div id="employer-name-header" class="text-sm font-bold text-espresso whitespace-nowrap">Loading...</div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-ivory rounded-lg border border-teal-600/5">
+                    <i class="fas fa-wallet text-[10px] text-copper-400"></i>
+                    <span id="employer-credits" class="text-xs font-mono font-bold text-espresso">₦0</span>
+                </div>
+                <button onclick="logout()" class="w-9 h-9 flex items-center justify-center rounded-xl bg-copper-50 text-copper-400 hover:bg-copper-400 hover:text-white transition-all">
+                    <i class="fas fa-power-off text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view-transition">
+
+        <!-- Main Dashboard -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+            <!-- Welcome Section -->
+            <section class="mb-10 animate-fade-in">
+                <div class="brand-surface-elevated p-6 sm:p-10 relative overflow-hidden">
+                    <!-- Sparkle accents -->
+                    <div class="absolute top-4 right-4 text-copper-400 opacity-20 text-2xl italic">✦</div>
+                    <div class="absolute bottom-4 left-4 text-teal-600 opacity-10 text-3xl italic">✦</div>
+                    
+                    <div class="flex flex-col md:flex-row items-baseline justify-between gap-4">
+                        <div>
+                            <h2 class="text-3xl sm:text-4xl font-display font-bold text-espresso mb-2 italic">
+                                Welcome back, <span id="welcome-name" class="text-teal-600">User</span>!
+                            </h2>
+                            <p class="text-espresso-muted font-medium">Your Nigerian sanctuary is thriving. Here's your status today.</p>
+                        </div>
+                        <div class="md:text-right">
+                            <div class="text-2xl font-display font-bold text-espresso" id="current-date">Loading...</div>
+                            <div class="text-sm font-mono text-copper-400 uppercase tracking-widest" id="current-time">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Metrics -->
+            <section class="mb-10">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <!-- Active Maids -->
+                    <div class="metric-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-teal-600"></i>
+                            </div>
+                            <div class="status-indicator status-active"></div>
+                        </div>
+                        <div class="text-3xl font-display font-bold text-espresso mb-1" id="active-maids">0</div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-espresso-muted">Active Staff</div>
+                    </div>
+
+                    <!-- Monthly Payments -->
+                    <div class="metric-card rounded-2xl p-6 border-l-4 border-copper-400">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-copper-50 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-wallet text-copper-400"></i>
+                            </div>
+                            <div class="text-[10px] font-bold text-copper-400 uppercase">This Month</div>
+                        </div>
+                        <div class="text-3xl font-display font-bold text-espresso mb-1" id="monthly-payments">₦0</div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-espresso-muted">Net Salaries</div>
+                    </div>
+
+                    <!-- Average Rating -->
+                    <div class="metric-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-star text-teal-600"></i>
+                            </div>
+                            <div class="text-[10px] font-bold text-teal-600 uppercase italic">✦ Excellent</div>
+                        </div>
+                        <div class="text-3xl font-display font-bold text-espresso mb-1" id="average-rating">0.0</div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-espresso-muted">Avg Service Rating</div>
+                    </div>
+
+                    <!-- Due Status -->
+                    <div class="metric-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-clock text-red-500"></i>
+                            </div>
+                            <div class="status-indicator status-pending"></div>
+                        </div>
+                        <div class="text-3xl font-display font-bold text-espresso mb-1" id="payment-due">0</div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-espresso-muted">Upcoming Dues</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column - Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <section>
+                        <div class="brand-surface p-6 sm:p-8">
+                            <div class="flex items-center justify-between mb-8">
+                                <h3 class="text-2xl font-display font-bold text-espresso italic">Manage Staff</h3>
+                                <button onclick="hireMaid()" class="px-6 py-2.5 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                                    + Hire Staff
+                                </button>
+                            </div>
+
+                            <div class="space-y-4" id="maids-list">
+                                <div class="text-center py-12">
+                                    <div class="text-teal-600/20 mb-4"><i class="fas fa-users-slash text-5xl"></i></div>
+                                    <p class="text-espresso-muted italic">Preparing your staff records...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column - Sidebar -->
+                <div class="space-y-8">
+                    <!-- Activities -->
+                    <section>
+                        <div class="brand-surface p-6 sm:p-8">
+                            <h3 class="text-xl font-display font-bold text-espresso mb-6">Recent Activity</h3>
+                            <div class="space-y-4" id="activities-list">
+                                <p class="text-espresso-muted text-sm italic">Loading events...</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Quick Actions -->
+                    <section>
+                        <div class="brand-surface p-6 bg-teal-600">
+                            <h3 class="font-display font-bold text-xl text-white mb-6 italic">Member Privilege</h3>
+                            <div class="space-y-3">
+                                <button onclick="hireMaid()" class="w-full flex items-center justify-between p-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl transition-all group">
+                                    <span class="text-white font-bold">Request Staff Upgrade</span>
+                                    <i class="fas fa-arrow-right text-white/40 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <a href="contact.html" class="w-full flex items-center justify-between p-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl transition-all group">
+                                    <span class="text-white font-bold">Premium Concierge</span>
+                                    <i class="fas fa-headset text-white/40 group-hover:rotate-12 transition-transform"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Pay Salary Modal -->
+    <div id="pay-modal" class="hidden fixed inset-0 bg-espresso/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div class="bg-ivory rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-fade-in border border-teal-600/10">
+            <h3 class="text-2xl font-display font-bold text-espresso mb-2">Process Salary</h3>
+            <p class="text-espresso-muted mb-8 text-sm italic">Confirm monthly remittance for <span id="pay-maid-name" class="text-teal-600 font-bold"></span>.</p>
+
+            <form id="pay-form" class="space-y-6">
+                <input type="hidden" id="pay-maid-phone">
+                <input type="hidden" id="pay-booking-id">
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2">Contracted Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-teal-600 font-bold">₦</span>
+                        <input type="number" id="pay-amount" readonly class="w-full pl-10 pr-4 py-4 bg-white border border-teal-600/10 rounded-2xl font-bold text-espresso text-lg focus:outline-none cursor-default">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closePayModal()" class="flex-1 py-4 text-espresso-muted font-bold hover:text-espresso transition-colors">Cancel</button>
+                    <button type="submit" id="pay-submit-btn" class="flex-1 py-4 bg-teal-600 text-white rounded-2xl font-bold shadow-teal-md hover:bg-teal-700 transition-all">Remit Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rate Maid Modal -->
+    <div id="rate-modal" class="hidden fixed inset-0 bg-espresso/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div class="bg-ivory rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-fade-in border border-teal-600/10">
+            <h3 class="text-2xl font-display font-bold text-espresso mb-2 italic">Service Quality</h3>
+            <p class="text-espresso-muted mb-8 text-sm">How was your experience with <span id="rate-maid-name" class="text-teal-600 font-bold"></span>?</p>
+
+            <form id="rate-form" class="space-y-6">
+                <input type="hidden" id="rate-maid-id">
+
+                <div class="flex justify-center gap-2 mb-2">
+                    <button type="button" class="star-btn text-3xl text-teal-600/20 hover:text-copper-400 focus:outline-none transition-colors" data-rating="1">✦</button>
+                    <button type="button" class="star-btn text-3xl text-teal-600/20 hover:text-copper-400 focus:outline-none transition-colors" data-rating="2">✦</button>
+                    <button type="button" class="star-btn text-3xl text-teal-600/20 hover:text-copper-400 focus:outline-none transition-colors" data-rating="3">✦</button>
+                    <button type="button" class="star-btn text-3xl text-teal-600/20 hover:text-copper-400 focus:outline-none transition-colors" data-rating="4">✦</button>
+                    <button type="button" class="star-btn text-3xl text-teal-600/20 hover:text-copper-400 focus:outline-none transition-colors" data-rating="5">✦</button>
+                </div>
+                <input type="hidden" id="rate-value" required>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2">Confidential Review</label>
+                    <textarea id="rate-comment" rows="3" class="w-full p-4 bg-white border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 text-sm" placeholder="Share your household feedback..."></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeRateModal()" class="flex-1 py-4 text-espresso-muted font-bold hover:text-espresso transition-colors">Later</button>
+                    <button type="submit" id="rate-submit-btn" class="flex-1 py-4 bg-copper-400 text-white rounded-2xl font-bold shadow-copper-md hover:bg-copper-500 transition-all">Submit Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loading-modal" class="hidden fixed inset-0 bg-ivory/80 backdrop-blur-md flex items-center justify-center z-[100]">
+        <div class="text-center">
+            <div class="pulse-teal w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-12 shadow-teal-lg">
+                <i class="fas fa-home text-white text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-display font-bold text-espresso italic">Maids.ng</h3>
+            <p class="text-espresso-muted text-sm font-medium tracking-widest uppercase mt-2">Harmonising Your Home...</p>
+        </div>
+    </div>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        const apiService = new ApiService('http://localhost:8000/api');
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+             const token = localStorage.getItem('access_token');
+             if (!token) {
+                 window.location.href = 'login.html';
+                 return;
+             }
+             apiService.token = token;
+             
+             // Initial Load
+             await loadDashboardData();
+             setupModals();
+             setupDateTimeUpdate();
+        });
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userPhone');
+            window.location.href = 'login.html';
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Show user info
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                document.getElementById('user-name').textContent = userData.name || 'User';
+                document.getElementById('welcome-name').textContent = userData.name || 'User';
+                document.getElementById('user-phone').textContent = userData.phone || localStorage.getItem('userPhone') || '';
+                
+                const response = await apiService.get('/dashboard');
+                if (response.success) {
+                    processBackendDashboardData(response.data);
+                }
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+                if (error.status === 401 || error.message === 'Unauthorized') logout();
+            }
+        }
+
+        function processBackendDashboardData(data) {
+            const activeMaids = data.active_maids || [];
+            const activities = data.activities || [];
+
+            // Update Metrics
+            document.getElementById('active-maids').textContent = activeMaids.length;
+            document.getElementById('monthly-payments').textContent = `₦${(data.total_salary || 0).toLocaleString()}`;
+            document.getElementById('average-rating').textContent = (data.average_rating || 0).toFixed(1);
+            
+           const maidsList = document.getElementById('maids-list');
+    if (activeMaids.length === 0) {
+        maidsList.innerHTML = '<div class="text-center py-6 text-espresso-muted italic">No active staff records found.</div>';
+    } else {
+        maidsList.innerHTML = activeMaids.map(maid => `
+            <div class="bg-white/50 border border-teal-600/5 rounded-2xl p-5 hover:border-teal-600/20 transition-all group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <img src="images/default-avatar.svg" class="w-12 h-12 rounded-full helper-avatar">
+                        <div>
+                            <h4 class="font-bold text-espresso">${maid.name}</h4>
+                            <p class="text-xs font-mono text-espresso-muted uppercase tracking-widest">${maid.job_title || 'Domestic Staff'}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openPayModal('${maid.name}', '${maid.phone}', '${maid.id}', ${maid.rate})" class="w-10 h-10 flex items-center justify-center bg-teal-50 text-teal-600 rounded-xl hover:bg-teal-600 hover:text-white transition-all shadow-sm" title="Pay Salary">
+                            <i class="fas fa-wallet"></i>
+                        </button>
+                        <button onclick="openRateModal('${maid.id}', '${maid.name}')" class="w-10 h-10 flex items-center justify-center bg-copper-50 text-copper-400 rounded-xl hover:bg-copper-400 hover:text-white transition-all shadow-sm" title="Rate Service">
+                            <i class="fas fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Render Activity
+    const activList = document.getElementById('activities-list');
+    if (activities.length === 0) {
+        activList.innerHTML = '<div class="text-center py-4 text-espresso-muted italic">No recent activity found.</div>';
+    } else {
+        activList.innerHTML = activities.map(act => `
+            <div class="flex items-start gap-3 p-4 bg-white/30 rounded-2xl border border-teal-600/5">
+                <div class="w-2 h-2 mt-1.5 rounded-full bg-copper-400 shadow-[0_0_8px_rgba(180,83,9,0.3)]"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-espresso leading-relaxed">${act.message || act.description}</p>
+                    <p class="text-[10px] font-mono text-espresso-muted uppercase tracking-widest mt-1">${new Date(act.created_at).toLocaleDateString()}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+// ... rest of feature functions ...
+
+function updateStars(rating) {
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        const btnRating = parseInt(btn.getAttribute('data-rating'));
+        if (btnRating <= rating) {
+            btn.classList.add('text-copper-400');
+            btn.classList.remove('text-teal-600/20');
+        } else {
+            btn.classList.add('text-teal-600/20');
+            btn.classList.remove('text-copper-400');
+        }
+    });
+}// Feature Functions
+        function hireMaid() {
+            window.location.href = 'index-merge.html';
+        }
+
+        // Modals Logic
+        function openPayModal(name, phone, bookingId, salary) {
+            document.getElementById('pay-maid-name').textContent = name;
+            document.getElementById('pay-maid-phone').value = phone;
+            document.getElementById('pay-booking-id').value = bookingId;
+            document.getElementById('pay-amount').value = salary;
+            document.getElementById('pay-modal').classList.remove('hidden');
+        }
+
+        function closePayModal() {
+            document.getElementById('pay-modal').classList.add('hidden');
+        }
+
+        function openRateModal(helperId, name) {
+            document.getElementById('rate-maid-name').textContent = name;
+            document.getElementById('rate-maid-id').value = helperId;
+            document.getElementById('rate-modal').classList.remove('hidden');
+            // Reset
+            document.getElementById('rate-value').value = '';
+            document.getElementById('rate-comment').value = '';
+            updateStars(0);
+        }
+
+        function closeRateModal() {
+            document.getElementById('rate-modal').classList.add('hidden');
+        }
+        
+        function updateStars(rating) {
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                const btnRating = parseInt(btn.getAttribute('data-rating'));
+                if (btnRating <= rating) {
+                    btn.classList.add('text-yellow-400');
+                    btn.classList.remove('text-gray-300');
+                } else {
+                    btn.classList.add('text-gray-300');
+                    btn.classList.remove('text-yellow-400');
+                }
+            });
+        }
+
+        function setupModals() {
+            // Stars
+             document.querySelectorAll('.star-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const rating = this.getAttribute('data-rating');
+                    document.getElementById('rate-value').value = rating;
+                    updateStars(rating);
+                });
+            });
+
+            // Pay Submit
+            document.getElementById('pay-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('pay-maid-name').textContent;
+                const amount = document.getElementById('pay-amount').value;
+                const bookingId = document.getElementById('pay-booking-id').value;
+                const phone = document.getElementById('pay-maid-phone').value;
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+
+                FlutterwaveCheckout({
+                    public_key: "FLWPUBK_TEST-5e8cd676c8c4a4f0b2f-X", // Test Key
+                    tx_ref: "SAL-" + bookingId + "-" + Date.now(),
+                    amount: parseFloat(amount),
+                    currency: "NGN",
+                    payment_options: "card, banktransfer, ussd",
+                    customer: {
+                        email: userData.email || localStorage.getItem('user_email') || "employer@maids.ng",
+                        phone_number: userData.phone || "08000000000",
+                        name: userData.name || "Employer",
+                    },
+                    customizations: {
+                        title: "Salary Payment",
+                        description: `Monthly salary for ${name}`,
+                        logo: "https://maids.ng/favicon.png",
+                    },
+                    callback: function (data) {
+                        if (data.status === "successful") {
+                            alert('Salary payment processed successfully!');
+                            // In a real app, we would notify the backend here
+                            closePayModal();
+                            // Refresh dashboard data to show the transaction (mocked)
+                            loadDashboardData();
+                        }
+                    },
+                    onclose: function () {
+                        // Optional: action when modal closes
+                    }
+                });
+            });
+
+            // Rate Submit
+            document.getElementById('rate-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const helperId = document.getElementById('rate-maid-id').value;
+                const rating = document.getElementById('rate-value').value;
+                const comment = document.getElementById('rate-comment').value;
+                
+                if (!rating) { alert('Please select a rating'); return; }
+                
+                try {
+                    await apiService.post('/ratings', {
+                        helper_id: helperId,
+                        rating: rating,
+                        review: comment
+                    });
+                    alert('Rating submitted!');
+                    closeRateModal();
+                } catch(err) {
+                    console.error(err);
+                    alert('Failed to submit rating');
+                }
+            });
+        }
+        
+        function setupDateTimeUpdate() {
+            const updateTime = () => {
+                const now = new Date();
+                document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            };
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Initialize mobile menu button if exists
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+            const close = document.getElementById('close-menu');
+            if (close) close.addEventListener('click', toggleMobileMenu);
+        });
+    </script>
+    
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom">
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <a href="index.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Home</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Find Help</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 px-3">
+                <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+            </a>
+            <a href="job.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Jobs</span>
+            </a>
+            <a href="login.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-teal-600 transition-colors">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Account</span>
+            </a>
+        </div>
+    </nav>

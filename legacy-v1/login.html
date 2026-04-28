@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Maids.ng - Access Your Domestic Worker Dashboard</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/api-service.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4', 100: '#D0EAEA', 200: '#A3D5D6', 300: '#6BB8B9', 400: '#2A9799',
+                            500: '#1A7374', 600: '#0F5556', 700: '#083A3B'
+                        },
+                        copper: {
+                            50: '#FEF3E6', 100: '#FDE6C8', 200: '#F5C88A', 400: '#B45309', 500: '#9A4508'
+                        },
+                        ivory: { DEFAULT: '#FAF7F2', 50: '#FDFCFA', 100: '#FAF7F2', 200: '#F1EAD7' },
+                        espresso: { DEFAULT: '#1C1812', light: '#2D2820', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-teal {
+            background: linear-gradient(45deg, #0F5556, #1A7374);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+    </style>
+</head>
+
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso pb-32 md:pb-0">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="https://maids.ng/images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-teal-600 font-semibold text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white/70 italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white/70 italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white/70 italic">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <a href="employer.html" class="block w-full py-4 bg-teal-600 text-white text-center rounded-2xl font-bold">Hire a Maid</a>
+                    <a href="login.html" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Log In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="pt-24 md:pt-32 pb-12 px-4">
+        <div class="max-w-md mx-auto">
+            <!-- Page Header -->
+            <div class="text-center mb-10">
+                <div class="pulse-teal w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-3 shadow-teal-md">
+                    <i class="fas fa-user-lock text-2xl text-white"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-display font-bold text-espresso mb-3 italic">Welcome back</h1>
+                <p class="text-espresso-muted">Sign in to manage your household staff or job applications.</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="brand-surface-elevated p-8 mb-8">
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="whatsapp" class="block text-sm font-semibold text-espresso mb-2">WhatsApp Number</label>
+                        <div class="relative">
+                            <input type="tel" id="whatsapp" name="whatsapp" required class="w-full px-4 py-3 bg-ivory border border-teal-600/10 rounded-xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all" placeholder="08012345678" maxlength="11" pattern="[0-9]{11}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="pin" class="block text-sm font-semibold text-espresso mb-2">4-6 Digit PIN</label>
+                        <div class="relative">
+                            <input type="password" id="pin" name="pin" required class="w-full px-4 py-3 bg-ivory border border-teal-600/10 rounded-xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-center text-2xl tracking-widest font-mono" placeholder="••••" maxlength="6" pattern="[0-9]{4,6}">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="w-full py-4 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all shadow-teal-md active:scale-[0.98] disabled:opacity-50">
+                        <span id="login-btn-text">Sign In</span>
+                    </button>
+                </form>
+
+                <div id="error-message" class="hidden mt-6 p-4 bg-red-50 border border-red-100 rounded-xl">
+                    <p id="error-text" class="text-red-700 text-sm font-medium flex items-center gap-2">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Error message</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- User Type Selection -->
+            <div class="space-y-4">
+                <h3 class="text-center text-espresso-muted text-sm font-medium uppercase tracking-wider mb-6">New to Maids.ng?</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="index.html" class="flex flex-col items-center gap-3 p-4 bg-white border border-teal-600/5 rounded-2xl hover:border-teal-600/20 hover:shadow-md transition-all group">
+                        <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="fas fa-home text-teal-600"></i>
+                        </div>
+                        <span class="text-sm font-bold text-espresso">Hire a Maid</span>
+                    </a>
+                    <a href="job.html" class="flex flex-col items-center gap-3 p-4 bg-white border border-teal-600/5 rounded-2xl hover:border-teal-600/20 hover:shadow-md transition-all group">
+                        <div class="w-10 h-10 bg-copper-50 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i class="fas fa-briefcase text-copper-400"></i>
+                        </div>
+                        <span class="text-sm font-bold text-espresso">Find a Job</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            if (menuBtn && menu) {
+                menuBtn.addEventListener('click', () => menu.classList.toggle('hidden'));
+            }
+        });
+    </script>
+
+    <script>
+        const apiService = new ApiService('http://localhost:8000/api');
+
+        // Auto-redirect if already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                const role = userData.user_type;
+                if (role === 'admin') window.location.href = 'admin.html';
+                else if (role === 'agency') window.location.href = 'agency.html';
+                else window.location.href = 'employer.html';
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('login-btn-text');
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            btn.disabled = true;
+            btnText.textContent = 'Signing in...';
+            errorDiv.classList.add('hidden');
+
+            const phone = document.getElementById('whatsapp').value;
+            const pin = document.getElementById('pin').value;
+
+            try {
+                const response = await apiService.post('/auth/login', { phone, pin });
+
+                if (response.success && response.tokens) {
+                    localStorage.setItem('access_token', response.tokens.access_token);
+                    localStorage.setItem('userData', JSON.stringify(response.user));
+                    localStorage.setItem('userPhone', phone);
+
+                    // Redirect based on role
+                    const role = response.user.user_type; // Ensure backend sends 'user_type'
+
+                    if (role === 'admin') {
+                        // Admins must use the dedicated Admin Portal for proper access
+                        window.location.href = 'admin-login.html';
+                    } else if (role === 'agency') {
+                        window.location.href = 'agency.html';
+                    } else {
+                        // Default to Employer Dashboard
+                        window.location.href = 'employer.html';
+                    }
+                } else {
+                    throw new Error(response.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error(error);
+                errorText.textContent = error.message || 'An error occurred during login.';
+                errorDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btnText.textContent = 'Sign In';
+            }
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Initialize mobile menu button if exists
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+            const close = document.getElementById('close-menu');
+            if (close) close.addEventListener('click', toggleMobileMenu);
+        });
+    </script>
+    
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-espresso/90 backdrop-blur-md rounded-full px-8 py-4 flex items-center justify-between z-50 border border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-house text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Home</span>
+        </a>
+        <a href="job.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-briefcase text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Jobs</span>
+        </a>
+        <!-- Center Plus Button -->
+        <a href="employer.html" class="w-14 h-14 bg-teal-600 rounded-full flex items-center justify-center -mt-12 border-4 border-ivory shadow-teal transition-transform hover:scale-110 active:scale-95">
+            <i class="fas fa-plus text-white text-xl"></i>
+        </a>
+        <a href="nin-verification.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-shield-alt text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Verify</span>
+        </a>
+        <a href="contact.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-envelope text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Chat</span>
+        </a>
+    </nav>
+</body>
+
+</html>

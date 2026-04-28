@@ -1,0 +1,378 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Identity | Maids.ng</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4', 100: '#D0EAEA', 200: '#A3D5D6', 300: '#6BB8B9', 400: '#2A9799',
+                            500: '#1A7374', 600: '#0F5556', 700: '#083A3B'
+                        },
+                        copper: {
+                            50: '#FEF3E6', 100: '#FDE6C8', 200: '#F5C88A', 400: '#B45309', 500: '#9A4508'
+                        },
+                        ivory: { DEFAULT: '#FAF7F2', 50: '#FDFCFA', 100: '#FAF7F2', 200: '#F1EAD7' },
+                        espresso: { DEFAULT: '#1C1812', light: '#2D2820', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-teal {
+            background: linear-gradient(45deg, #0F5556, #1A7374);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso pb-32 md:pb-0">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-teal-600 font-semibold text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white/70 italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white/70 italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white italic">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <a href="employer.html" class="block w-full py-4 bg-teal-600 text-white text-center rounded-2xl font-bold">Hire a Maid</a>
+                    <a href="login.html" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Staff Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Banner -->
+    <div class="pulse-teal text-white pt-32 pb-24 px-4 text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-brand-texture"></div>
+        <div class="max-w-2xl mx-auto relative z-10">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-[10px] font-bold uppercase tracking-widest mb-6">
+                <span class="w-1.5 h-1.5 rounded-full bg-copper-400 animate-pulse"></span>
+                Official Verification Node
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6 italic">Secure Identity Assurance</h1>
+            <p class="text-lg md:text-xl font-medium text-white/80 leading-relaxed">Direct connection to the National Identity Management Commission (NIMC) for instant domestic staff verification.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-3xl mx-auto px-4 pb-20 relative">
+        <div class="brand-surface p-8 md:p-12 shadow-teal-md -mt-10 relative z-10 overflow-hidden">
+            <div class="absolute top-0 right-0 p-6 text-teal-600/5 italic text-6xl">✦</div>
+            
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="hidden absolute inset-0 bg-ivory/95 backdrop-blur-md z-20 flex-col items-center justify-center animate-fade-in">
+                <div class="w-16 h-16 border-4 border-teal-100 border-t-teal-600 rounded-full animate-spin mb-6"></div>
+                <h4 class="text-2xl font-display font-bold text-espresso italic">Processing Secure Node...</h4>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted mt-2">Initializing Encypted Payment Tunnel</p>
+            </div>
+
+            <div class="text-center mb-12">
+                <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 border border-teal-600/5">
+                    <i class="fas fa-fingerprint text-2xl"></i>
+                </div>
+                <h3 class="text-3xl font-display font-bold text-espresso italic">Identity Verification</h3>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted">Cross-referencing with NIMC database</p>
+            </div>
+
+            <form id="ninVerificationForm" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2 ml-1">Legal First Name</label>
+                        <input type="text" id="firstName" required placeholder="As shown on NIN card" 
+                               class="w-full px-5 py-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-espresso font-medium placeholder:text-espresso-muted/30">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2 ml-1">Legal Surname</label>
+                        <input type="text" id="lastName" required placeholder="As shown on NIN card" 
+                               class="w-full px-5 py-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-espresso font-medium placeholder:text-espresso-muted/30">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2 ml-1">Personnel's 11-Digit NIN</label>
+                    <input type="text" id="ninNumber" required pattern="\d{11}" maxlength="11" placeholder="0000 0000 000" 
+                           class="w-full px-5 py-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-espresso font-mono tracking-[0.2em] placeholder:text-espresso-muted/30">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-2 ml-1">Your Delivery Email</label>
+                    <input type="email" id="email" required placeholder="Verification report will be sent here" 
+                           class="w-full px-5 py-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-espresso font-medium placeholder:text-espresso-muted/30">
+                </div>
+
+                <div class="bg-teal-50 border border-teal-600/10 rounded-2xl p-6 flex items-start gap-4">
+                    <i class="fas fa-lock text-teal-600 text-lg mt-0.5"></i>
+                    <div class="text-sm leading-relaxed text-teal-700">
+                        <span class="font-bold">Protocol Fee: <span id="displayFee">₦5,000</span></span>. This encrypted query is processed through QoreID's secure link to the National Identity Management Commission.
+                    </div>
+                </div>
+
+                <button type="submit" id="payBtn" class="w-full bg-teal-600 text-white py-5 rounded-2xl font-bold text-lg shadow-teal-md hover:bg-teal-700 transition-all hover:translate-y-[-2px]">
+                    Initialize Secure Verification
+                </button>
+            </form>
+            
+            <div id="errorAlert" class="hidden mt-6 bg-copper-50 border border-copper-400/20 text-copper-600 text-xs font-bold uppercase tracking-widest p-4 rounded-xl shadow-sm text-center"></div>
+
+            <div class="mt-12 bg-ivory/50 border border-teal-600/5 rounded-3xl p-8 text-center relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-2 text-copper-400/5 italic text-4xl">✦</div>
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-copper-50 text-copper-400 mb-6 rotate-3 border border-copper-400/5">
+                    <i class="fas fa-user-shield text-2xl"></i>
+                </div>
+                <h5 class="text-2xl font-display font-bold text-espresso italic mb-3">Tired of independent screening?</h5>
+                <p class="text-espresso-muted text-sm mb-6 max-w-sm mx-auto">Hire pre-verified, background-checked, and medically-screened professionals directly from our managed pool.</p>
+                <a href="index.html" class="inline-block px-8 py-3 bg-white text-teal-600 font-bold text-sm rounded-xl border border-teal-600/10 hover:bg-teal-50 transition-all shadow-sm">Explore Managed Workforce</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom">
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <a href="index.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Home</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Find Help</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 px-3">
+                <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+            </a>
+            <a href="job.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Jobs</span>
+            </a>
+            <a href="login.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Account</span>
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Scripts -->
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api';
+        let paymentReference = '';
+
+        document.getElementById('ninVerificationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('payBtn');
+            const overlay = document.getElementById('loadingOverlay');
+            const errorAlert = document.getElementById('errorAlert');
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            errorAlert.classList.add('hidden');
+            
+            const payload = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                nin: document.getElementById('ninNumber').value,
+                email: document.getElementById('email').value,
+                gateway: 'flutterwave'
+            };
+
+            try {
+                const req = await fetch(`${API_BASE}/standalone-verification/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const response = await req.json();
+                
+                if (!req.ok || !response.success) {
+                    throw new Error(response.error || 'Failed to initialize payment');
+                }
+
+                const paymentData = response.payment;
+                paymentReference = response.reference; 
+
+                FlutterwaveCheckout({
+                    public_key: paymentData.public_key,
+                    tx_ref: paymentData.tx_ref,
+                    amount: paymentData.amount,
+                    currency: paymentData.currency,
+                    payment_options: "card,banktransfer,ussd",
+                    customer: {
+                        email: payload.email,
+                        name: payload.first_name + ' ' + payload.last_name,
+                    },
+                    customizations: {
+                        title: "NIN Verification Fee",
+                        description: "Identity check via Maids.ng",
+                        logo: window.location.origin + "/images/logo.png"
+                    },
+                    callback: function (data) {
+                        overlay.querySelector('h4').textContent = "Verifying Identity...";
+                        verifyTransaction(paymentReference, data.transaction_id);
+                    },
+                    onclose: function() {
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('flex');
+                    }
+                });
+                
+            } catch (err) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                errorAlert.textContent = err.message;
+                errorAlert.classList.remove('hidden');
+            }
+        });
+
+        async function verifyTransaction(reference, transactionId) {
+            try {
+                const req = await fetch(`${API_BASE}/standalone-verification/verify-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reference: reference,
+                        transaction_id: transactionId
+                    })
+                });
+                
+                const response = await req.json();
+                
+                if (!req.ok || !response.success) {
+                    throw new Error(response.error || 'Identity Verification failed after payment.');
+                }
+
+                window.location.href = `verification-report.html?ref=${reference}`;
+                
+            } catch (err) {
+                const overlay = document.getElementById('loadingOverlay');
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                
+                const errorAlert = document.getElementById('errorAlert');
+                errorAlert.textContent = err.message;
+                errorAlert.classList.remove('hidden');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Initialize mobile menu button if exists
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+            const close = document.getElementById('close-menu');
+            if (close) close.addEventListener('click', toggleMobileMenu);
+        });
+    </script>
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-espresso/90 backdrop-blur-md rounded-full px-8 py-4 flex items-center justify-between z-50 border border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-house text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Home</span>
+        </a>
+        <a href="job.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-briefcase text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Jobs</span>
+        </a>
+        <!-- Center Hire Button -->
+        <a href="employer.html" class="w-14 h-14 bg-teal-600 rounded-full flex items-center justify-center -mt-12 border-4 border-ivory shadow-teal transition-transform hover:scale-110 active:scale-95">
+            <i class="fas fa-plus text-white text-xl"></i>
+        </a>
+        <a href="nin-verification.html" class="flex flex-col items-center gap-1 text-white transition-colors">
+            <i class="fas fa-shield-alt text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Verify</span>
+        </a>
+        <a href="contact.html" class="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors">
+            <i class="fas fa-envelope text-lg"></i>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Chat</span>
+        </a>
+    </nav>

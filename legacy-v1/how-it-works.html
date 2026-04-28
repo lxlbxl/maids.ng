@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+
+    <!-- SEO Meta Tags -->
+    <title>How Maids.ng Works - Find Verified Domestic Workers in Nigeria</title>
+    <meta name="description" content="Simple 4-step process to find verified domestic workers, maids, cleaners, and nannies in Nigeria using Maids.ng's AI-powered matching.">
+    
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#EAF4F4', 100: '#D0EAEA', 200: '#A3D5D6', 300: '#6BB8B9', 400: '#2A9799',
+                            500: '#1A7374', 600: '#0F5556', 700: '#083A3B'
+                        },
+                        copper: {
+                            50: '#FEF3E6', 100: '#FDE6C8', 200: '#F5C88A', 400: '#B45309', 500: '#9A4508'
+                        },
+                        ivory: { DEFAULT: '#FAF7F2', 50: '#FDFCFA', 100: '#FAF7F2', 200: '#F1EAD7' },
+                        espresso: { DEFAULT: '#1C1812', light: '#2D2820', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    },
+                    boxShadow: {
+                        'teal-sm': '0 1px 3px rgba(15,85,86,0.08)',
+                        'teal-md': '0 4px 16px rgba(15,85,86,0.10)',
+                        'teal-lg': '0 12px 40px rgba(15,85,86,0.14)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-teal {
+            background: linear-gradient(45deg, #0F5556, #1A7374);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+    </style>
+</head>
+
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso pb-32 md:pb-0">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-teal-600 font-semibold text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Contact</a>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white/70 italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white/70 italic">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <a href="employer.html" class="block w-full py-4 bg-teal-600 text-white text-center rounded-2xl font-bold">Hire a Maid</a>
+                    <a href="login.html" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Staff Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="pt-24 md:pt-32 pb-12 px-4">
+        <div class="max-w-2xl mx-auto">
+            <!-- Page Header -->
+            <div class="text-center mb-12">
+                <div class="pulse-teal w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-3 shadow-teal-md">
+                    <i class="fas fa-info-circle text-2xl text-white"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-display font-bold text-espresso mb-4 italic">How it works</h1>
+                <p class="text-espresso-muted text-lg max-w-md mx-auto">A seamless 4-step process to find your perfect domestic sanctuary.</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div class="brand-surface-elevated p-8 brand-card-hover border-l-4 border-teal-600">
+                    <div class="flex gap-6">
+                        <div class="w-12 h-12 bg-teal-50 rounded-xl flex-shrink-0 flex items-center justify-center">
+                            <span class="font-display font-bold text-teal-600 text-2xl">1</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-espresso mb-2">Tell Us Your Needs</h3>
+                            <p class="text-espresso-muted leading-relaxed">Briefly share what you're looking for—service type, location, and your specific domestic preferences. It takes less than 2 minutes.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="brand-surface-elevated p-8 brand-card-hover border-l-4 border-copper-400">
+                    <div class="flex gap-6">
+                        <div class="w-12 h-12 bg-copper-50 rounded-xl flex-shrink-0 flex items-center justify-center">
+                            <span class="font-display font-bold text-copper-400 text-2xl">2</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-espresso mb-2">Get Matched Instantly</h3>
+                            <p class="text-espresso-muted leading-relaxed">Our matching engine immediately pairs you with background-verified staff who fit your criteria perfectly.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="brand-surface-elevated p-8 brand-card-hover border-l-4 border-teal-600">
+                    <div class="flex gap-6">
+                        <div class="w-12 h-12 bg-teal-50 rounded-xl flex-shrink-0 flex items-center justify-center">
+                            <span class="font-display font-bold text-teal-600 text-2xl">3</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-espresso mb-2">Review & Select</h3>
+                            <p class="text-espresso-muted leading-relaxed">Browse detailed profiles, review credentials, and choose the helper who resonates with your household values.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="brand-surface-elevated p-8 brand-card-hover border-l-4 border-copper-400">
+                    <div class="flex gap-6">
+                        <div class="w-12 h-12 bg-copper-50 rounded-xl flex-shrink-0 flex items-center justify-center">
+                            <span class="font-display font-bold text-copper-400 text-2xl">4</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-display font-bold text-espresso mb-2">Secure & Start</h3>
+                            <p class="text-espresso-muted leading-relaxed">Finalise with a secure service fee. Your hire is protected by our 10-day replacement guarantee and full worker verification.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-teal-600/5">
+                    <i class="fas fa-check-circle text-teal-600"></i>
+                    <span class="text-espresso-muted font-medium">100% NIN Verified Staff</span>
+                </div>
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-teal-600/5">
+                    <i class="fas fa-check-circle text-teal-600"></i>
+                    <span class="text-espresso-muted font-medium">Medical & Background Checks</span>
+                </div>
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-teal-600/5">
+                    <i class="fas fa-check-circle text-teal-600"></i>
+                    <span class="text-espresso-muted font-medium">10-Day Replacement Guarantee</span>
+                </div>
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-teal-600/5">
+                    <i class="fas fa-check-circle text-teal-600"></i>
+                    <span class="text-espresso-muted font-medium">24/7 Digital Support</span>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-16 text-center">
+                <a href="index.html" class="inline-block px-10 py-4 bg-teal-600 text-white rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all shadow-teal-lg hover:-translate-y-1">
+                    Find Help Now
+                </a>
+                <p class="mt-6 text-espresso-muted text-sm italic">Trusted by thousands of Nigerian households. <span class="text-copper-400 italic">✦</span></p>
+            </div>
+        </div>
+    </main>
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Initialize mobile menu button if exists
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+            const close = document.getElementById('close-menu');
+            if (close) close.addEventListener('click', toggleMobileMenu);
+        });
+    </script>
+      <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom">
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <a href="index.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Home</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Find Help</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 px-3">
+                <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+            </a>
+            <a href="job.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-teal-600 transition-colors">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Jobs</span>
+            </a>
+            <a href="login.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Account</span>
+            </a>
+        </div>
+    </nav>
+</body>

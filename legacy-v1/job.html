@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://maids.ng/favicon.png">
+    <link rel="apple-touch-icon" href="https://maids.ng/favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    
+    <link rel="stylesheet" href="css/brand.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/api-service.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: { 50: '#EAF4F4', 100: '#D0EAEA', 200: '#A1D5D5', 600: '#0F5556', 700: '#083A3B' },
+                        copper: { 50: '#FEF3E6', 400: '#B45309', 500: '#9A4508' },
+                        ivory: '#FAF7F2',
+                        espresso: { DEFAULT: '#1C1812', muted: '#6B7280' }
+                    },
+                    fontFamily: {
+                        display: ['Cormorant Garamond', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                        mono: ['DM Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-teal {
+            background: linear-gradient(45deg, #0F5556, #1A7374);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .option-card {
+            background: white;
+            border: 1px solid rgba(15, 85, 86, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:hover {
+            border-color: #0F5556;
+            background: rgba(15, 85, 86, 0.02);
+        }
+        .option-card.selected {
+            background: #0F5556;
+            color: white;
+            border-color: #0F5556;
+        }
+        .loading-spinner {
+            border: 2px solid rgba(15, 85, 86, 0.1);
+            border-top: 2px solid #0F5556;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="bg-ivory bg-brand-texture min-h-screen font-body text-espresso pb-32 md:pb-0">
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav fixed top-0 left-0 right-0 z-50 bg-ivory/95 backdrop-blur-md border-b border-teal-600/8">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 shrink-0">
+                <img src="images/logo.png" alt="Maids.ng" class="h-9">
+            </a>
+            <div class="flex items-center gap-7">
+                <a href="index.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Home</a>
+                <a href="how-it-works.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">How It Works</a>
+                <a href="job.html" class="text-teal-600 font-semibold text-sm transition-colors">Find Jobs</a>
+                <a href="agency.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">For Agencies</a>
+                <a href="nin-verification.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">NIN Verify</a>
+                <a href="contact.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Contact</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="login.html" class="text-espresso hover:text-teal-600 font-medium text-sm transition-colors">Log In</a>
+                <a href="employer.html" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl font-body font-semibold text-sm hover:bg-teal-700 transition-all shadow-teal-sm">
+                    Hire a Maid
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden sticky top-0 bg-ivory/95 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-teal-600/8 z-40">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="images/logo.png" alt="Maids.ng" class="h-8">
+        </a>
+        <div class="flex items-center gap-3">
+            <button class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                <i class="fas fa-bell text-sm"></i>
+            </button>
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-espresso text-white flex items-center justify-center">
+                <i class="fas fa-bars-staggered text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-espresso/95 backdrop-blur-xl z-[100] transform translate-y-full transition-transform duration-500 ease-in-out md:hidden">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-12">
+                <img src="images/logo.png" alt="Maids.ng" class="h-8 brightness-0 invert">
+                <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <a href="index.html" class="block text-2xl font-display font-medium text-white italic">Home</a>
+                <a href="how-it-works.html" class="block text-2xl font-display font-medium text-white/70 italic">How It Works</a>
+                <a href="job.html" class="block text-2xl font-display font-medium text-white italic">Find Jobs</a>
+                <a href="agency.html" class="block text-2xl font-display font-medium text-white/70 italic">For Agencies</a>
+                <a href="nin-verification.html" class="block text-2xl font-display font-medium text-white/70 italic">NIN Verify</a>
+                <a href="contact.html" class="block text-2xl font-display font-medium text-white/70 italic">Contact</a>
+                <div class="pt-10 space-y-4">
+                    <a href="employer.html" class="block w-full py-4 bg-teal-600 text-white text-center rounded-2xl font-bold">Hire a Maid</a>
+                    <a href="login.html" class="block w-full py-4 bg-white/10 text-white text-center rounded-2xl font-bold">Staff Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 pt-24 md:pt-32 pb-12" id="app">
+        <!-- Welcome View -->
+        <div id="welcome-view" class="space-y-8 animate-fade-in text-center">
+            <!-- Welcome Section -->
+            <div class="mb-12">
+                <div class="pulse-teal w-24 h-24 rounded-3xl mx-auto mb-8 flex items-center justify-center rotate-6 shadow-teal-md">
+                    <i class="fas fa-briefcase text-4xl text-white"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-display font-bold text-espresso mb-4 italic">Find your perfect home job</h1>
+                <p class="text-espresso-muted text-lg max-w-md mx-auto">Join Nigeria's most trusted domestic workforce and earn more with verified families.</p>
+            </div>
+
+            <!-- Start Button -->
+            <button onclick="startHelperFlow()" class="w-full bg-teal-600 text-white py-5 rounded-2xl font-bold text-xl hover:bg-teal-700 transition-all shadow-teal-md hover:translate-y-[-2px]">
+                Start Registration
+            </button>
+
+            <!-- Trust Indicators -->
+            <div class="brand-surface p-6 mt-12 overflow-hidden relative">
+                <div class="absolute top-0 right-0 p-2 text-teal-600/5 italic text-4xl">✦</div>
+                <div class="flex items-center justify-around">
+                    <div class="px-2">
+                        <div class="text-2xl font-display font-bold text-teal-600">500+</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-espresso-muted">Active Jobs</div>
+                    </div>
+                    <div class="w-px h-10 bg-teal-600/10"></div>
+                    <div class="px-2">
+                        <div class="text-2xl font-display font-bold text-copper-400">₦45k</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-espresso-muted">Avg. Salary</div>
+                    </div>
+                    <div class="w-px h-10 bg-teal-600/10"></div>
+                    <div class="px-2">
+                        <div class="text-2xl font-display font-bold text-teal-600">4.9★</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-espresso-muted">Rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Card View (Hidden by default) -->
+        <div id="question-view" class="hidden">
+            <div class="brand-surface p-8 shadow-teal-md relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-teal-600/5 rounded-full blur-2xl"></div>
+                
+                <!-- Progress -->
+                <div class="flex items-center justify-between mb-10 relative">
+                    <button onclick="goBack()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-ivory text-espresso hover:text-teal-600 transition-all border border-teal-600/5">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="flex-1 mx-6">
+                        <div class="bg-teal-600/10 rounded-full h-1.5">
+                            <div id="progress-bar" class="bg-teal-600 h-1.5 rounded-full transition-all duration-700 shadow-[0_0_8px_rgba(15,85,86,0.3)]" style="width: 6%"></div>
+                        </div>
+                        <div class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted mt-2 text-center" id="progress-text">Step 1 of 16</div>
+                    </div>
+                </div>
+
+                <!-- Question Header -->
+                <div class="text-center mb-10">
+                    <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-3 border border-teal-600/5">
+                        <i class="fas fa-question text-2xl"></i>
+                    </div>
+                    <h3 id="question-title" class="text-2xl font-display font-bold text-espresso italic">What is your full name?</h3>
+                </div>
+
+                <!-- Answer Options -->
+                <div id="answer-options" class="space-y-4 mb-8">
+                    <!-- Options populated by JS -->
+                </div>
+
+                <!-- Input Section -->
+                <div id="input-section" class="pt-6 border-t border-teal-600/5">
+                    <div class="space-y-4">
+                        <input type="text" id="text-input" placeholder="Type here..." 
+                               class="w-full px-5 py-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/5 transition-all text-espresso font-medium placeholder:text-espresso-muted/40">
+                        <button id="next-btn" class="w-full bg-teal-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all shadow-teal-sm">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Voice Recording Section -->
+                <div id="voice-section" class="hidden pt-6 border-t border-teal-600/5">
+                    <div class="text-center space-y-6">
+                        <button id="voice-btn" class="w-full bg-teal-600 text-white py-6 rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all shadow-teal-md group relative overflow-hidden">
+                            <div class="flex items-center justify-center gap-3 relative z-10">
+                                <div id="audio-wave" class="hidden flex items-center gap-1.5">
+                                    <div class="w-1.5 h-3 bg-white/40 rounded-full animate-[audioWave_0.6s_ease-in-out_infinite]"></div>
+                                    <div class="w-1.5 h-6 bg-white rounded-full animate-[audioWave_0.8s_ease-in-out_infinite]"></div>
+                                    <div class="w-1.5 h-4 bg-white/60 rounded-full animate-[audioWave_0.7s_ease-in-out_infinite]"></div>
+                                </div>
+                                <i class="fas fa-microphone"></i>
+                                <span id="voice-status">Tap to record (20s)</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="upload-section" class="hidden pt-6 border-t border-teal-600/5">
+                    <div class="space-y-4">
+                        <!-- Inline Camera Container -->
+                        <div id="camera-container" class="hidden relative overflow-hidden rounded-2xl bg-black aspect-square mb-4">
+                            <video id="camera-video" class="w-full h-full object-cover" autoplay playsinline></video>
+                            <canvas id="camera-canvas" class="hidden"></canvas>
+                            <div class="absolute bottom-6 left-0 right-0 flex justify-center gap-4 px-6">
+                                <button id="capture-btn" class="flex-1 bg-white text-espresso py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2">
+                                    <i class="fas fa-camera"></i>
+                                    Snapshot
+                                </button>
+                                <button id="close-camera-btn" class="w-12 h-12 bg-white/20 backdrop-blur-md text-white rounded-xl flex items-center justify-center">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="upload-controls" class="space-y-4">
+                            <button id="camera-btn" class="w-full bg-white border border-teal-600/10 text-espresso py-4 rounded-2xl font-bold hover:bg-teal-50 transition-all flex items-center justify-center gap-3 shadow-sm">
+                                <i class="fas fa-camera text-teal-600"></i>
+                                <span>Take Photo</span>
+                            </button>
+                            <button id="upload-btn" class="w-full bg-white border border-teal-600/10 text-espresso py-4 rounded-2xl font-bold hover:bg-teal-50 transition-all flex items-center justify-center gap-3 shadow-sm">
+                                <i class="fas fa-cloud-upload-alt text-teal-600"></i>
+                                <span>Choose from Gallery</span>
+                            </button>
+                        </div>
+
+                        <input type="file" id="file-input" accept="image/*" class="hidden">
+                        
+                        <div id="upload-preview" class="hidden text-center p-4 bg-teal-50/50 rounded-2xl border border-teal-600/5 mt-4">
+                            <img id="preview-image" class="w-40 h-40 object-cover mx-auto rounded-2xl border-4 border-white shadow-md mb-3" alt="Preview">
+                            <div class="flex flex-col gap-2">
+                                <span class="text-teal-600 font-bold text-sm flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    Photo Ready
+                                </span>
+                                <button id="retake-btn" class="text-[10px] text-espresso-muted hover:text-teal-600 font-bold uppercase tracking-widest mt-1">
+                                    Retake Photo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maid Summary View (Hidden by default) -->
+        <div id="helper-summary-view" class="hidden space-y-8 animate-fade-in">
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-copper-50 text-copper-400 rounded-2xl mx-auto mb-6 flex items-center justify-center rotate-3 border border-copper-400/5">
+                    <i class="fas fa-id-card text-2xl"></i>
+                </div>
+                <h3 class="text-3xl font-display font-bold text-espresso italic">Profile Preview</h3>
+                <p class="text-espresso-muted">Review your professional profile below</p>
+            </div>
+
+            <!-- Maid Profile Card -->
+            <div class="brand-surface p-8 shadow-teal-md relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-3 text-teal-600/5 italic text-5xl">✦</div>
+                <div class="flex items-center gap-6 mb-8">
+                    <div class="w-20 h-20 bg-teal-600 text-white rounded-2xl flex items-center justify-center text-3xl font-display font-extrabold shadow-teal-sm" id="user-initial">U</div>
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <h4 class="text-24 font-display font-bold text-espresso" id="user-profile-name">User Profile</h4>
+                            <span class="text-[10px] font-bold uppercase tracking-widest bg-copper-400 text-white px-3 py-1 rounded-full">New Member</span>
+                        </div>
+                        <p class="text-sm font-mono text-espresso-muted uppercase tracking-widest" id="summary-job-title">Domestic Professional</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 mb-8">
+                    <div class="flex items-center gap-4 p-4 bg-ivory rounded-2xl border border-teal-600/5 transition-all hover:border-teal-600/20">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="text-sm font-medium text-espresso" id="summary-availability">Ready to work immediately</div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-ivory rounded-2xl border border-teal-600/5 transition-all hover:border-teal-600/20">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="text-sm font-medium text-espresso" id="summary-location">Available in Lagos</div>
+                    </div>
+                    <div class="flex items-center gap-4 p-4 bg-copper-50 rounded-2xl border border-copper-400/5 transition-all hover:border-copper-400/20">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-copper-100 text-copper-600">
+                            <i class="fas fa-naira-sign"></i>
+                        </div>
+                        <div class="text-sm font-bold text-copper-600" id="summary-salary">₦35,000 / month</div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-teal-600/10">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-4">Core Skills & Expertise</p>
+                    <div class="flex flex-wrap gap-2" id="summary-skills">
+                        <!-- Skills populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Publish Button -->
+            <button id="publish-profile-btn" class="w-full bg-teal-600 text-white py-6 rounded-2xl font-bold text-xl hover:bg-teal-700 transition-all shadow-teal-md">
+                Publish My Profile
+            </button>
+        </div>
+
+        <!-- Thank You View (Hidden by default) -->
+        <div id="thank-you-view" class="hidden space-y-8 animate-fade-in text-center">
+            <div class="mb-10">
+                <div class="w-24 h-24 bg-teal-600 text-white rounded-3xl mx-auto mb-8 flex items-center justify-center shadow-teal-md animate-bounce">
+                    <i class="fas fa-check text-4xl"></i>
+                </div>
+                <h3 class="text-4xl font-display font-bold text-espresso italic mb-4">Profile is Live!</h3>
+                <p class="text-espresso-muted text-lg">Your journey with Maids.ng has officially begun.</p>
+            </div>
+
+            <div class="brand-surface p-8 border-teal-600/10 mb-10">
+                <p class="text-espresso font-medium leading-relaxed mb-6">Your profile is now live and visible to families looking for exceptional home care.</p>
+                <div class="flex items-center justify-center gap-3 p-4 bg-teal-50 rounded-2xl text-teal-700">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    <span class="text-sm font-bold">Watch your WhatsApp for interview invites!</span>
+                </div>
+            </div>
+
+            <button onclick="window.location.href='index.html'" class="w-full bg-teal-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all">
+                Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-teal-600/8 z-50 px-2 py-1.5 safe-area-bottom">
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <a href="index.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-home text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Home</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-search text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Find Help</span>
+            </a>
+            <a href="index.html#find" class="flex flex-col items-center gap-0.5 px-3">
+                <div class="w-12 h-12 bg-teal-600 rounded-2xl -mt-5 flex items-center justify-center shadow-teal-md hover:bg-teal-700 transition-colors active:scale-95">
+                    <i class="fas fa-plus text-white text-lg"></i>
+                </div>
+                <span class="text-[9px] font-body font-bold text-teal-600 mt-0.5">Hire</span>
+            </a>
+            <a href="job.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-teal-600 transition-colors">
+                <i class="fas fa-briefcase text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Jobs</span>
+            </a>
+            <a href="login.html" class="flex flex-col items-center gap-0.5 py-1.5 px-3 text-espresso-muted hover:text-teal-600 transition-colors">
+                <i class="fas fa-user-circle text-lg"></i>
+                <span class="text-[9px] font-body font-semibold">Account</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        // Maid flow data
+        const helperFlow = [
+            {
+                title: "What is your WhatsApp number?",
+                type: "tel",
+                placeholder: "Enter your WhatsApp number...",
+                required: true,
+                key: "phone",
+                footnote: "We communicate primarily via WhatsApp"
+            },
+            {
+                title: "What is your NIN (National Identification Number)?",
+                type: "text",
+                placeholder: "Enter your 11-digit NIN...",
+                required: true,
+                key: "nin",
+                verification: true,
+                footnote: "This is to verify your identity. Your information is safe and will not be shared."
+            },
+            {
+                title: "What is your first name?",
+                type: "text",
+                placeholder: "Enter your first name...",
+                required: true,
+                key: "firstName",
+                verification: true
+            },
+            {
+                title: "What is your last name?",
+                type: "text",
+                placeholder: "Enter your last name...",
+                required: true,
+                key: "lastName",
+                verification: true
+            },
+            {
+                title: "What is your email address?",
+                type: "email",
+                placeholder: "Enter your email address...",
+                required: false,
+                key: "email"
+            },
+            {
+                title: "What is your age?",
+                type: "number",
+                placeholder: "Enter your age...",
+                required: true,
+                key: "age"
+            },
+            {
+                title: "What is your date of birth?",
+                type: "date",
+                required: true,
+                key: "dob"
+            },
+            {
+                title: "What is your address?",
+                type: "textarea",
+                placeholder: "Enter your full address...",
+                required: true,
+                key: "address"
+            },
+            {
+                title: "Emergency Contact Information",
+                type: "form",
+                fields: [
+                    { name: "emergency_contact_name", placeholder: "Emergency contact name", type: "text" },
+                    { name: "emergency_contact_phone", placeholder: "Emergency contact phone", type: "tel" },
+                    { name: "emergency_contact_relationship", placeholder: "Relationship", type: "text" }
+                ],
+                key: "emergency_contact"
+            },
+            {
+                title: "Guarantor Details",
+                type: "form",
+                fields: [
+                    { name: "guarantor_name", placeholder: "Guarantor full name", type: "text" },
+                    { name: "guarantor_phone", placeholder: "Guarantor phone number", type: "tel" },
+                    { name: "guarantor_nin", placeholder: "Guarantor NIN (11 digits)", type: "text" },
+                    { name: "guarantor_relationship", placeholder: "Relationship to guarantor", type: "text" }
+                ],
+                key: "guarantor"
+            },
+            {
+                title: "Where do you want to work?",
+                type: "select",
+                options: [
+                    { text: "Stay in the house", value: "live_in" },
+                    { text: "Go home daily", value: "live_out" },
+                    { text: "Any is fine", value: "either" }
+                ],
+                required: true,
+                key: "accommodation_type"
+            },
+            {
+                title: "What type of work do you want to do?",
+                type: "select",
+                options: [
+                    { text: "House Maid", value: "house_maid" },
+                    { text: "Cleaner", value: "cleaner" },
+                    { text: "Cook", value: "cook" },
+                    { text: "Nanny", value: "nanny" }
+                ],
+                required: true,
+                key: "job_type"
+            },
+            {
+                title: "What services can you provide?",
+                type: "multiple",
+                options: [
+                    { text: "House Cleaning", value: "cleaning" },
+                    { text: "Cooking", value: "cooking" },
+                    { text: "Childcare/Nanny", value: "childcare" },
+                    { text: "Elderly Care", value: "elderly_care" },
+                    { text: "Laundry", value: "laundry" },
+                    { text: "Shopping", value: "shopping" }
+                ],
+                key: "services"
+            },
+            {
+                title: "What is your education level?",
+                type: "select",
+                options: [
+                    { text: "No School", value: "no_school" },
+                    { text: "SSCE/WAEC", value: "ssce_waec" },
+                    { text: "OND", value: "ond" },
+                    { text: "HND/BSc", value: "hnd_bsc" }
+                ],
+                required: false,
+                key: "certifications"
+            },
+            {
+                title: "What is your expected monthly salary?",
+                type: "salary_select",
+                options: [
+                    { text: "₦35,000", value: "35000" },
+                    { text: "₦40,000", value: "40000" },
+                    { text: "₦45,000", value: "45000" },
+                    { text: "₦50,000", value: "50000" }
+                ],
+                key: "salary"
+            },
+            {
+                title: "What languages do you speak?",
+                type: "multiple",
+                options: [
+                    { text: "English", value: "english" },
+                    { text: "Yoruba", value: "yoruba" },
+                    { text: "Igbo", value: "igbo" },
+                    { text: "Hausa", value: "hausa" },
+                    { text: "French", value: "french" }
+                ],
+                key: "languages"
+            },
+            {
+                title: "When are you available to start?",
+                type: "select",
+                options: [
+                    { text: "Immediately", value: "immediately" },
+                    { text: "Within 1 week", value: "1_week" },
+                    { text: "Within 2 weeks", value: "2_weeks" },
+                    { text: "Within 1 month", value: "1_month" }
+                ],
+                key: "availability"
+            },
+            {
+                title: "Upload your NIN card",
+                type: "upload",
+                accept: "image/*",
+                key: "nin_card"
+            },
+            {
+                title: "Record a voice introduction (20 seconds)",
+                type: "voice",
+                duration: 20,
+                key: "voice_intro"
+            },
+            {
+                title: "Upload your profile photo",
+                type: "upload",
+                accept: "image/*",
+                key: "profile_photo"
+            }
+        ];
+
+        let currentStep = 0;
+        let userAnswers = {};
+        let mediaRecorder = null;
+        let recordedBlob = null;
+        let leadCaptured = false; // Flag to track if lead has been captured
+        const apiService = new ApiService('http://localhost:8000/api');
+
+        // Lead capture function
+        async function captureLeadData(whatsappNumber) {
+            if (leadCaptured) {
+                console.log('Lead already captured, skipping duplicate submission');
+                return; // Avoid duplicate submissions
+            }
+
+            try {
+                console.log('=== LEAD CAPTURE DEBUG START ===');
+                console.log('Capturing lead for WhatsApp number:', whatsappNumber);
+                console.log('Webhook object available:', typeof window.Webhook);
+                console.log('Webhook.post function:', typeof window.Webhook.post);
+
+                const leadData = {
+                    whatsapp: whatsappNumber,
+                    timestamp: new Date().toISOString(),
+                    source: 'job_application_form',
+                    step: 'whatsapp_entered'
+                };
+
+                console.log('Lead data to send:', JSON.stringify(leadData, null, 2));
+
+                console.log('Sending lead data to /maid-lead endpoint...');
+                const result = await apiService.post('/maid-lead', leadData);
+                console.log('Lead capture SUCCESS! Result:', result);
+
+                leadCaptured = true;
+                console.log('Lead captured flag set to true');
+
+                // Show a subtle confirmation
+                console.log('✅ Lead successfully captured and sent to webhook');
+
+            } catch (error) {
+                console.error('=== LEAD CAPTURE ERROR ===');
+                console.error('Error capturing lead:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                console.error('=== END LEAD CAPTURE ERROR ===');
+                // Don't interrupt the user flow even if lead capture fails
+            }
+            console.log('=== LEAD CAPTURE DEBUG END ===');
+        }
+
+        // Validation functions
+        function validatePhoneNumber(phone) {
+            // Nigerian phone number: 11 digits starting with 0
+            const phoneRegex = /^0[789][01]\d{8}$/;
+            return phoneRegex.test(phone.replace(/\s+/g, ''));
+        }
+
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validateNIN(nin) {
+            // NIN should be exactly 11 digits
+            const ninRegex = /^\d{11}$/;
+            return ninRegex.test(nin.replace(/\s+/g, ''));
+        }
+
+        function showValidationError(input, message) {
+            // Remove existing error message
+            const existingError = input.parentNode.querySelector('.validation-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Add error styling
+            input.classList.add('border-copper-400', 'ring-4', 'ring-copper-400/10');
+            input.classList.remove('border-teal-600/10', 'focus:border-teal-600', 'focus:ring-teal-600/5');
+
+            // Add error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'validation-error text-copper-600 text-[10px] font-bold uppercase tracking-widest mt-2 px-2';
+            errorDiv.textContent = message;
+            input.parentNode.appendChild(errorDiv);
+        }
+
+        function clearValidationError(input) {
+            // Remove error message
+            const existingError = input.parentNode.querySelector('.validation-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Remove error styling
+            input.classList.remove('border-copper-400', 'ring-4', 'ring-copper-400/10');
+            input.classList.add('border-teal-600/10');
+        }
+
+        function startHelperFlow() {
+            userAnswers = {};
+            currentStep = 0;
+            leadCaptured = false; // Reset lead capture flag
+            showQuestionView();
+            loadQuestion(0);
+        }
+
+        function showQuestionView() {
+            document.getElementById('welcome-view').classList.add('hidden');
+            document.getElementById('question-view').classList.remove('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('thank-you-view').classList.add('hidden');
+            updateProgress();
+        }
+
+        function showHelperSummaryView() {
+            document.getElementById('welcome-view').classList.add('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.remove('hidden');
+            document.getElementById('thank-you-view').classList.add('hidden');
+
+            // Update summary with user data
+            if (userAnswers.firstName && userAnswers.lastName) {
+                const fullName = `${userAnswers.firstName} ${userAnswers.lastName}`;
+                document.getElementById('user-profile-name').textContent = fullName;
+                document.getElementById('user-initial').textContent = userAnswers.firstName.charAt(0).toUpperCase();
+            }
+            if (userAnswers.salary) {
+                document.getElementById('summary-salary').textContent = userAnswers.salary;
+            }
+            if (userAnswers.services) {
+                const skillsContainer = document.getElementById('summary-skills');
+                skillsContainer.innerHTML = '';
+                userAnswers.services.forEach(service => {
+                    const span = document.createElement('span');
+                    span.className = 'text-[10px] font-bold uppercase tracking-widest bg-ivory text-teal-600 px-3 py-1.5 rounded-full border border-teal-600/5 shadow-sm';
+                    span.textContent = service;
+                    skillsContainer.appendChild(span);
+                });
+            }
+        }
+
+        function showThankYouView() {
+            document.getElementById('welcome-view').classList.add('hidden');
+            document.getElementById('question-view').classList.add('hidden');
+            document.getElementById('helper-summary-view').classList.add('hidden');
+            document.getElementById('thank-you-view').classList.remove('hidden');
+        }
+
+        function goBack() {
+            if (currentStep > 0) {
+                currentStep--;
+                loadQuestion(currentStep);
+                updateProgress();
+            } else {
+                document.getElementById('welcome-view').classList.remove('hidden');
+                document.getElementById('question-view').classList.add('hidden');
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentStep + 1) / helperFlow.length) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = `Step ${currentStep + 1} of ${helperFlow.length}`;
+        }
+
+        function loadQuestion(step) {
+            if (step >= helperFlow.length) {
+                showHelperSummaryView();
+                return;
+            }
+
+            const question = helperFlow[step];
+            document.getElementById('question-title').textContent = question.title;
+
+            // Hide all sections
+            document.getElementById('answer-options').classList.add('hidden');
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('voice-section').classList.add('hidden');
+            document.getElementById('upload-section').classList.add('hidden');
+
+            // Clear previous content
+            document.getElementById('answer-options').innerHTML = '';
+
+            // Clear any existing footnotes (both regular and enhanced styles)
+            const existingFootnotes = document.querySelectorAll('#input-section div[class*="text-"]');
+            existingFootnotes.forEach(footnote => {
+                if (footnote.querySelector('svg') || footnote.querySelector('.fas') || footnote.classList.contains('text-espresso-muted') || footnote.classList.contains('text-teal-600')) {
+                    footnote.remove();
+                }
+            });
+
+            // Clear any existing skip buttons from voice section
+            const existingSkipBtns = document.querySelectorAll('#voice-section button:not(#voice-btn)');
+            existingSkipBtns.forEach(btn => btn.remove());
+
+            // Reset input elements visibility
+            const textInput = document.getElementById('text-input');
+            const textarea = document.getElementById('textarea-input');
+            if (textInput) textInput.style.display = 'block';
+            if (textarea) textarea.style.display = 'none';
+
+            switch (question.type) {
+                case 'text':
+                case 'email':
+                case 'tel':
+                case 'number':
+                case 'date':
+                    showTextInput(question);
+                    break;
+                case 'textarea':
+                    showTextareaInput(question);
+                    break;
+                case 'select':
+                    showSelectOptions(question);
+                    break;
+                case 'salary_select':
+                    showSalarySelectOptions(question);
+                    break;
+                case 'multiple':
+                    showMultipleOptions(question);
+                    break;
+                case 'form':
+                    showFormInput(question);
+                    break;
+                case 'voice':
+                    showVoiceInput(question);
+                    break;
+                case 'upload':
+                    showUploadInput(question);
+                    break;
+            }
+        }
+
+        function showTextInput(question) {
+            document.getElementById('input-section').classList.remove('hidden');
+            const input = document.getElementById('text-input');
+            input.type = question.type;
+            input.placeholder = question.placeholder;
+            input.value = userAnswers[question.key] || '';
+
+            // Clear any existing validation errors
+            clearValidationError(input);
+
+            // Add real-time validation
+            input.addEventListener('input', function () {
+                const value = this.value.trim();
+                if (value) {
+                    validateField(question.key, value, this);
+                } else {
+                    clearValidationError(this);
+                }
+            });
+
+            // Add footnote if present
+            if (question.footnote) {
+                const footnote = document.createElement('div');
+                // Special styling for verification-related footnotes (like NIN privacy)
+                if (question.verification && question.key === 'nin') {
+                    footnote.className = 'text-[10px] font-mono uppercase tracking-widest text-teal-600 mt-6 p-4 bg-teal-50/50 border border-teal-600/10 rounded-2xl text-center flex items-center justify-center gap-3';
+                    footnote.innerHTML = `
+                        <i class="fas fa-shield-alt"></i>
+                        <span>${question.footnote}</span>
+                    `;
+                } else {
+                    footnote.className = 'text-[10px] font-mono uppercase tracking-widest text-espresso-muted mt-4 text-center';
+                    footnote.textContent = question.footnote;
+                }
+                document.getElementById('input-section').appendChild(footnote);
+            }
+
+            document.getElementById('next-btn').onclick = () => {
+                const value = input.value.trim();
+
+                // Check if field is required
+                if (question.required && !value) {
+                    showValidationError(input, 'This field is required.');
+                    return;
+                }
+
+                // Validate field if it has a value
+                if (value && !validateField(question.key, value, input)) {
+                    return; // Validation error already shown
+                }
+
+                userAnswers[question.key] = value;
+
+                // If this is the WhatsApp number field (first question), capture the lead
+                console.log('=== PHONE FIELD DEBUG ===');
+                console.log('Question key:', question.key);
+                console.log('Value entered:', value);
+                console.log('Phone validation result:', validatePhoneNumber(value));
+
+                if (question.key === 'phone' && value && validatePhoneNumber(value)) {
+                    console.log('✅ Phone validation passed, calling captureLeadData...');
+                    captureLeadData(value);
+                } else {
+                    console.log('❌ Phone validation failed or not phone field');
+                    console.log('- Is phone field?', question.key === 'phone');
+                    console.log('- Has value?', !!value);
+                    console.log('- Valid phone?', validatePhoneNumber(value));
+                }
+                console.log('=== END PHONE FIELD DEBUG ===');
+
+                nextQuestion();
+            };
+        }
+
+        function validateField(fieldKey, value, input) {
+            let isValid = true;
+            let errorMessage = '';
+
+            switch (fieldKey) {
+                case 'phone':
+                    if (!validatePhoneNumber(value)) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid Nigerian phone number (11 digits starting with 0)';
+                    }
+                    break;
+                case 'email':
+                    if (value && !validateEmail(value)) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid email address';
+                    }
+                    break;
+                case 'nin':
+                    if (!validateNIN(value)) {
+                        isValid = false;
+                        errorMessage = 'NIN must be exactly 11 digits';
+                    }
+                    break;
+            }
+
+            if (isValid) {
+                clearValidationError(input);
+            } else {
+                showValidationError(input, errorMessage);
+            }
+
+            return isValid;
+        }
+
+        function showTextareaInput(question) {
+            document.getElementById('input-section').classList.remove('hidden');
+
+            // Hide the regular text input and create a textarea
+            const textInput = document.getElementById('text-input');
+            textInput.style.display = 'none';
+
+            // Check if textarea already exists, if not create it
+            let textarea = document.getElementById('textarea-input');
+            if (!textarea) {
+                textarea = document.createElement('textarea');
+                textarea.id = 'textarea-input';
+                textarea.className = 'w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-lemon-400 focus:ring-2 focus:ring-lemon-100';
+                textarea.rows = 4;
+                textInput.parentNode.insertBefore(textarea, textInput);
+            } else {
+                textarea.style.display = 'block';
+            }
+
+            textarea.placeholder = question.placeholder;
+            textarea.value = userAnswers[question.key] || '';
+
+            // Clear any existing validation errors
+            clearValidationError(textarea);
+
+            document.getElementById('next-btn').onclick = () => {
+                const value = textarea.value.trim();
+                if (question.required && !value) {
+                    showValidationError(textarea, 'This field is required.');
+                    return;
+                }
+                userAnswers[question.key] = value;
+                nextQuestion();
+            };
+        }
+
+        function showSelectOptions(question) {
+            document.getElementById('answer-options').classList.remove('hidden');
+            const container = document.getElementById('answer-options');
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-card w-full p-5 text-left rounded-2xl transition-all flex items-center justify-between group';
+                button.innerHTML = `
+                    <span class="font-bold text-espresso group-hover:text-teal-600 transition-colors">${option.text}</span>
+                    <i class="fas fa-chevron-right text-teal-600/20 group-hover:text-teal-600 transition-all transform group-hover:translate-x-1"></i>
+                `;
+                button.onclick = () => {
+                    userAnswers[question.key] = option.value;
+                    nextQuestion();
+                };
+                container.appendChild(button);
+            });
+        }
+
+        function showSalarySelectOptions(question) {
+            document.getElementById('answer-options').classList.remove('hidden');
+            const container = document.getElementById('answer-options');
+
+            // Add predefined salary options
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-card w-full p-5 text-left rounded-2xl transition-all flex items-center justify-between group mb-4';
+                button.innerHTML = `
+                    <span class="font-bold text-espresso group-hover:text-teal-600 transition-colors">${option.text}</span>
+                    <i class="fas fa-naira-sign text-teal-600/20 group-hover:text-teal-600"></i>
+                `;
+                button.onclick = () => {
+                    userAnswers[question.key] = option.text;
+                    nextQuestion();
+                };
+                container.appendChild(button);
+            });
+
+            // Add custom text input option
+            const customDiv = document.createElement('div');
+            customDiv.className = 'brand-surface p-6 shadow-sm border-teal-600/5 mt-6';
+            customDiv.innerHTML = `
+                <div class="text-[10px] font-bold uppercase tracking-widest text-espresso-muted mb-4">Enter custom amount</div>
+                <div class="flex gap-3">
+                    <input type="text" id="custom-salary" placeholder="e.g., ₦55,000" class="flex-1 px-4 py-3 bg-ivory border border-teal-600/10 rounded-xl focus:outline-none focus:border-teal-600 text-espresso font-medium">
+                    <button id="custom-salary-btn" class="bg-teal-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-teal-700 transition-all shadow-teal-sm">Confirm</button>
+                </div>
+            `;
+            container.appendChild(customDiv);
+
+            // Handle custom salary input
+            setTimeout(() => {
+                document.getElementById('custom-salary-btn').onclick = () => {
+                    const customValue = document.getElementById('custom-salary').value.trim();
+                    if (!customValue) {
+                        alert('Please enter a salary amount.');
+                        return;
+                    }
+                    userAnswers[question.key] = customValue;
+                    nextQuestion();
+                };
+            }, 100);
+        }
+
+        function showMultipleOptions(question) {
+            document.getElementById('answer-options').classList.remove('hidden');
+            const container = document.getElementById('answer-options');
+            let selectedOptions = userAnswers[question.key] || [];
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                const isSelected = selectedOptions.includes(option.value);
+                button.className = `w-full p-5 text-left border rounded-2xl transition-all flex items-center justify-between group ${isSelected
+                    ? 'bg-teal-600 border-teal-600 text-white shadow-teal-sm'
+                    : 'bg-white border-teal-600/10 hover:border-teal-600 hover:bg-teal-50/30'
+                    }`;
+                button.innerHTML = `
+                    <span class="font-bold ${isSelected ? 'text-white' : 'text-espresso group-hover:text-teal-600'}">${option.text}</span>
+                    <div class="w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-white/20 border-white' : 'border-teal-600/10'}">
+                        ${isSelected ? '<i class="fas fa-check text-xs"></i>' : ''}
+                    </div>
+                `;
+                button.onclick = () => {
+                    if (selectedOptions.includes(option.value)) {
+                        selectedOptions = selectedOptions.filter(v => v !== option.value);
+                    } else {
+                        selectedOptions.push(option.value);
+                    }
+                    userAnswers[question.key] = selectedOptions;
+                    loadQuestion(currentStep); // Reload to update UI
+                };
+                container.appendChild(button);
+            });
+
+            // Add continue button
+            const continueBtn = document.createElement('button');
+            continueBtn.className = 'w-full mt-8 bg-teal-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all shadow-teal-sm';
+            continueBtn.textContent = 'Continue';
+            continueBtn.onclick = () => {
+                if (selectedOptions.length === 0) {
+                    alert('Please select at least one option.');
+                    return;
+                }
+                nextQuestion();
+            };
+            container.appendChild(continueBtn);
+        }
+
+        function showFormInput(question) {
+            document.getElementById('answer-options').classList.remove('hidden');
+            const container = document.getElementById('answer-options');
+
+            const form = document.createElement('div');
+            form.className = 'space-y-3';
+
+            question.fields.forEach(field => {
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'relative';
+
+                const input = document.createElement('input');
+                input.type = field.type;
+                input.placeholder = field.placeholder;
+                input.className = 'w-full p-4 bg-ivory border border-teal-600/10 rounded-2xl focus:outline-none focus:border-teal-600 transition-all text-espresso placeholder:text-espresso-muted/40';
+                input.value = userAnswers[field.name] || '';
+                // ... logic ...
+                inputContainer.appendChild(input);
+                form.appendChild(inputContainer);
+            });
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'w-full mt-8 bg-teal-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all shadow-teal-sm';
+            nextBtn.textContent = 'Save & Continue';
+            nextBtn.onclick = () => {
+                const requiredFields = question.fields.filter(f => !f.placeholder.includes('optional'));
+                let hasErrors = false;
+
+                // Validate all required fields
+                requiredFields.forEach(field => {
+                    const value = userAnswers[field.name] || '';
+                    const input = form.querySelector(`input[placeholder="${field.placeholder}"]`);
+
+                    if (!value.trim()) {
+                        showValidationError(input, 'This field is required.');
+                        hasErrors = true;
+                    } else if (!validateFormField(field.name, value.trim(), input)) {
+                        hasErrors = true;
+                    }
+                });
+
+                if (hasErrors) {
+                    return;
+                }
+
+                nextQuestion();
+            };
+            form.appendChild(nextBtn);
+
+            container.appendChild(form);
+        }
+
+        function validateFormField(fieldName, value, input) {
+            let isValid = true;
+            let errorMessage = '';
+
+            // Validate phone fields
+            if (fieldName.includes('phone') && value) {
+                if (!validatePhoneNumber(value)) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid Nigerian phone number (11 digits starting with 0)';
+                }
+            }
+
+            // Validate NIN fields - be more specific to avoid matching 'certifications'
+            if ((fieldName === 'nin' || fieldName === 'guarantor_nin') && value) {
+                if (!validateNIN(value)) {
+                    isValid = false;
+                    errorMessage = 'NIN must be exactly 11 digits';
+                }
+            }
+
+            if (isValid) {
+                clearValidationError(input);
+            } else {
+                showValidationError(input, errorMessage);
+            }
+
+            return isValid;
+        }
+
+        function showVoiceInput(question) {
+            document.getElementById('voice-section').classList.remove('hidden');
+            const voiceBtn = document.getElementById('voice-btn');
+            const audioWave = document.getElementById('audio-wave');
+            const voiceStatus = document.getElementById('voice-status');
+
+            // Create skip button
+            const skipBtn = document.createElement('button');
+            skipBtn.className = 'w-full mt-4 bg-ivory text-espresso border border-teal-600/10 py-4 rounded-2xl font-bold hover:bg-teal-50 transition-all';
+            skipBtn.textContent = 'Skip for now';
+            skipBtn.onclick = () => {
+                // Skip voice recording and proceed to next question
+                nextQuestion();
+            };
+
+            // Add skip button to voice section
+            document.getElementById('voice-section').appendChild(skipBtn);
+
+            let isRecording = false;
+            let recordingTimer = null;
+
+            voiceBtn.onclick = async () => {
+                if (!isRecording) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        mediaRecorder = new MediaRecorder(stream);
+                        const chunks = [];
+
+                        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                        mediaRecorder.onstop = () => {
+                            recordedBlob = new Blob(chunks, { type: 'audio/wav' });
+                            userAnswers[question.key] = recordedBlob;
+                            voiceStatus.textContent = 'Recording Complete!';
+
+                            // Replace record button with next button
+                            voiceBtn.textContent = 'Next';
+                            voiceBtn.className = 'w-full bg-gradient-to-r from-lemon-400 to-lemon-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all';
+                            voiceBtn.onclick = () => nextQuestion();
+
+                            // Hide skip button since recording is complete
+                            skipBtn.style.display = 'none';
+                        };
+
+                        mediaRecorder.start();
+                        isRecording = true;
+                        audioWave.classList.remove('hidden');
+                        voiceStatus.textContent = 'Recording... (20s)';
+                        voiceBtn.textContent = 'Recording...';
+                        voiceBtn.disabled = true;
+
+                        recordingTimer = setTimeout(() => {
+                            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                                mediaRecorder.stop();
+                                stream.getTracks().forEach(track => track.stop());
+                                isRecording = false;
+                                audioWave.classList.add('hidden');
+                                voiceBtn.disabled = false;
+                            }
+                        }, 20000);
+
+                    } catch (err) {
+                        alert('Microphone access denied. Please allow microphone access and try again.');
+                    }
+                }
+            };
+        }
+
+        function showUploadInput(question) {
+            document.getElementById('upload-section').classList.remove('hidden');
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const cameraBtn = document.getElementById('camera-btn');
+            const preview = document.getElementById('upload-preview');
+            const previewImg = document.getElementById('preview-image');
+            const uploadSection = document.getElementById('upload-section');
+
+            // Clear any existing next buttons to prevent duplicates
+            const existingNextBtns = uploadSection.querySelectorAll('button[data-next-btn="true"]');
+            existingNextBtns.forEach(btn => btn.remove());
+
+            // Reset file input to clear previous selection
+            fileInput.value = '';
+
+            // Hide preview initially
+            preview.classList.add('hidden');
+            previewImg.src = '';
+
+            uploadBtn.onclick = () => fileInput.click();
+
+            const cameraContainer = document.getElementById('camera-container');
+            const cameraVideo = document.getElementById('camera-video');
+            const cameraCanvas = document.getElementById('camera-canvas');
+            const uploadControls = document.getElementById('upload-controls');
+            const captureBtn = document.getElementById('capture-btn');
+            const closeCameraBtn = document.getElementById('close-camera-btn');
+            const retakeBtn = document.getElementById('retake-btn');
+
+            let mediaStream = null;
+
+            async function stopCamera() {
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+                cameraContainer.classList.add('hidden');
+                uploadControls.classList.remove('hidden');
+            }
+
+            cameraBtn.onclick = async () => {
+                try {
+                    preview.classList.add('hidden');
+                    uploadControls.classList.add('hidden');
+                    cameraContainer.classList.remove('hidden');
+                    
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'user' }, 
+                        audio: false 
+                    });
+                    cameraVideo.srcObject = mediaStream;
+                } catch (err) {
+                    console.error("Camera Error:", err);
+                    alert('Could not access camera. Please check permissions or use Gallery upload.');
+                    stopCamera();
+                }
+            };
+
+            closeCameraBtn.onclick = stopCamera;
+            retakeBtn.onclick = () => {
+                preview.classList.add('hidden');
+                cameraBtn.click();
+            };
+
+            captureBtn.onclick = () => {
+                const context = cameraCanvas.getContext('2d');
+                cameraCanvas.width = cameraVideo.videoWidth;
+                cameraCanvas.height = cameraVideo.videoHeight;
+                context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                
+                cameraCanvas.toBlob((blob) => {
+                    const file = new File([blob], `${question.key}.jpg`, { type: 'image/jpeg' });
+                    userAnswers[question.key] = file;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        
+                        // Add next button
+                        setTimeout(() => {
+                            const nextBtn = document.createElement('button');
+                            nextBtn.className = 'w-full mt-4 bg-teal-600 text-white py-4 rounded-xl font-bold shadow-teal-md hover:bg-teal-700 transition-all';
+                            nextBtn.textContent = 'Continue â†’';
+                            nextBtn.setAttribute('data-next-btn', 'true');
+                            nextBtn.onclick = () => nextQuestion();
+                            uploadSection.appendChild(nextBtn);
+                        }, 100);
+                    };
+                    reader.readAsDataURL(file);
+                }, 'image/jpeg', 0.9);
+
+                stopCamera();
+            };
+
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    userAnswers[question.key] = file;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImg.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        setTimeout(() => {
+                            const nextBtn = document.createElement('button');
+                            nextBtn.className = 'w-full mt-4 bg-teal-600 text-white py-4 rounded-xl font-bold shadow-teal-md hover:bg-teal-700 transition-all';
+                            nextBtn.textContent = 'Continue â†’';
+                            nextBtn.setAttribute('data-next-btn', 'true');
+                            nextBtn.onclick = () => nextQuestion();
+                            uploadSection.appendChild(nextBtn);
+                        }, 100);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+
+        async function nextQuestion() {
+            // Check if we need to perform NIN verification
+            if (currentStep === 3) { // After lastName (step 3, 0-indexed since WhatsApp is now first)
+                const nin = userAnswers.nin;
+                const firstName = userAnswers.firstName;
+                const lastName = userAnswers.lastName;
+
+                if (nin && firstName && lastName) {
+                    await performNINVerification(nin, firstName, lastName);
+                    return; // Don't proceed until verification is complete
+                }
+            }
+
+            currentStep++;
+            updateProgress();
+            loadQuestion(currentStep);
+        }
+
+        async function performNINVerification(nin, firstName, lastName) {
+            // Show loading state
+            showVerificationLoading();
+
+            try {
+                const result = await apiService.post('/verify-nin-prematch', {
+                    nin: nin,
+                    firstName: firstName,
+                    lastName: lastName
+                });
+
+                console.log('NIN Verification response:', result);
+
+                // Handle both array format [{"response": "Success"}] and direct string format
+                let isSuccess = false;
+
+                if (Array.isArray(result) && result.length > 0 && result[0].response === 'Success') {
+                    isSuccess = true;
+                } else if (typeof result === 'string' && result === 'Success') {
+                    isSuccess = true;
+                } else if (result && result.response === 'Success') {
+                    isSuccess = true;
+                }
+
+                console.log('NIN Verification success status:', isSuccess);
+
+                if (isSuccess) {
+                    // Verification successful, show success message first
+                    hideVerificationLoading();
+                    showVerificationSuccess();
+
+                    // Wait 2 seconds to show success, then proceed
+                    setTimeout(() => {
+                        hideVerificationSuccess();
+                        currentStep++;
+                        updateProgress();
+                        loadQuestion(currentStep);
+                    }, 2000);
+                } else {
+                    // Verification failed
+                    hideVerificationLoading();
+                    showVerificationError('The NIN and Name does not match. Please check your details and try again.');
+                }
+
+            } catch (error) {
+                console.error('NIN verification error:', error);
+                hideVerificationLoading();
+                showVerificationError('Verification failed. Please check your internet connection and try again.');
+            }
+        }
+
+        function showVerificationLoading() {
+            // Hide current question content
+            document.getElementById('answer-options').classList.add('hidden');
+            document.getElementById('input-section').classList.add('hidden');
+
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'verification-loading';
+            loadingDiv.className = 'text-center py-12 brand-surface border-teal-600/10 relative overflow-hidden animate-pulse';
+            loadingDiv.innerHTML = `
+                <div class="relative z-10">
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                        <div class="loading-spinner"></div>
+                        <span class="text-xl font-display font-bold text-teal-600 italic">Verifying Identity...</span>
+                    </div>
+                    <p class="text-espresso font-medium mb-2">Connecting to NIMC Secure Gateway</p>
+                    <p class="text-xs text-espresso-muted font-mono uppercase tracking-widest">Expected Wait: 5-10 Seconds</p>
+                    <div class="mt-8 flex items-center justify-center gap-3 text-[10px] font-bold uppercase tracking-tighter text-teal-600/40">
+                        <i class="fas fa-lock"></i>
+                        <span>End-to-End Encrypted Verification</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('question-view').appendChild(loadingDiv);
+        }
+
+        function hideVerificationLoading() {
+            const loadingDiv = document.getElementById('verification-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+
+        function showVerificationSuccess() {
+            // Show success message
+            const successDiv = document.createElement('div');
+            successDiv.id = 'verification-success';
+            successDiv.className = 'text-center py-12 brand-surface border-teal-600/10 shadow-teal-sm';
+            successDiv.innerHTML = `
+                <div class="w-16 h-16 bg-teal-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-teal-sm">
+                    <i class="fas fa-check text-2xl"></i>
+                </div>
+                <h4 class="text-2xl font-display font-bold text-teal-600 italic mb-2">Verification Passed</h4>
+                <p class="text-espresso font-medium mb-4">Identity successfully matched via NIMC</p>
+                <div class="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-espresso-muted">
+                    <div class="w-1.5 h-1.5 rounded-full bg-teal-600"></div>
+                    <span>Secure Record Created</span>
+                </div>
+            `;
+
+            document.getElementById('question-view').appendChild(successDiv);
+        }
+
+        function hideVerificationSuccess() {
+            const successDiv = document.getElementById('verification-success');
+            if (successDiv) {
+                successDiv.remove();
+            }
+        }
+
+        function showVerificationError(message) {
+            // Hide loading if present
+            hideVerificationLoading();
+
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'verification-error';
+            errorDiv.className = 'brand-surface p-10 text-center border-copper-400/20';
+            errorDiv.innerHTML = `
+                <div class="w-16 h-16 bg-copper-50 text-copper-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-display font-bold text-copper-600 italic mb-4">Verification Incomplete</h3>
+                <p class="text-espresso font-medium leading-relaxed mb-8">${message}</p>
+                <button onclick="retryVerification()" class="w-full bg-copper-400 text-white py-5 rounded-2xl font-bold hover:bg-copper-600 transition-all shadow-copper">
+                    Review Details & Retry
+                </button>
+            `;
+
+            document.getElementById('question-view').appendChild(errorDiv);
+        }
+
+        function retryVerification() {
+            // Remove error message
+            const errorDiv = document.getElementById('verification-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+
+            // Go back to the NIN question (Step 1 in reality, but Step 0 is now WhatsApp)
+            currentStep = 1; 
+            updateProgress();
+            loadQuestion(currentStep);
+        }
+
+        // Mobile menu functionality
+        document.getElementById('mobile-menu-btn').addEventListener('click', function () {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Confetti animation function
+        function createConfetti() {
+            const colors = ['#0F5556', '#B45309', '#FAF7F2', '#1C1812', '#9A4508'];
+            for (let i = 0; i < 60; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                document.body.appendChild(confetti);
+
+                // Remove confetti after animation
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Publish profile functionality
+        document.getElementById('publish-profile-btn').addEventListener('click', async function () {
+            const publishBtn = this;
+            const originalText = publishBtn.innerHTML;
+
+            try {
+                // Show loading state
+                publishBtn.innerHTML = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <div class="loading-spinner"></div>
+                        <span>Publishing...</span>
+                    </div>
+                `;
+                publishBtn.disabled = true;
+
+                // Prepare form data
+                const formData = new FormData();
+
+                // Add flow type identifier
+                formData.append('flowType', 'maid-reg');
+
+                // Add NIN verification status
+                formData.append('nin_verification_status', 'verified');
+
+                // Add all text data
+                Object.keys(userAnswers).forEach(key => {
+                    if (userAnswers[key] && typeof userAnswers[key] !== 'object') {
+                        formData.append(key, userAnswers[key]);
+                    } else if (Array.isArray(userAnswers[key])) {
+                        formData.append(key, JSON.stringify(userAnswers[key]));
+                    }
+                });
+
+                // Add files
+                if (userAnswers.profile_photo instanceof File) {
+                    formData.append('profile_photo', userAnswers.profile_photo);
+                }
+                if (userAnswers.nin_card instanceof File) {
+                    formData.append('nin_card', userAnswers.nin_card);
+                }
+                if (userAnswers.voice_intro instanceof Blob) {
+                    formData.append('voice_intro', userAnswers.voice_intro, 'voice_intro.wav');
+                }
+
+                // Log the data being sent for debugging
+                console.log('Submitting profile data to webhook...');
+                console.log('FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                        console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+                    } else {
+                        console.log(`${key}: ${value}`);
+                    }
+                }
+
+                // Submit to webhook using enhanced webhook manager
+                const response = await apiService.post('/maid-post', formData);
+
+                console.log('Success response:', response);
+
+                // Create confetti animation
+                createConfetti();
+
+                // Show success state briefly
+                publishBtn.innerHTML = `
+                    <div class="flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Published!</span>
+                    </div>
+                `;
+
+                // Show thank you view after brief delay
+                setTimeout(() => {
+                    showThankYouView();
+                }, 1500);
+
+            } catch (error) {
+                console.error('Error submitting profile:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    userAnswers: userAnswers
+                });
+
+                publishBtn.innerHTML = originalText;
+                publishBtn.disabled = false;
+
+                // Show detailed error message
+                const errorMessage = error.message.includes('HTTP') ?
+                    `Submission failed: ${error.message}` :
+                    'There was an error submitting your profile. Please check your internet connection and try again.';
+
+                alert(errorMessage);
+            }
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('translate-y-full')) {
+                menu.classList.remove('translate-y-full');
+                menu.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('translate-y-0');
+                menu.classList.add('translate-y-full');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Initialize mobile menu button if exists
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.addEventListener('click', toggleMobileMenu);
+            const close = document.getElementById('close-menu');
+            if (close) close.addEventListener('click', toggleMobileMenu);
+        });
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function () {
+            // Show welcome view by default
+            document.getElementById('welcome-view').classList.remove('hidden');
+        });
+    </script>
+</body>
+
+</html>
