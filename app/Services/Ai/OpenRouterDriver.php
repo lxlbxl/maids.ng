@@ -17,10 +17,29 @@ class OpenRouterDriver implements AiProvider
         $this->model = Setting::get('openrouter_model', 'google/gemini-flash-1.5');
     }
 
-    public function chat(string $prompt, array $options = []): array
+    public function chat(string|array $prompt, array $options = []): array
     {
         if (!$this->apiKey) {
             return ['error' => 'OpenRouter API key missing.', 'message' => 'Please configure your OpenRouter key in System Settings.'];
+        }
+
+        $payload = [
+            'model' => $options['model'] ?? $this->model,
+            'temperature' => $options['temperature'] ?? 0.7,
+        ];
+
+        if (is_array($prompt)) {
+            $payload['messages'] = $prompt;
+        } else {
+            $payload['messages'] = [
+                ['role' => 'system', 'content' => $options['system_prompt'] ?? 'You are an AI agent operating a marketplace for household help.'],
+                ['role' => 'user', 'content' => $prompt]
+            ];
+        }
+
+        if (isset($options['tools'])) {
+            $payload['tools'] = $options['tools'];
+            $payload['tool_choice'] = $options['tool_choice'] ?? 'auto';
         }
 
         $response = Http::withToken($this->apiKey)
@@ -28,14 +47,7 @@ class OpenRouterDriver implements AiProvider
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => 'Maids.ng Mission Control',
             ])
-            ->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => $options['model'] ?? $this->model,
-                'messages' => [
-                    ['role' => 'system', 'content' => $options['system_prompt'] ?? 'You are an AI agent operating a marketplace for household help.'],
-                    ['role' => 'user', 'content' => $prompt]
-                ],
-                'temperature' => $options['temperature'] ?? 0.7,
-            ]);
+            ->post('https://openrouter.ai/api/v1/chat/completions', $payload);
 
         if ($response->failed()) {
             return ['error' => 'OpenRouter API Call Failed', 'message' => $response->json('error.message', 'Unknown error')];

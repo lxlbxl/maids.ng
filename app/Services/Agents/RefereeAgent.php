@@ -51,18 +51,21 @@ class RefereeAgent extends AgentService
             'agent_recommendation' => $recommendation
         ]);
 
+        // Build system prompt from KnowledgeService
+        $systemPrompt = $this->knowledge->buildContext('referee', 'authenticated');
+
         // Construct the prompt for the AI Brain
-        $prompt = "A booking dispute has occurred. Result: Maid cancelled. 
-                   Booking details: 
+        $prompt = "A booking dispute has occurred. Result: Maid cancelled.
+                   Booking details:
                    - Agreed Salary: {$booking->agreed_salary}
                    - Status: {$booking->status}
-                   
-                   Task: Determine if this should be flagged for manual review or auto-cleared. 
-                   Rule: If the maid cancels without a documented emergency, it's a strike. 
+
+                   Task: Determine if this should be flagged for manual review or auto-cleared.
+                   Rule: If the maid cancels without a documented emergency, it's a strike.
                    Return your decision in JSON: { 'decision': 'flagged'|'cleared', 'confidence': 0-100, 'reasoning': 'string' }";
 
         $aiResponse = $this->think($prompt, [
-            'system_prompt' => "You are the Referee Agent, a neutral arbiter for a maid marketplace. Focus on contract fairness."
+            'system_prompt' => $systemPrompt,
         ]);
 
         if (isset($aiResponse['error'])) {

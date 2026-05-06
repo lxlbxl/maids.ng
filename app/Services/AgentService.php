@@ -3,15 +3,19 @@
 namespace App\Services;
 
 use App\Models\AgentActivityLog;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 abstract class AgentService
 {
     protected $aiService;
+    protected KnowledgeService $knowledge;
 
     public function __construct()
     {
         $this->aiService = new \App\Services\Ai\AiService();
+        // Resolve KnowledgeService from container (singleton)
+        $this->knowledge = App::make(KnowledgeService::class);
     }
 
     /**
@@ -38,7 +42,7 @@ abstract class AgentService
         $subject = null,
         bool $requiresReview = false
     ): AgentActivityLog {
-        
+
         $log = AgentActivityLog::create([
             'agent_name' => static::getName(),
             'action' => $action,

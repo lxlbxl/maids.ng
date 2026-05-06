@@ -18,6 +18,15 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/views/
+/database/database.sqlite
+.env-prod
+.env-production
+*.zip
+/graphify-out/
+/temp_deploy/
+.checkpoint
+/checkpoint
 /vendor
 _ide_helper.php
 Homestead.json

@@ -2,6 +2,7 @@
 
 namespace App\Services\Sms;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,14 +19,15 @@ class AfricasTalkingProvider implements SmsProviderInterface
 
     public function __construct()
     {
-        $this->username = config('services.africastalking.username', '');
-        $this->apiKey   = config('services.africastalking.api_key', '');
-        $this->from     = config('services.africastalking.from', 'MaidsNG');
+        // Read from Admin Settings (database) — falls back to .env
+        $this->username = Setting::get('africastalking_username', config('services.africastalking.username', ''));
+        $this->apiKey = Setting::get('africastalking_api_key', config('services.africastalking.api_key', ''));
+        $this->from = Setting::get('africastalking_from', config('services.africastalking.from', 'MaidsNG'));
     }
 
     public function send(string $phone, string $message): array
     {
-        if (! $this->username || ! $this->apiKey) {
+        if (!$this->username || !$this->apiKey) {
             return ['success' => false, 'error' => "Africa's Talking credentials not configured"];
         }
 
@@ -37,9 +39,9 @@ class AfricasTalkingProvider implements SmsProviderInterface
                 ->asForm()
                 ->post('https://api.africastalking.com/version1/messaging', [
                     'username' => $this->username,
-                    'to'       => $phone,
-                    'message'  => $message,
-                    'from'     => $this->from,
+                    'to' => $phone,
+                    'message' => $message,
+                    'from' => $this->from,
                 ]);
 
             $data = $response->json();
@@ -48,9 +50,9 @@ class AfricasTalkingProvider implements SmsProviderInterface
                 $recipient = $data['SMSMessageData']['Recipients'][0] ?? [];
 
                 return [
-                    'success'    => true,
+                    'success' => true,
                     'message_id' => $recipient['messageId'] ?? '',
-                    'response'   => $data,
+                    'response' => $data,
                 ];
             }
 
@@ -58,7 +60,7 @@ class AfricasTalkingProvider implements SmsProviderInterface
 
             return [
                 'success' => false,
-                'error'   => $data['SMSMessageData']['Message'] ?? "Africa's Talking API error",
+                'error' => $data['SMSMessageData']['Message'] ?? "Africa's Talking API error",
             ];
         } catch (\Exception $e) {
             Log::error("AfricasTalking SMS exception", ['error' => $e->getMessage()]);
@@ -68,7 +70,7 @@ class AfricasTalkingProvider implements SmsProviderInterface
 
     public function getBalance(): array
     {
-        if (! $this->username || ! $this->apiKey) {
+        if (!$this->username || !$this->apiKey) {
             return ['success' => false, 'error' => "Africa's Talking credentials not configured"];
         }
 
@@ -84,8 +86,8 @@ class AfricasTalkingProvider implements SmsProviderInterface
                 preg_match('/[\d.]+/', $balance, $m);
 
                 return [
-                    'success'  => true,
-                    'balance'  => (float) ($m[0] ?? 0),
+                    'success' => true,
+                    'balance' => (float) ($m[0] ?? 0),
                     'currency' => 'NGN',
                 ];
             }
@@ -101,7 +103,7 @@ class AfricasTalkingProvider implements SmsProviderInterface
         // Africa's Talking uses delivery report callbacks — no polling endpoint
         return [
             'success' => false,
-            'error'   => "Africa's Talking does not support polling delivery status. Use delivery report callbacks.",
+            'error' => "Africa's Talking does not support polling delivery status. Use delivery report callbacks.",
         ];
     }
 

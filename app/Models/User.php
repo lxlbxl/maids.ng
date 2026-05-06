@@ -42,6 +42,11 @@ class User extends Authenticatable
         return $this->hasOne(MaidProfile::class);
     }
 
+    public function ninVerification()
+    {
+        return $this->hasOne(\App\Models\NinVerification::class);
+    }
+
     public function employerPreferences()
     {
         return $this->hasMany(EmployerPreference::class, 'employer_id');

@@ -24,8 +24,12 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                     <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
                         <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-6 font-bold">Profile Information</h3>
                         <div className="flex items-start gap-6">
-                            <div className="w-20 h-20 bg-teal/10 rounded-full flex items-center justify-center text-3xl text-teal font-bold border-2 border-teal/20">
-                                {user?.name?.charAt(0)}
+                            <div className="w-20 h-20 bg-teal/10 rounded-full flex items-center justify-center text-3xl text-teal font-bold border-2 border-teal/20 overflow-hidden">
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    user?.name?.charAt(0)
+                                )}
                             </div>
                             <div className="flex-1 grid grid-cols-2 gap-4">
                                 {[
@@ -53,17 +57,30 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                         )}
                     </div>
 
-                    {/* Skills */}
-                    {profile?.skills?.length > 0 && (
-                        <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
-                            <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">Skills</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {profile.skills.map(skill => (
-                                    <span key={skill} className="bg-teal/10 text-teal px-3 py-1.5 rounded-full text-xs font-medium capitalize">{skill}</span>
-                                ))}
+                    {/* Skills & Languages */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {profile?.skills?.length > 0 && (
+                            <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
+                                <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">Skills</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.skills.map(skill => (
+                                        <span key={skill} className="bg-teal/10 text-teal px-3 py-1.5 rounded-full text-xs font-medium capitalize">{skill}</span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+
+                        {profile?.languages?.length > 0 && (
+                            <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
+                                <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">Languages</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.languages.map(lang => (
+                                        <span key={lang} className="bg-white/10 text-white px-3 py-1.5 rounded-full text-xs font-medium capitalize">{lang}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Recent Bookings */}
                     <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
@@ -95,7 +112,9 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-white/60 text-sm">NIN Verification</span>
-                                {profile?.nin_verified ? (
+                                {profile?.is_foreigner ? (
+                                    <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">🌍 Foreigner</span>
+                                ) : profile?.nin_verified ? (
                                     <span className="bg-success/10 text-success px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✓ Verified</span>
                                 ) : (
                                     <span className="bg-danger/10 text-danger px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✗ Pending</span>
@@ -111,6 +130,17 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                             </div>
                         </div>
                     </div>
+
+                    {profile?.nin_report && (
+                        <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
+                            <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">NIN Verification Report</h3>
+                            <div className="bg-white/[0.03] border border-white/5 rounded-brand-md p-4 overflow-auto">
+                                <pre className="text-[10px] font-mono text-teal/80 whitespace-pre-wrap">
+                                    {JSON.stringify(JSON.parse(profile.nin_report), null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
                         <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">Admin Actions</h3>

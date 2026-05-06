@@ -2,23 +2,25 @@ import { Head, Link } from '@inertiajs/react';
 import MaidLayout from '@/Layouts/MaidLayout';
 
 export default function MaidDashboard({ auth, profile, profileInsights = { score: 0, tips: [] }, bookings = [], stats = {} }) {
+    const firstName = auth?.user?.name?.split(' ')[0] || 'Helper';
+
     return (
         <MaidLayout user={auth?.user}>
-            <Head title="Helper Dashboard" />
+            <Head title="My Home | Maids.ng" />
             
             <div className="mb-8">
-                <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-1">Overview</p>
-                <h1 className="font-display text-3xl font-light text-espresso">Mission Briefing</h1>
-                <p className="text-muted mt-2">Welcome back. Here's your current performance and activity.</p>
+                <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-1">Welcome Back</p>
+                <h1 className="font-display text-3xl font-light text-espresso">Hello, {firstName} 👋</h1>
+                <p className="text-muted mt-2">Here is a quick look at how things are going for you.</p>
             </div>
 
-            {/* Performance Stats */}
+            {/* Quick Numbers */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                 {[
-                    { label: 'Avg Rating', value: profile?.rating || '—', color: 'copper' },
-                    { label: 'Active Jobs', value: stats.active_bookings || 0, color: 'teal' },
-                    { label: 'Completed', value: stats.completed_bookings || 0, color: 'teal' },
-                    { label: 'Total Jobs', value: stats.total_bookings || 0, color: 'teal' },
+                    { label: 'My Star Rating', value: profile?.rating || '—', color: 'copper' },
+                    { label: 'Jobs Right Now', value: stats.active_bookings || 0, color: 'teal' },
+                    { label: 'Jobs I Finished', value: stats.completed_bookings || 0, color: 'teal' },
+                    { label: 'All My Jobs', value: stats.total_bookings || 0, color: 'teal' },
                 ].map(s => (
                     <div key={s.label} className="bg-white rounded-brand-lg p-5 border border-gray-200 shadow-brand-1">
                         <p className="font-mono text-[10px] tracking-[0.1em] text-muted uppercase mb-1">{s.label}</p>
@@ -28,11 +30,14 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Profile Strength & AI Tips */}
+                {/* Profile Score & Tips */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-1 p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="font-display text-xl text-espresso">Profile Strength</h2>
+                            <div>
+                                <h2 className="font-display text-xl text-espresso">Your Profile Score</h2>
+                                <p className="text-xs text-muted mt-1">A complete profile helps you get more jobs</p>
+                            </div>
                             <span className="bg-teal text-white text-[10px] font-mono px-2 py-1 rounded shadow-sm">{profileInsights.score}%</span>
                         </div>
                         
@@ -44,7 +49,7 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="font-mono text-[10px] uppercase tracking-widest text-muted">Sentinel Agent Recommendations:</h3>
+                            <h3 className="font-mono text-[10px] uppercase tracking-widest text-muted">Things you can do to get more jobs:</h3>
                             {profileInsights.tips.length > 0 ? (
                                 <ul className="space-y-3">
                                     {profileInsights.tips.map((tip, i) => (
@@ -57,7 +62,7 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                             ) : (
                                 <div className="bg-success/5 p-4 rounded-brand-md border border-success/10 flex items-center gap-3">
                                     <span className="text-xl">✨</span>
-                                    <p className="text-sm text-success">Your profile is optimized! The Sentinel Agent has no further recommendations.</p>
+                                    <p className="text-sm text-success">Great job! Your profile looks complete. Employers can easily find you.</p>
                                 </div>
                             )}
                         </div>
@@ -66,17 +71,17 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                     {/* Quick Profile View */}
                     <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-1 p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="font-display text-xl text-espresso">Public Identity</h2>
-                            <Link href="/maid/profile" className="text-teal text-xs font-semibold hover:underline">Edit Info</Link>
+                            <h2 className="font-display text-xl text-espresso">My Profile Info</h2>
+                            <Link href="/maid/profile" className="text-teal text-xs font-semibold hover:underline">Edit</Link>
                         </div>
                         <div className="flex items-center gap-2 mb-4">
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter ${profile?.availability_status === 'available' ? 'bg-success text-white' : 'bg-gray-100 text-muted'}`}>
-                                {profile?.availability_status}
+                                {profile?.availability_status === 'available' ? '✅ Available for Work' : profile?.availability_status === 'busy' ? '🔴 Busy' : '⏸️ Not Available'}
                             </span>
-                            {profile?.nin_verified && <span className="bg-teal text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">NIN Verified</span>}
+                            {profile?.nin_verified && <span className="bg-teal text-white px-2.5 py-1 rounded-full text-[10px] font-bold">✓ ID Verified</span>}
                         </div>
                         <p className="text-muted text-sm leading-relaxed italic border-l-2 border-gray-100 pl-4 py-1 mb-6">
-                            "{profile?.bio || 'Add a bio to attract more employers.'}"
+                            "{profile?.bio || 'Add a short description about yourself so employers can get to know you.'}"
                         </p>
                         <div className="flex flex-wrap gap-2">
                              {(profile?.skills || []).map(s => <span key={s} className="bg-gray-100 text-espresso text-[11px] px-2.5 py-1 rounded font-medium border border-gray-200">{s}</span>)}
@@ -84,10 +89,10 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                     </div>
                 </div>
 
-                {/* Recent Jobs */}
+                {/* Current Jobs */}
                 <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-1 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="font-display text-xl text-espresso">Current Assignments</h2>
+                        <h2 className="font-display text-xl text-espresso">My Current Jobs</h2>
                         <Link href="/maid/bookings" className="text-teal text-xs font-semibold hover:underline">See All</Link>
                     </div>
                     {bookings.length > 0 ? (
@@ -95,14 +100,14 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                             {bookings.map(b => (
                                 <div key={b.id} className="p-6 hover:bg-gray-50 transition-all flex items-center justify-between group">
                                     <div>
-                                        <p className="font-semibold text-espresso mb-1 group-hover:text-teal transition-colors">Employer: {b.employer_name}</p>
-                                        <p className="text-xs text-muted">Starts: {b.start_date} · Salary: ₦{b.agreed_salary?.toLocaleString()}</p>
+                                        <p className="font-semibold text-espresso mb-1 group-hover:text-teal transition-colors">Working for: {b.employer_name}</p>
+                                        <p className="text-xs text-muted">Start: {b.start_date} · Pay: ₦{b.agreed_salary?.toLocaleString()} / month</p>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-[0.05em] ${b.status === 'active' ? 'bg-success text-white' : 'bg-gray-100 text-muted'}`}>
-                                            {b.status}
+                                            {b.status === 'active' ? 'Active' : b.status}
                                         </span>
-                                        <Link href={`/maid/bookings/${b.id}`} className="text-[10px] font-mono text-muted group-hover:text-teal uppercase tracking-widest">Details →</Link>
+                                        <Link href={`/maid/bookings/${b.id}`} className="text-[10px] font-mono text-muted group-hover:text-teal uppercase tracking-widest">View →</Link>
                                     </div>
                                 </div>
                             ))}
@@ -110,8 +115,9 @@ export default function MaidDashboard({ auth, profile, profileInsights = { score
                     ) : (
                         <div className="p-12 text-center">
                             <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📋</div>
-                            <h3 className="font-display text-lg text-espresso mb-1">No active jobs</h3>
-                            <p className="text-muted text-sm">When employers select you, they'll appear here.</p>
+                            <h3 className="font-display text-lg text-espresso mb-1">No jobs yet</h3>
+                            <p className="text-muted text-sm">When an employer hires you, the job will appear here.</p>
+                            <Link href="/maid/profile" className="text-teal text-sm font-semibold hover:underline mt-3 inline-block">Make your profile better →</Link>
                         </div>
                     )}
                 </div>

@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 
-export default function Users({ auth, users, roles }) {
+export default function Users({ auth, users, stats, roles }) {
     const { post, delete: destroy, processing } = useForm();
 
     const handleStatusUpdate = (id, currentStatus) => {
@@ -21,16 +21,31 @@ export default function Users({ auth, users, roles }) {
 
     return (
         <AdminLayout>
-            <Head title="People Management | Mission Control" />
+            <Head title="Employer Hub | Mission Control" />
             
             <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 className="font-display text-4xl font-light tracking-tight text-white mb-2">People Management</h1>
-                    <p className="text-white/40 text-sm">Oversee all platform participants, roles, and account statuses.</p>
+                    <h1 className="font-display text-4xl font-light tracking-tight text-white mb-2">Employer Hub</h1>
+                    <p className="text-white/40 text-sm">Manage client relationships, bookings, and financial activities.</p>
                 </div>
-                <button className="bg-white/5 border border-white/10 px-6 py-3 rounded-brand-md text-[10px] font-mono uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all font-bold">
-                    + Register Human Entity
-                </button>
+            </div>
+
+            {/* Insight Hub */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                {[
+                    { label: 'Total Employers', value: stats?.total || 0, icon: '👤', color: 'text-white' },
+                    { label: 'Live Bookings', value: stats?.active_bookings || 0, icon: '📅', color: 'text-teal' },
+                    { label: 'Total Revenue', value: `₦${(stats?.total_spent || 0).toLocaleString()}`, icon: '💰', color: 'text-success' },
+                    { label: 'New Signups', value: stats?.new_signups || 0, icon: '📈', color: 'text-white' },
+                ].map(stat => (
+                    <div key={stat.label} className="bg-[#121214] border border-white/5 rounded-brand-lg p-5 hover:border-teal/20 transition-all">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/30">{stat.label}</span>
+                            <span className="text-sm opacity-50">{stat.icon}</span>
+                        </div>
+                        <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                    </div>
+                ))}
             </div>
 
             <div className="bg-[#121214] border border-white/5 rounded-brand-xl overflow-hidden shadow-2xl">
@@ -46,27 +61,28 @@ export default function Users({ auth, users, roles }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {users.data.map(user => (
+                            {users?.data?.map(user => (
                                 <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-full bg-[#1c1c1e] text-lg flex items-center justify-center border border-white/5 shadow-inner">
-                                                {user.name.charAt(0)}
+                                                {user.name?.charAt(0) || 'U'}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-white leading-tight">{user.name}</p>
+                                                <p className="font-bold text-white leading-tight">{user.name || 'Unknown User'}</p>
                                                 <p className="text-[10px] font-mono text-white/20 uppercase">ID: ENT-{user.id}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-5">
                                         <select 
-                                            value={user.roles[0]?.name}
+                                            value={user.roles?.[0]?.name || ''}
                                             onChange={(e) => handleRoleUpdate(user.id, e.target.value)}
                                             disabled={processing}
                                             className="bg-transparent border-none text-[11px] font-mono uppercase tracking-widest text-teal font-bold focus:ring-0 cursor-pointer"
                                         >
-                                            {roles.map(role => (
+                                            <option value="" disabled>Select Role</option>
+                                            {roles?.map(role => (
                                                 <option key={role.id} value={role.name} className="bg-espresso">{role.name}</option>
                                             ))}
                                         </select>

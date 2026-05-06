@@ -7,6 +7,7 @@ use App\Models\EmployerPreference;
 use App\Models\MaidProfile;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\UserEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -34,7 +35,13 @@ class MatchingController extends Controller
         $name = $validated['contact_name'];
         $phone = $validated['contact_phone'] ?? null;
 
-        $existingUser = User::where('email', $email)->first();
+        // Check if user exists by email OR phone
+        $existingUser = User::where('email', $email)
+            ->when($phone, function($q) use ($phone) {
+                return $q->orWhere('phone', $phone);
+            })
+            ->first();
+
         $isNewAccount = !$existingUser;
         $tempPassword = null;
 
@@ -53,12 +60,20 @@ class MatchingController extends Controller
         } else {
             $user = $existingUser;
 
-            // Update name/phone if not already set
+            // Update user details if they have changed or were missing
+            $updates = [];
             if (!$user->name || $user->name === 'Guest Employer') {
-                $user->update(['name' => $name]);
+                $updates['name'] = $name;
             }
             if ($phone && !$user->phone) {
-                $user->update(['phone' => $phone]);
+                $updates['phone'] = $phone;
+            }
+            if ($email && !$user->email) {
+                $updates['email'] = $email;
+            }
+            
+            if (!empty($updates)) {
+                $user->update($updates);
             }
         }
 
@@ -112,18 +127,29 @@ class MatchingController extends Controller
             $phone = $validated['contact_phone'] ?? null;
             $tempPassword = Str::random(10);
 
-            $user = User::firstOrCreate(
-                ['email' => $email],
-                [
+            // Check if user exists by email OR phone
+            $user = User::where('email', $email)
+                ->when($phone, function($q) use ($phone) {
+                    return $q->orWhere('phone', $phone);
+                })
+                ->first();
+
+            if (!$user) {
+                $user = User::create([
                     'name' => $name,
+                    'email' => $email,
                     'phone' => $phone,
                     'password' => Hash::make($tempPassword),
                     'status' => 'active'
-                ]
-            );
-
-            if (!$user->hasRole('employer')) {
+                ]);
                 $user->assignRole('employer');
+            } else {
+                // Update missing details
+                $updates = [];
+                if (!$user->name || $user->name === 'Guest Employer') $updates['name'] = $name;
+                if ($phone && !$user->phone) $updates['phone'] = $phone;
+                if ($email && !$user->email) $updates['email'] = $email;
+                if (!empty($updates)) $user->update($updates);
             }
 
             // Send welcome email if this was a new creation
@@ -139,7 +165,7 @@ class MatchingController extends Controller
             $employerId = $user->id;
         }
 
-        // Save preferences
+        // Save preferences with quiz lifecycle tracking
         $preference = EmployerPreference::create([
             'employer_id' => $employerId,
             'help_types' => $validated['help_types'],
@@ -154,9 +180,19 @@ class MatchingController extends Controller
             'contact_phone' => $validated['contact_phone'] ?? null,
             'contact_email' => $validated['contact_email'] ?? null,
             'matching_status' => 'pending',
+            'quiz_status' => 'completed',
+            'quiz_completed_at' => now(),
         ]);
 
         Log::info('Matching requested for location: ' . $validated['location'] . ' (City: ' . $preference->city . ', State: ' . $preference->state . ')');
+
+        // Track quiz completion event
+        UserEvent::recordQuizComplete($employerId, [
+            'preference_id' => $preference->id,
+            'help_types' => $validated['help_types'],
+            'location' => $validated['location'],
+            'budget_max' => $validated['budget_max'],
+        ]);
 
         // Get all available maids with profiles
         $maids = User::role('maid')
@@ -166,6 +202,18 @@ class MatchingController extends Controller
             ->get();
 
         Log::info('Found ' . $maids->count() . ' potential maids in database.');
+
+        // Update matches_shown_at timestamp when we're about to return matches
+        $preference->update([
+            'matches_shown_at' => now(),
+        ]);
+
+        // Track matches viewed event
+        UserEvent::recordMatchesViewed($employerId, [
+            'preference_id' => $preference->id,
+            'total_maids_scored' => $maids->count(),
+            'matches_returned' => 0, // Will be updated after scoring
+        ]);
 
         // Score each maid
         $scored = $maids->map(function ($maid) use ($preference, $scoutAgent) {
@@ -198,6 +246,20 @@ class MatchingController extends Controller
             ->values();
 
         Log::info('Matching results: ' . count($scored) . ' maids passed 40% threshold.');
+
+        // Update the matches_viewed event with actual count
+        UserEvent::where('event_type', 'matches_viewed')
+            ->where('user_id', $employerId)
+            ->latest()
+            ->first()?->update([
+                    'event_data' => array_merge(
+                        (array) (UserEvent::where('event_type', 'matches_viewed')
+                            ->where('user_id', $employerId)
+                            ->latest()
+                            ->first()?->event_data ?? []),
+                        ['matches_returned' => count($scored)]
+                    ),
+                ]);
 
         // Include guarantee_fee in response so frontend can show it for zero-result upsell
         $guaranteeFee = (int) Setting::get('matching_fee_amount', 5000);
@@ -273,9 +335,7 @@ class MatchingController extends Controller
 
         // Determine which payment gateway to use
         $defaultGateway = Setting::get('default_payment_gateway', 'paystack');
-        $publicKey = $defaultGateway === 'paystack'
-            ? Setting::get('paystack_public_key')
-            : Setting::get('flutterwave_public_key');
+        $publicKey = Setting::get($defaultGateway . '_public_key', config('services.' . $defaultGateway . '.public_key'));
 
         return Inertia::render('Employer/MatchingPayment', [
             'preference' => $preference,
@@ -304,9 +364,7 @@ class MatchingController extends Controller
         $preference = EmployerPreference::findOrFail($preferenceId);
 
         $defaultGateway = Setting::get('default_payment_gateway', 'paystack');
-        $publicKey = $defaultGateway === 'paystack'
-            ? Setting::get('paystack_public_key')
-            : Setting::get('flutterwave_public_key');
+        $publicKey = Setting::get($defaultGateway . '_public_key', config('services.' . $defaultGateway . '.public_key'));
 
         return Inertia::render('Employer/GuaranteeMatchPayment', [
             'preference' => $preference,

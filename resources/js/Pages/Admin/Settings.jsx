@@ -191,6 +191,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                         { id: 'verification', name: 'Verification', icon: '✓' },
                         { id: 'sms', name: 'SMS Gateway', icon: '💬' },
                         { id: 'email', name: 'Email Settings', icon: '✉️' },
+                        { id: 'deployment', name: 'Deployment & Cron', icon: '🚀' },
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -840,6 +841,74 @@ export default function Settings({ auth, settings, aiManifest }) {
                                                 placeholder="Maids.ng"
                                                 className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                             />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {activeTab === 'deployment' && (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div>
+                                    <h2 className="text-2xl font-display mb-2 text-teal">Background Tasks & Cron Jobs</h2>
+                                    <p className="text-white/40 text-xs italic">Essential configuration for automated matching and notifications.</p>
+                                </div>
+
+                                <div className="bg-amber-400/5 border border-amber-400/20 rounded-brand-xl p-6 space-y-4">
+                                    <div className="flex items-center gap-3 text-amber-400">
+                                        <span className="text-2xl">⚠️</span>
+                                        <h3 className="font-display text-lg uppercase tracking-wider">Critical Setup Required</h3>
+                                    </div>
+                                    <p className="text-white/60 text-sm leading-relaxed">
+                                        For the platform to function (AI matching, salary reminders, SMS notifications), you must configure **Cron Jobs** in your hosting control panel.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <h3 className="font-display text-lg text-white/80">1. Task Scheduler</h3>
+                                        <p className="text-white/40 text-xs">Run this command every minute to trigger scheduled AI analysis and reminders.</p>
+                                        <div className="relative group">
+                                            <code className="block bg-black/40 border border-white/5 rounded-brand-lg p-6 font-mono text-sm text-teal/90 break-all">
+                                                {'* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1'}
+                                            </code>
+                                            <button
+                                                type="button"
+                                                onClick={() => navigator.clipboard.writeText('* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1')}
+                                                className="absolute top-4 right-4 text-[10px] font-mono uppercase tracking-widest text-white/20 hover:text-teal transition-colors"
+                                            >
+                                                Copy Command
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h3 className="font-display text-lg text-white/80">2. Queue Worker (Option A)</h3>
+                                        <p className="text-white/40 text-xs">Run this every minute to process pending emails and matching calculations on shared hosting.</p>
+                                        <div className="relative group">
+                                            <code className="block bg-black/40 border border-white/5 rounded-brand-lg p-6 font-mono text-sm text-teal/90 break-all">
+                                                {'* * * * * cd /path/to/project && php artisan queue:work --stop-when-empty >> /dev/null 2>&1'}
+                                            </code>
+                                            <button
+                                                type="button"
+                                                onClick={() => navigator.clipboard.writeText('* * * * * cd /path/to/project && php artisan queue:work --stop-when-empty >> /dev/null 2>&1')}
+                                                className="absolute top-4 right-4 text-[10px] font-mono uppercase tracking-widest text-white/20 hover:text-teal transition-colors"
+                                            >
+                                                Copy Command
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-8 border-t border-white/5">
+                                        <h3 className="font-display text-lg text-white/80 mb-4">Environment Status</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="bg-white/5 rounded-brand-lg p-4 flex items-center justify-between">
+                                                <span className="text-white/40 text-xs uppercase font-mono">Queue Connection</span>
+                                                <span className="text-teal font-mono text-sm">Database</span>
+                                            </div>
+                                            <div className="bg-white/5 rounded-brand-lg p-4 flex items-center justify-between">
+                                                <span className="text-white/40 text-xs uppercase font-mono">Scheduler Status</span>
+                                                <span className="text-teal font-mono text-sm">Active</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

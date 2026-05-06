@@ -11,9 +11,9 @@ const STEPS = [
 export default function VerificationService({ fee }) {
     const [stepIndex, setStepIndex] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
-    
+
     const displayFee = fee || 2000;
-    
+
     const { data, setData, post, errors, processing } = useForm({
         maid_nin: '',
         maid_first_name: '',
@@ -36,6 +36,54 @@ export default function VerificationService({ fee }) {
 
     const prevStep = () => {
         if (stepIndex > 0) setStepIndex(stepIndex - 1);
+    };
+
+    /**
+     * Wait for Flutterwave SDK to be fully loaded with retry logic.
+     */
+    const waitForFlutterwave = (maxRetries = 10, delay = 500) => {
+        return new Promise((resolve, reject) => {
+            if (typeof window.FlutterwaveCheckout === 'function') {
+                resolve(true);
+                return;
+            }
+
+            let retries = 0;
+            const checkInterval = setInterval(() => {
+                retries++;
+                if (typeof window.FlutterwaveCheckout === 'function') {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                } else if (retries >= maxRetries) {
+                    clearInterval(checkInterval);
+                    reject(new Error('Flutterwave SDK failed to load after multiple attempts'));
+                }
+            }, delay);
+        });
+    };
+
+    /**
+     * Wait for Paystack SDK to be fully loaded with retry logic.
+     */
+    const waitForPaystack = (maxRetries = 10, delay = 500) => {
+        return new Promise((resolve, reject) => {
+            if (typeof window.PaystackPop !== 'undefined') {
+                resolve(true);
+                return;
+            }
+
+            let retries = 0;
+            const checkInterval = setInterval(() => {
+                retries++;
+                if (typeof window.PaystackPop !== 'undefined') {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                } else if (retries >= maxRetries) {
+                    clearInterval(checkInterval);
+                    reject(new Error('Paystack SDK failed to load after multiple attempts'));
+                }
+            }, delay);
+        });
     };
 
     const handleInitializePayment = async () => {
@@ -67,59 +115,99 @@ export default function VerificationService({ fee }) {
             }
 
             if (!response.ok) {
+                const errorBody = await response.text();
+                console.error('Payment init error response:', errorBody);
                 throw new Error('Server returned ' + response.status);
             }
 
             const result = await response.json();
-            
+
             if (result.success) {
                 if (result.gateway === 'flutterwave') {
-                    // Check if Flutterwave is loaded
-                    if (typeof window.FlutterwaveCheckout !== 'function') {
-                        alert('Payment gateway (Flutterwave) is still loading. Please wait a moment and try again.');
+                    // If backend provided a redirect URL, use it (more reliable)
+                    if (result.redirect_url) {
+                        console.log('Redirecting to Flutterwave checkout:', result.redirect_url);
+                        window.location.href = result.redirect_url;
+                        return;
+                    }
+
+                    // Fallback: inline modal
+                    try {
+                        await waitForFlutterwave();
+                    } catch (sdkError) {
+                        console.error('Flutterwave SDK not available:', sdkError);
+                        alert('Flutterwave payment gateway is not available. Please try again in a moment, or contact support if the issue persists.');
                         setIsProcessing(false);
                         return;
                     }
 
-                    window.FlutterwaveCheckout({
-                        public_key: result.key,
-                        tx_ref: result.reference,
-                        amount: result.amount,
-                        currency: "NGN",
-                        payment_options: "card, banktransfer, ussd",
-                        customer: {
-                            email: result.email,
-                            name: data.requester_name,
-                            phone_number: data.requester_phone,
-                        },
-                        callback: function (response) {
-                            window.location.href = route('standalone-verification.verify', { reference: result.reference });
-                        },
-                        onclose: function() {
-                            setIsProcessing(false);
-                        }
-                    });
+                    try {
+                        window.FlutterwaveCheckout({
+                            public_key: result.key,
+                            tx_ref: result.reference,
+                            amount: result.amount,
+                            currency: "NGN",
+                            payment_options: "card, banktransfer, ussd",
+                            customer: {
+                                email: result.email,
+                                name: data.requester_name,
+                                phone_number: data.requester_phone,
+                            },
+                            meta: {
+                                consumer_id: result.verification_id,
+                                consumer_mac: "maids-ng-verification",
+                            },
+                            customizations: {
+                                title: "Maids.ng NIN Verification",
+                                description: "Payment for NIN Identity Verification",
+                                logo: "/maids-logo.png",
+                            },
+                            callback: function (response) {
+                                console.log('Flutterwave callback:', response);
+                                window.location.href = route('standalone-verification.verify', { reference: result.reference });
+                            },
+                            onclose: function () {
+                                console.log('Flutterwave modal closed');
+                                setIsProcessing(false);
+                            }
+                        });
+                    } catch (checkoutError) {
+                        console.error('FlutterwaveCheckout error:', checkoutError);
+                        alert('Failed to open payment window. Please try again or use a different browser.');
+                        setIsProcessing(false);
+                    }
                 } else {
-                    // Check if Paystack is loaded
-                    if (typeof window.PaystackPop === 'undefined') {
-                        alert('Payment gateway (Paystack) is still loading. Please wait a moment and try again.');
+                    try {
+                        // Wait for Paystack SDK to load
+                        await waitForPaystack();
+                    } catch (sdkError) {
+                        console.error('Paystack SDK not available:', sdkError);
+                        alert('Paystack payment gateway is not available. Please try again in a moment, or contact support if the issue persists.');
                         setIsProcessing(false);
                         return;
                     }
 
-                    const handler = window.PaystackPop.setup({
-                        key: result.key,
-                        email: result.email,
-                        amount: result.amount * 100, // Paystack requires kobo
-                        ref: result.reference,
-                        callback: function(response) {
-                            window.location.href = route('standalone-verification.verify', { reference: response.reference });
-                        },
-                        onClose: function() {
-                            setIsProcessing(false);
-                        }
-                    });
-                    handler.openIframe();
+                    try {
+                        const handler = window.PaystackPop.setup({
+                            key: result.key,
+                            email: result.email,
+                            amount: result.amount * 100, // Paystack requires kobo
+                            ref: result.reference,
+                            callback: function (response) {
+                                console.log('Paystack callback:', response);
+                                window.location.href = route('standalone-verification.verify', { reference: response.reference });
+                            },
+                            onClose: function () {
+                                console.log('Paystack modal closed');
+                                setIsProcessing(false);
+                            }
+                        });
+                        handler.openIframe();
+                    } catch (checkoutError) {
+                        console.error('Paystack setup error:', checkoutError);
+                        alert('Failed to open payment window. Please try again or use a different browser.');
+                        setIsProcessing(false);
+                    }
                 }
             } else {
                 alert('Failed to initialize payment: ' + (result.message || 'Unknown error'));
@@ -127,7 +215,7 @@ export default function VerificationService({ fee }) {
             }
         } catch (error) {
             console.error('Payment initialization error:', error);
-            alert('Could not initialize payment. Please check your internet connection.');
+            alert('Could not initialize payment. Please check your internet connection and try again.');
             setIsProcessing(false);
         }
     };
@@ -203,7 +291,7 @@ export default function VerificationService({ fee }) {
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">11-Digit NIN</label>
-                                            <input 
+                                            <input
                                                 type="text" maxLength={11}
                                                 value={data.maid_nin} onChange={e => setData('maid_nin', e.target.value)}
                                                 className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3.5 text-lg font-mono tracking-widest text-center focus:border-teal outline-none"
@@ -213,7 +301,7 @@ export default function VerificationService({ fee }) {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">First Name</label>
-                                                <input 
+                                                <input
                                                     type="text"
                                                     value={data.maid_first_name} onChange={e => setData('maid_first_name', e.target.value)}
                                                     className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none"
@@ -222,7 +310,7 @@ export default function VerificationService({ fee }) {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Last Name</label>
-                                                <input 
+                                                <input
                                                     type="text"
                                                     value={data.maid_last_name} onChange={e => setData('maid_last_name', e.target.value)}
                                                     className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none"
@@ -243,7 +331,7 @@ export default function VerificationService({ fee }) {
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Your Full Name</label>
-                                            <input 
+                                            <input
                                                 type="text"
                                                 value={data.requester_name} onChange={e => setData('requester_name', e.target.value)}
                                                 className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none"
@@ -252,7 +340,7 @@ export default function VerificationService({ fee }) {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Your Email Address</label>
-                                            <input 
+                                            <input
                                                 type="email"
                                                 value={data.requester_email} onChange={e => setData('requester_email', e.target.value)}
                                                 className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none"
@@ -261,7 +349,7 @@ export default function VerificationService({ fee }) {
                                         </div>
                                         <div>
                                             <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Your Phone Number</label>
-                                            <input 
+                                            <input
                                                 type="tel"
                                                 value={data.requester_phone} onChange={e => setData('requester_phone', e.target.value)}
                                                 className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none"
@@ -295,8 +383,8 @@ export default function VerificationService({ fee }) {
 
                                     <div className="flex gap-4">
                                         <button onClick={prevStep} disabled={isProcessing} className="flex-1 bg-gray-100 text-espresso py-4 rounded-brand-md text-sm font-bold hover:bg-gray-200 disabled:opacity-50">Back</button>
-                                        <button 
-                                            onClick={handleInitializePayment} 
+                                        <button
+                                            onClick={handleInitializePayment}
                                             disabled={isProcessing}
                                             className="flex-1 bg-espresso text-white py-4 rounded-brand-md font-bold text-sm hover:bg-espresso/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-xl shadow-espresso/20"
                                         >

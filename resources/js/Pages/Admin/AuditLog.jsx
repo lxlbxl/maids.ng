@@ -1,7 +1,37 @@
 import { Head, Link } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
+import { useState, useMemo } from 'react';
 
 export default function AuditLog({ auth, logs }) {
+    const [agentFilter, setAgentFilter] = useState('all');
+    const [confidenceFilter, setConfidenceFilter] = useState(0);
+
+    // Extract unique agent names for filter dropdown
+    const agentNames = useMemo(() => {
+        const names = new Set();
+        if (logs?.data) {
+            logs.data.forEach(log => { if (log.agent_name) names.add(log.agent_name); });
+        }
+        return ['all', ...Array.from(names)];
+    }, [logs]);
+
+    const confidenceOptions = [
+        { label: 'All', value: 0 },
+        { label: '>50%', value: 50 },
+        { label: '>70%', value: 70 },
+        { label: '>90%', value: 90 },
+    ];
+
+    // Filter logs client-side
+    const filteredLogs = useMemo(() => {
+        if (!logs?.data) return [];
+        return logs.data.filter(log => {
+            if (agentFilter !== 'all' && log.agent_name !== agentFilter) return false;
+            if (confidenceFilter > 0 && (log.confidence_score || 0) < confidenceFilter) return false;
+            return true;
+        });
+    }, [logs, agentFilter, confidenceFilter]);
+
     return (
         <AdminLayout>
             <Head title="Intelligence Feed | Mission Control" />
@@ -12,8 +42,36 @@ export default function AuditLog({ auth, logs }) {
                     <p className="text-white/40 text-sm font-light">Comprehensive real-time reporting of all autonomous agent operations.</p>
                 </div>
                 <div className="flex gap-4">
-                    <button className="bg-white/5 border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-white/60 hover:text-white transition-all">Filter: All Agents</button>
-                    <button className="bg-white/5 border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-white/60 hover:text-white transition-all">Confidence: {'>'}0%</button>
+                    {/* Agent Filter Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={agentFilter}
+                            onChange={(e) => setAgentFilter(e.target.value)}
+                            className="bg-white/5 border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-white/60 hover:text-white transition-all appearance-none pr-8 rounded-brand-md cursor-pointer focus:border-teal/50 outline-none"
+                            style={{ backgroundColor: '#121214' }}
+                        >
+                            {agentNames.map(name => (
+                                <option key={name} value={name} className="bg-[#121214] text-white">
+                                    {name === 'all' ? 'Filter: All Agents' : `Agent: ${name}`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {/* Confidence Filter */}
+                    <div className="relative">
+                        <select
+                            value={confidenceFilter}
+                            onChange={(e) => setConfidenceFilter(Number(e.target.value))}
+                            className="bg-white/5 border border-white/10 px-4 py-2 text-[10px] font-mono uppercase tracking-widest text-white/60 hover:text-white transition-all appearance-none pr-8 rounded-brand-md cursor-pointer focus:border-teal/50 outline-none"
+                            style={{ backgroundColor: '#121214' }}
+                        >
+                            {confidenceOptions.map(opt => (
+                                <option key={opt.value} value={opt.value} className="bg-[#121214] text-white">
+                                    Confidence: {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -31,7 +89,7 @@ export default function AuditLog({ auth, logs }) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {logs.data.map(log => (
+                            {filteredLogs.length > 0 ? filteredLogs.map(log => (
                                 <tr key={log.id} className="hover:bg-white/[0.02] transition-colors group">
                                     <td className="px-8 py-5">
                                         <div className={`w-2 h-2 rounded-full ${log.decision === 'approved' ? 'bg-teal shadow-[0_0_8px_rgba(45,164,142,0.8)]' : log.decision === 'rejected' ? 'bg-danger shadow-[0_0_8px_rgba(235,87,87,0.8)]' : 'bg-copper animate-pulse'}`}></div>
@@ -55,7 +113,14 @@ export default function AuditLog({ auth, logs }) {
                                         {new Date(log.created_at).toLocaleTimeString()}
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" className="px-8 py-16 text-center text-white/30">
+                                        <div className="text-3xl mb-3">🔍</div>
+                                        <p className="text-sm">No logs match the selected filters.</p>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -91,6 +91,8 @@ class MaidSearchController extends Controller
                 'bio' => $p?->bio,
                 'experience_years' => $p?->experience_years ?? 0,
                 'verified' => ($p?->nin_verified ?? false) && ($p?->background_verified ?? false),
+                'nin_verified' => $p?->nin_verified ?? false,
+                'background_verified' => $p?->background_verified ?? false,
                 'avatar' => $maid->avatar,
                 'reviews' => $maid->reviewsReceived->map(fn($r) => [
                     'rating' => $r->rating,

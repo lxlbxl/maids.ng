@@ -40,3 +40,9 @@ Schedule::command('ai:process-salary-reminders')
 Schedule::command('log:clear-old')
     ->dailyAt('02:00')
     ->withoutOverlapping();
+
+// Refresh SEO content monthly for pages older than 90 days
+Schedule::job(new \App\Jobs\RefreshSeoContent)
+    ->monthly()
+    ->name('refresh-seo-content')
+    ->withoutOverlapping();

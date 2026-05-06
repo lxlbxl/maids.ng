@@ -20,19 +20,21 @@ export default function Maids({ auth, maids, stats, filters }) {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            {/* Insight Hub */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
                 {[
                     { label: 'Total Helpers', value: stats?.total || 0, icon: '👥', color: 'text-white' },
-                    { label: 'Active', value: stats?.active || 0, icon: '🟢', color: 'text-teal' },
-                    { label: 'Verified', value: stats?.verified || 0, icon: '🛡️', color: 'text-success' },
+                    { label: 'Active Talent', value: stats?.active || 0, icon: '🟢', color: 'text-teal' },
+                    { label: 'ID Verified', value: stats?.verified || 0, icon: '🛡️', color: 'text-success' },
+                    { label: 'Pending NIN', value: stats?.pending_verification || 0, icon: '⏳', color: 'text-copper' },
+                    { label: 'New This Week', value: stats?.new_this_week || 0, icon: '📈', color: 'text-white' },
                 ].map(stat => (
-                    <div key={stat.label} className="bg-[#121214] border border-white/5 rounded-brand-lg p-5">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{stat.icon}</span>
+                    <div key={stat.label} className="bg-[#121214] border border-white/5 rounded-brand-lg p-5 hover:border-teal/20 transition-all">
+                        <div className="flex items-center justify-between mb-2">
                             <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/30">{stat.label}</span>
+                            <span className="text-sm opacity-50">{stat.icon}</span>
                         </div>
-                        <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                        <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                     </div>
                 ))}
             </div>

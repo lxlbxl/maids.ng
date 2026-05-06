@@ -242,11 +242,25 @@ See `docs/api/` for complete API documentation.
 1. **Upload files** via FTP/SFTP or Git
 2. **Set document root** to `public/` directory
 3. **Create database** and import schema
-4. **Configure `.env`** with production credentials
+4. **Configure `.env`** with production credentials:
+   - Set `QUEUE_CONNECTION=database`
 5. **Run deployment** (admin only):
    ```
    GET /deploy-all?token={DEPLOY_SECRET}
    ```
+
+### 📋 Background Tasks & Cron Jobs (Shared Hosting)
+
+For the platform to function correctly on shared hosting, you must set up the following Cron Jobs in your control panel (e.g., cPanel):
+
+| Frequency | Command | Purpose |
+|-----------|---------|---------|
+| Every Minute | `* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1` | Runs the task scheduler (Reminders, AI Matching Queue) |
+| Every Minute | `* * * * * cd /path/to/project && php artisan queue:work --stop-when-empty >> /dev/null 2>&1` | Processes background jobs (SMS, Emails, Matching) |
+
+> [!IMPORTANT]
+> Replace `/path/to/project` with the actual absolute path to your application on the server.
+
 
 ### VPS/Cloud Deployment
 

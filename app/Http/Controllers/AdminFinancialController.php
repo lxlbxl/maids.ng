@@ -4,14 +4,19 @@ use Inertia\Inertia;
 
 class AdminFinancialController extends Controller
 {
-    public function payments() 
-    { 
+    public function payments()
+    {
         $payments = \App\Models\MatchingFeePayment::with('employer')
             ->latest()
             ->paginate(20);
 
         $totalRevenue = \App\Models\MatchingFeePayment::where('status', 'paid')->sum('amount');
         $escrowTotal = \App\Models\Booking::where('status', 'active')->sum('agreed_salary');
+
+        // Verification revenue
+        $verificationRevenue = \App\Models\StandaloneVerification::where('payment_status', 'paid')->sum('amount');
+        $verificationCount = \App\Models\StandaloneVerification::count();
+        $verificationPending = \App\Models\StandaloneVerification::where('payment_status', 'pending')->count();
 
         return Inertia::render('Admin/Financials', [
             'payments' => $payments,
@@ -20,8 +25,11 @@ class AdminFinancialController extends Controller
                 'escrow_balance' => $escrowTotal,
                 'pending_payouts' => \App\Models\Booking::where('status', 'completed')->where('payment_status', 'pending')->count(),
                 'total_payments' => \App\Models\MatchingFeePayment::count(),
+                'verification_revenue' => $verificationRevenue,
+                'verification_count' => $verificationCount,
+                'verification_pending' => $verificationPending,
             ]
-        ]); 
+        ]);
     }
 
     public function earnings()

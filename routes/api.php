@@ -20,6 +20,10 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MaidController;
 use App\Http\Controllers\Api\EmployerController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AmbassadorChatController;
+use App\Http\Controllers\Api\AgentChannelWebhookController;
+use App\Http\Controllers\Api\UserEventController;
+use App\Http\Controllers\Api\VerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -349,7 +353,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/reports/ai-matching', [ReportController::class, 'aiMatchingReport']);
             Route::get('/reports/notifications', [ReportController::class, 'notificationReport']);
             Route::get('/reports/agent-logs', [ReportController::class, 'agentActivityLogs']);
-            
+
             // New AI-Native Stats & Controls
             Route::get('/matching/queue', [ApiMatchingController::class, 'getQueueStatus']);
             Route::get('/matching/statistics', [ApiMatchingController::class, 'statistics']);
@@ -373,7 +377,7 @@ Route::prefix('v1')->group(function () {
             // Wallet Oversight
             Route::get('/wallets/overview', [AdminController::class, 'walletOverview']);
             Route::post('/wallets/{walletId}/adjust', [AdminController::class, 'adjustWalletBalance']);
-            
+
             Route::post('/reports/export', [ReportController::class, 'export']);
         });
 
@@ -426,3 +430,43 @@ Route::get('/user', function (Request $request) {
 
 // Public matching API - no authentication required
 Route::post('/matching/find', [ApiMatchingController::class, 'findMatches']);
+
+/*
+|--------------------------------------------------------------------------
+| Verification Routes (Public — NIN verification via QoreID)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('verification')->group(function () {
+    // Verify NIN (public, no auth required)
+    Route::post('/nin', [VerificationController::class, 'verifyNin']);
+
+    // Get verification status by reference
+    Route::get('/nin/{reference}', [VerificationController::class, 'getStatus']);
+
+    // Batch verify multiple NINs
+    Route::post('/nin/batch', [VerificationController::class, 'batchVerify']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| User Events (Public — sendBeacon from frontend)
+|--------------------------------------------------------------------------
+*/
+Route::post('/user-events', [UserEventController::class, 'store']);
+
+/*
+|--------------------------------------------------------------------------
+| Ambassador Agent Chat (Moved to web.php for session state)
+|--------------------------------------------------------------------------
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Agent Channel Webhooks (Public — Inbound from external channels)
+|--------------------------------------------------------------------------
+*/
+Route::post('/agent/webhook/email', [AgentChannelWebhookController::class, 'emailWebhook']);
+Route::post('/agent/webhook/whatsapp', [AgentChannelWebhookController::class, 'whatsappWebhook']);
+Route::post('/agent/webhook/instagram', [AgentChannelWebhookController::class, 'instagramWebhook']);
+Route::post('/agent/webhook/facebook', [AgentChannelWebhookController::class, 'facebookWebhook']);
+Route::get('/agent/webhook/facebook/verify', [AgentChannelWebhookController::class, 'facebookVerify']);

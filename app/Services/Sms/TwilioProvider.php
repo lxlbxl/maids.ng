@@ -2,6 +2,7 @@
 
 namespace App\Services\Sms;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,14 +19,15 @@ class TwilioProvider implements SmsProviderInterface
 
     public function __construct()
     {
-        $this->sid   = config('services.twilio.sid', '');
-        $this->token = config('services.twilio.token', '');
-        $this->from  = config('services.twilio.from', '');
+        // Read from Admin Settings (database) — falls back to .env
+        $this->sid = Setting::get('twilio_sid', config('services.twilio.sid', ''));
+        $this->token = Setting::get('twilio_token', config('services.twilio.token', ''));
+        $this->from = Setting::get('twilio_from', config('services.twilio.from', ''));
     }
 
     public function send(string $phone, string $message): array
     {
-        if (! $this->sid || ! $this->token) {
+        if (!$this->sid || !$this->token) {
             return ['success' => false, 'error' => 'Twilio credentials not configured'];
         }
 
@@ -36,7 +38,7 @@ class TwilioProvider implements SmsProviderInterface
                 ->timeout(15)
                 ->asForm()
                 ->post("https://api.twilio.com/2010-04-01/Accounts/{$this->sid}/Messages.json", [
-                    'To'   => $phone,
+                    'To' => $phone,
                     'From' => $this->from,
                     'Body' => $message,
                 ]);
@@ -45,9 +47,9 @@ class TwilioProvider implements SmsProviderInterface
 
             if ($response->successful() && isset($data['sid'])) {
                 return [
-                    'success'    => true,
+                    'success' => true,
                     'message_id' => $data['sid'],
-                    'response'   => $data,
+                    'response' => $data,
                 ];
             }
 
@@ -55,7 +57,7 @@ class TwilioProvider implements SmsProviderInterface
 
             return [
                 'success' => false,
-                'error'   => $data['message'] ?? 'Twilio API error',
+                'error' => $data['message'] ?? 'Twilio API error',
             ];
         } catch (\Exception $e) {
             Log::error('Twilio SMS exception', ['error' => $e->getMessage()]);
@@ -65,7 +67,7 @@ class TwilioProvider implements SmsProviderInterface
 
     public function getBalance(): array
     {
-        if (! $this->sid || ! $this->token) {
+        if (!$this->sid || !$this->token) {
             return ['success' => false, 'error' => 'Twilio credentials not configured'];
         }
 
@@ -77,8 +79,8 @@ class TwilioProvider implements SmsProviderInterface
             $data = $response->json();
 
             return [
-                'success'  => $response->successful(),
-                'balance'  => (float) ($data['balance'] ?? 0),
+                'success' => $response->successful(),
+                'balance' => (float) ($data['balance'] ?? 0),
                 'currency' => $data['currency'] ?? 'USD',
             ];
         } catch (\Exception $e) {
@@ -88,7 +90,7 @@ class TwilioProvider implements SmsProviderInterface
 
     public function getDeliveryStatus(string $messageId): array
     {
-        if (! $this->sid || ! $this->token) {
+        if (!$this->sid || !$this->token) {
             return ['success' => false, 'error' => 'Twilio credentials not configured'];
         }
 
@@ -101,7 +103,7 @@ class TwilioProvider implements SmsProviderInterface
 
             return [
                 'success' => $response->successful(),
-                'status'  => $data['status'] ?? 'unknown',
+                'status' => $data['status'] ?? 'unknown',
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];

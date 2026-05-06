@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        // Drop conflicting indexes before renaming
+        try {
+            Schema::table('notification_logs', function (Blueprint $table) {
+                $table->dropIndex('notification_logs_type_status_index');
+            });
+        } catch (\Exception $e) {
+            // Index may not exist
+        }
+
         Schema::table('notification_logs', function (Blueprint $table) {
             // Rename 'type' to 'notification_type' if 'type' exists
             if (Schema::hasColumn('notification_logs', 'type') && !Schema::hasColumn('notification_logs', 'notification_type')) {
@@ -88,11 +97,20 @@ return new class extends Migration {
     {
         Schema::table('notification_logs', function (Blueprint $table) {
             $columns = [
-                'subject', 'reference_id', 'reference_type', 'status',
-                'delivery_response', 'delivered_at', 'read_at',
-                'requires_follow_up', 'follow_up_scheduled_at',
-                'ai_prompt_used', 'ip_address', 'user_agent',
-                'error_message', 'retry_count',
+                'subject',
+                'reference_id',
+                'reference_type',
+                'status',
+                'delivery_response',
+                'delivered_at',
+                'read_at',
+                'requires_follow_up',
+                'follow_up_scheduled_at',
+                'ai_prompt_used',
+                'ip_address',
+                'user_agent',
+                'error_message',
+                'retry_count',
             ];
 
             foreach ($columns as $col) {

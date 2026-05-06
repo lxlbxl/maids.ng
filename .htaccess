@@ -1,8 +1,21 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    
-    # Exclude the installation script from the redirect
-    RewriteCond %{REQUEST_URI} !^/install\.php$
-    
+
+    # Allow access to utility files in root
+    RewriteCond %{REQUEST_URI} !^/fix-htaccess\.php
+    RewriteCond %{REQUEST_URI} !^/check\.php
+    RewriteCond %{REQUEST_URI} !^/install\.php
+    RewriteCond %{REQUEST_URI} !^/deploy\.php
+    RewriteCond %{REQUEST_URI} !^/fix-cache\.php
+    RewriteCond %{REQUEST_URI} !^/fix-vite\.php
+    RewriteCond %{REQUEST_URI} !^/clear-all-cache\.php
+    RewriteCond %{REQUEST_URI} !^/fix-vite-production\.php
+    RewriteCond %{REQUEST_URI} !^/fix-vite-final\.php
+    RewriteCond %{REQUEST_URI} !^/run-migration\.php
+
+    # Redirect all other requests to public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+
+# Disable directory listing
+Options -Indexes

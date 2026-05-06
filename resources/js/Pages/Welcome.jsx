@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import AmbassadorChatWidget from '@/Components/AmbassadorChatWidget';
 
 export default function Welcome({ auth }) {
     return (
@@ -37,8 +38,8 @@ export default function Welcome({ auth }) {
 
             {/* ── Hero Section ── */}
             <section className="min-h-screen flex items-center bg-espresso relative overflow-hidden pt-20">
-                <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage: 'repeating-linear-gradient(45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%)', backgroundSize: '28px 28px'}} />
-                <div className="absolute top-[-300px] right-[-200px] w-[800px] h-[800px] rounded-full" style={{background: 'radial-gradient(circle, rgba(15,85,86,0.35) 0%, transparent 65%)'}} />
+                <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%)', backgroundSize: '28px 28px' }} />
+                <div className="absolute top-[-300px] right-[-200px] w-[800px] h-[800px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(15,85,86,0.35) 0%, transparent 65%)' }} />
 
                 <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
                     <p className="font-mono text-xs tracking-[0.16em] uppercase text-teal-light mb-5 animate-fade-up">
@@ -55,8 +56,8 @@ export default function Welcome({ auth }) {
                         <Link href="/onboarding" className="bg-teal text-white px-8 py-4 rounded-brand-md text-base font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-2 text-center">
                             Find Your Perfect Helper →
                         </Link>
-                        <Link href="/register" className="border border-white/30 text-ivory px-8 py-4 rounded-brand-md text-base font-medium hover:bg-white/[0.08] transition-all text-center">
-                            Register as a Helper
+                        <Link href="/register/maid" className="border border-white/30 text-ivory px-8 py-4 rounded-brand-md text-base font-medium hover:bg-white/[0.08] transition-all text-center">
+                            Become a Helper
                         </Link>
                     </div>
 
@@ -207,16 +208,23 @@ export default function Welcome({ auth }) {
                         <h4 className="font-semibold text-ivory mb-3">Platform</h4>
                         <div className="space-y-2">
                             <a href="/onboarding" className="block hover:text-teal-light transition-colors">Find a Helper</a>
-                            <a href="/register" className="block hover:text-teal-light transition-colors">Become a Helper</a>
+                            <a href="/register/maid" className="block hover:text-teal-light transition-colors">Become a Helper</a>
                             <a href="/maids" className="block hover:text-teal-light transition-colors">Browse Helpers</a>
                         </div>
                     </div>
                     <div>
                         <h4 className="font-semibold text-ivory mb-3">Company</h4>
                         <div className="space-y-2">
-                            <a href="#" className="block hover:text-teal-light transition-colors">About Us</a>
-                            <a href="#" className="block hover:text-teal-light transition-colors">Contact</a>
-                            <a href="#" className="block hover:text-teal-light transition-colors">Blog</a>
+                            <Link href="/about" className="block hover:text-teal-light transition-colors">About Us</Link>
+                            <Link href="/contact" className="block hover:text-teal-light transition-colors">Contact</Link>
+                            <Link href="/blog" className="block hover:text-teal-light transition-colors">Blog</Link>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-ivory mb-3">Legal</h4>
+                        <div className="space-y-2">
+                            <Link href="/terms" className="block hover:text-teal-light transition-colors">Terms of Service</Link>
+                            <Link href="/privacy" className="block hover:text-teal-light transition-colors">Privacy Policy</Link>
                         </div>
                     </div>
                     <div>
@@ -237,6 +245,8 @@ export default function Welcome({ auth }) {
                 @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
                 .animate-fade-up { animation: fade-up 0.9s cubic-bezier(0, 0, 0.2, 1) both; }
             `}</style>
+
+            <AmbassadorChatWidget />
         </>
     );
 }

@@ -5,12 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\EmployerPreference;
 use App\Models\MatchingFeePayment;
 use App\Models\Setting;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MatchingFeeController extends Controller
 {
+    protected $paymentService;
+
+    public function __construct(PaymentService $paymentService)
+    {
+        $this->paymentService = $paymentService;
+    }
+
     public function initialize(Request $request)
     {
         $validated = $request->validate([
@@ -24,7 +33,15 @@ class MatchingFeeController extends Controller
         $reference = 'MNG-' . strtoupper(Str::random(10));
 
         $gateway = Setting::get('default_payment_gateway', 'paystack');
-        $key = Setting::get($gateway . '_public_key');
+        $key = Setting::get($gateway . '_public_key', config('services.' . $gateway . '.public_key'));
+
+        if (empty($key)) {
+            Log::error("Payment gateway {$gateway} public key not configured.");
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment gateway is not properly configured. Please contact support.',
+            ], 500);
+        }
 
         $payment = MatchingFeePayment::create([
             'preference_id' => $preference->id,
@@ -51,13 +68,35 @@ class MatchingFeeController extends Controller
 
     public function verify(Request $request)
     {
-        $reference = $request->query('reference');
+        $reference = $request->query('reference') ?? $request->query('trxref');
+        
+        if (!$reference) {
+            return redirect()->route('employer.dashboard')
+                ->with('error', 'Payment reference missing.');
+        }
+
         $payment = MatchingFeePayment::where('reference', $reference)->firstOrFail();
 
-        // Mark as paid (in production, verify with Paystack API)
+        // Already processed
+        if ($payment->status === 'paid') {
+            return redirect()->route('employer.dashboard')
+                ->with('success', 'Payment already verified.');
+        }
+
+        // Verify with Gateway
+        $gatewayData = $this->paymentService->verifyTransaction($reference, $payment->gateway);
+
+        if (!$gatewayData) {
+            Log::warning("Payment verification failed for reference: {$reference}");
+            return redirect()->route($payment->payment_type === 'guarantee_match' ? 'employer.guarantee-match.payment' : 'employer.matching.payment', $payment->preference_id)
+                ->with('error', 'We could not verify your payment. If you were debited, please contact support.');
+        }
+
+        // Mark as paid
         $payment->update([
             'status' => 'paid',
             'paid_at' => now(),
+            'gateway_response' => $gatewayData,
         ]);
 
         // Set the correct matching status based on payment type
@@ -116,25 +155,40 @@ class MatchingFeeController extends Controller
 
     public function webhook(Request $request)
     {
+        // Paystack Webhook
         $payload = $request->all();
         $reference = $payload['data']['reference'] ?? null;
 
-        if (!$reference)
+        if (!$reference) {
             return response()->json(['status' => 'ignored'], 200);
+        }
 
         $payment = MatchingFeePayment::where('reference', $reference)->first();
-        if (!$payment)
+        if (!$payment) {
             return response()->json(['status' => 'not_found'], 200);
+        }
+
+        // If already paid, don't re-process
+        if ($payment->status === 'paid') {
+            return response()->json(['status' => 'already_paid'], 200);
+        }
 
         if ($payload['event'] === 'charge.success') {
-            $payment->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-                'gateway_response' => $payload['data'],
-            ]);
+            // Re-verify on server to be 100% sure
+            $gatewayData = $this->paymentService->verifyTransaction($reference, $payment->gateway);
+            
+            if ($gatewayData) {
+                $payment->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'gateway_response' => $gatewayData,
+                ]);
 
-            $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
-            $payment->preference->update(['matching_status' => $newStatus]);
+                $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
+                $payment->preference->update(['matching_status' => $newStatus]);
+                
+                Log::info("Payment verified via webhook for reference: {$reference}");
+            }
         }
 
         return response()->json(['status' => 'success'], 200);

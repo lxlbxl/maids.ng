@@ -64,7 +64,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'qoreid' => [
-        'token' => env('QOREID_TOKEN'),
+        'client_id' => env('QOREID_CLIENT_ID'),
+        'client_secret' => env('QOREID_CLIENT_SECRET'),
         'base_url' => env('QOREID_BASE_URL', 'https://api.qoreid.com/v1'),
     ],
 
@@ -98,6 +99,41 @@ return [
         'payment_gateway' => env('DEFAULT_PAYMENT_GATEWAY', 'paystack'),
         'min_salary' => env('MINIMUM_SALARY', 15000),
         'max_salary' => env('MAXIMUM_SALARY', 200000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Business API (Meta)
+    |--------------------------------------------------------------------------
+    */
+    'whatsapp' => [
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Facebook Messenger & Instagram Graph API
+    |--------------------------------------------------------------------------
+    */
+    'facebook' => [
+        'app_id' => env('FACEBOOK_APP_ID'),
+        'app_secret' => env('FACEBOOK_APP_SECRET'),
+        'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'webhook_verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Instagram Graph API
+    |--------------------------------------------------------------------------
+    */
+    'instagram' => [
+        'app_id' => env('INSTAGRAM_APP_ID'),
+        'app_secret' => env('INSTAGRAM_APP_SECRET'),
+        'ig_access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+        'ig_business_id' => env('INSTAGRAM_BUSINESS_ID'),
     ],
 
 ];

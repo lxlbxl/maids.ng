@@ -14,7 +14,7 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
-        $s = fn ($key, $val, $group, $encrypt = false) =>
+        $s = fn($key, $val, $group, $encrypt = false) =>
             \App\Models\Setting::set($key, $val, $group, $encrypt);
 
         // ═══════════════════════════════════════════
@@ -44,6 +44,18 @@ class SettingSeeder extends Seeder
         $s('min_withdrawal', '5000', 'finance');
         $s('max_withdrawal', '500000', 'finance');
         $s('withdrawal_processing_days', '3', 'finance');
+
+        // ── Agent Knowledge Base Pricing Settings ──
+        // These are the single source of truth for ALL pricing quoted by ALL agents.
+        // Edit these values via /admin/settings — never hardcode in any agent.
+        $s('matching_fee', '5000', 'finance');
+        $s('premium_matching_fee', '15000', 'finance');
+        $s('commission_rate', '15', 'finance');
+        $s('guarantee_period_days', '10', 'finance');
+        $s('maid_monthly_rate_min', '30000', 'finance');
+        $s('maid_monthly_rate_max', '80000', 'finance');
+        $s('withdrawal_minimum', '5000', 'finance');
+        $s('escrow_release_days', '3', 'finance');
 
         // ═══════════════════════════════════════════
         // Payment Gateways

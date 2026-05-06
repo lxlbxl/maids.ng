@@ -32,7 +32,6 @@ import {
     Banknote,
     RefreshCw,
     AlertCircle,
-    CheckCircle,
     Clock,
     TrendingUp,
 } from 'lucide-react';
@@ -44,12 +43,12 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
 
     const handleWithdrawalRequest = async () => {
         if (!withdrawalAmount || parseFloat(withdrawalAmount) <= 0) {
-            toast.error('Please enter a valid amount');
+            toast.error('Please enter the amount you want to withdraw');
             return;
         }
 
         if (parseFloat(withdrawalAmount) > wallet?.available_balance) {
-            toast.error('Insufficient balance');
+            toast.error('You do not have enough money for this withdrawal');
             return;
         }
 
@@ -67,16 +66,15 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
             const data = await response.json();
 
             if (response.ok) {
-                toast.success('Withdrawal request submitted successfully');
+                toast.success('Your withdrawal request has been sent! We will process it soon.');
                 setShowWithdrawalDialog(false);
                 setWithdrawalAmount('');
-                // Refresh page to show updated data
                 window.location.reload();
             } else {
-                toast.error(data.message || 'Failed to submit withdrawal request');
+                toast.error(data.message || 'Something went wrong. Please try again.');
             }
         } catch (error) {
-            toast.error('An error occurred');
+            toast.error('Could not connect. Please check your internet and try again.');
         } finally {
             setLoading(false);
         }
@@ -90,7 +88,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
+        if (!dateString) return 'Not available';
         return new Date(dateString).toLocaleDateString('en-NG', {
             year: 'numeric',
             month: 'short',
@@ -115,6 +113,17 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
         }
     };
 
+    const getTransactionLabel = (type) => {
+        switch (type) {
+            case 'credit': return 'Money Received';
+            case 'salary_earned': return 'Salary Paid';
+            case 'debit': return 'Money Sent Out';
+            case 'withdrawal': return 'Withdrawal';
+            case 'withdrawal_pending': return 'Withdrawal Waiting';
+            default: return type?.replace(/_/g, ' ');
+        }
+    };
+
     const getTransactionColor = (type) => {
         switch (type) {
             case 'credit':
@@ -128,24 +137,35 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
         }
     };
 
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'completed': return '✅ Done';
+            case 'pending': return '⏳ Waiting';
+            case 'approved': return '✔️ Approved';
+            case 'failed': return '❌ Failed';
+            default: return status;
+        }
+    };
+
     return (
         <MaidLayout auth={auth}>
-            <Head title="My Earnings" />
+            <Head title="My Wallet | Maids.ng" />
 
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">My Earnings</h1>
-                    <p className="text-gray-500 mt-1">View your earnings and manage withdrawals</p>
+                    <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+                    <p className="text-gray-500 mt-1">See your money balance and send a request to withdraw to your bank</p>
                 </div>
 
                 {/* Balance Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Available Balance - Main Card */}
                     <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-green-100 text-sm">Available Balance</p>
+                                    <p className="text-green-100 text-sm">Money I Can Take Out Now</p>
                                     <p className="text-3xl font-bold mt-1">
                                         {formatCurrency(wallet?.available_balance)}
                                     </p>
@@ -157,23 +177,23 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                     <DialogTrigger asChild>
                                         <Button variant="secondary" size="sm" className="w-full">
                                             <Banknote className="w-4 h-4 mr-2" />
-                                            Request Withdrawal
+                                            Send Money to My Bank
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
                                             <DialogTitle>Request Withdrawal</DialogTitle>
                                             <DialogDescription>
-                                                Request a withdrawal from your available balance
+                                                Enter the amount you want to send to your bank account. The money will arrive within 1–2 working days.
                                             </DialogDescription>
                                         </DialogHeader>
                                         <div className="space-y-4 py-4">
                                             <div>
-                                                <Label htmlFor="amount">Amount (NGN)</Label>
+                                                <Label htmlFor="amount">How much do you want? (₦)</Label>
                                                 <Input
                                                     id="amount"
                                                     type="number"
-                                                    placeholder="Enter amount"
+                                                    placeholder="e.g. 5000"
                                                     value={withdrawalAmount}
                                                     onChange={(e) => setWithdrawalAmount(e.target.value)}
                                                     min="1000"
@@ -181,7 +201,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                                     max={wallet?.available_balance}
                                                 />
                                                 <p className="text-sm text-gray-500 mt-1">
-                                                    Available: {formatCurrency(wallet?.available_balance)}
+                                                    You have {formatCurrency(wallet?.available_balance)} available. Minimum is ₦1,000.
                                                 </p>
                                             </div>
                                         </div>
@@ -200,7 +220,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                                     parseFloat(withdrawalAmount) > wallet?.available_balance
                                                 }
                                             >
-                                                {loading ? 'Processing...' : 'Submit Request'}
+                                                {loading ? 'Sending request...' : 'Yes, Send to My Bank'}
                                             </Button>
                                         </DialogFooter>
                                     </DialogContent>
@@ -209,11 +229,12 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                         </CardContent>
                     </Card>
 
+                    {/* Total Balance */}
                     <Card>
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Total Balance</p>
+                                    <p className="text-sm font-medium text-gray-500">My Total Balance</p>
                                     <p className="text-2xl font-bold text-gray-900">
                                         {formatCurrency(wallet?.balance)}
                                     </p>
@@ -221,16 +242,17 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                 <Wallet className="w-8 h-8 text-gray-400" />
                             </div>
                             <p className="text-sm text-gray-500 mt-2">
-                                Including pending withdrawals
+                                Includes money that is still being processed
                             </p>
                         </CardContent>
                     </Card>
 
+                    {/* Pending Withdrawal */}
                     <Card>
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Pending Withdrawal</p>
+                                    <p className="text-sm font-medium text-gray-500">Withdrawal Being Processed</p>
                                     <p className="text-2xl font-bold text-yellow-600">
                                         {formatCurrency(wallet?.pending_withdrawal)}
                                     </p>
@@ -238,7 +260,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                 <Clock className="w-8 h-8 text-yellow-500" />
                             </div>
                             <p className="text-sm text-gray-500 mt-2">
-                                Awaiting admin approval
+                                Waiting to be sent to your bank
                             </p>
                         </CardContent>
                     </Card>
@@ -250,7 +272,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Total Earned</p>
+                                    <p className="text-sm font-medium text-gray-500">All Money I Have Earned</p>
                                     <p className="text-2xl font-bold text-green-600">
                                         {formatCurrency(wallet?.total_earned)}
                                     </p>
@@ -264,7 +286,7 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500">Total Withdrawn</p>
+                                    <p className="text-sm font-medium text-gray-500">Total Money Withdrawn</p>
                                     <p className="text-2xl font-bold text-blue-600">
                                         {formatCurrency(wallet?.total_withdrawn)}
                                     </p>
@@ -281,10 +303,10 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5" />
-                                Current Assignment Earnings
+                                My Current Job Pay
                             </CardTitle>
                             <CardDescription>
-                                Earnings from your active assignments
+                                How much you are earning from your current job(s)
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -296,18 +318,18 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                     >
                                         <div>
                                             <p className="font-medium text-gray-900">
-                                                {earning.employer_name}
+                                                Working for: {earning.employer_name}
                                             </p>
                                             <p className="text-sm text-gray-500">
-                                                Started: {new Date(earning.start_date).toLocaleDateString()}
+                                                Started: {new Date(earning.start_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-gray-900">
-                                                {formatCurrency(earning.monthly_salary)}/month
+                                                {formatCurrency(earning.monthly_salary)} / month
                                             </p>
                                             <p className="text-sm text-gray-500">
-                                                Next payment: {new Date(earning.next_due_date).toLocaleDateString()}
+                                                Next pay: {new Date(earning.next_due_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })}
                                             </p>
                                         </div>
                                     </div>
@@ -323,21 +345,22 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                                 <History className="w-5 h-5" />
-                                Transaction History
+                                Money History
                             </CardTitle>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Refresh
                             </Button>
                         </div>
+                        <CardDescription>Every time money came in or went out of your wallet</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Description</TableHead>
+                                    <TableHead>Date & Time</TableHead>
+                                    <TableHead>What Happened</TableHead>
+                                    <TableHead>Details</TableHead>
                                     <TableHead className="text-right">Amount</TableHead>
                                     <TableHead>Status</TableHead>
                                 </TableRow>
@@ -346,48 +369,44 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                                 {transactions?.data?.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                                            No transactions yet
+                                            No transactions yet. When you receive money it will appear here.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     transactions?.data?.map((transaction) => (
                                         <TableRow key={transaction.id}>
-                                            <TableCell className="whitespace-nowrap">
+                                            <TableCell className="whitespace-nowrap text-sm">
                                                 {formatDate(transaction.created_at)}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    {getTransactionIcon(transaction.type)}
-                                                    <span className="capitalize">
-                                                        {transaction.type.replace('_', ' ')}
+                                                    {getTransactionIcon(transaction.transaction_type || transaction.type)}
+                                                    <span className="text-sm">
+                                                        {getTransactionLabel(transaction.transaction_type || transaction.type)}
                                                     </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{transaction.description}</TableCell>
+                                            <TableCell className="text-sm text-gray-600">{transaction.description || '—'}</TableCell>
                                             <TableCell
                                                 className={`text-right font-medium ${getTransactionColor(
-                                                    transaction.type
+                                                    transaction.transaction_type || transaction.type
                                                 )}`}
                                             >
-                                                {['credit', 'salary_earned'].includes(transaction.type)
+                                                {['credit', 'salary_earned'].includes(transaction.transaction_type || transaction.type)
                                                     ? '+'
                                                     : '-'}
                                                 {formatCurrency(transaction.amount)}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge
-                                                    variant={
-                                                        transaction.status === 'completed'
-                                                            ? 'success'
-                                                            : transaction.status === 'pending'
-                                                                ? 'warning'
-                                                                : transaction.status === 'approved'
-                                                                    ? 'success'
-                                                                    : 'default'
-                                                    }
-                                                >
-                                                    {transaction.status}
-                                                </Badge>
+                                                <span className={`px-2 py-1 rounded-full text-[11px] font-medium ${
+                                                    transaction.status === 'completed' || transaction.status === 'approved'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : transaction.status === 'pending'
+                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                            : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {getStatusLabel(transaction.status)}
+                                                </span>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -397,18 +416,19 @@ export default function MaidWallet({ auth, wallet, transactions, earnings }) {
                     </CardContent>
                 </Card>
 
-                {/* Withdrawal Info */}
+                {/* Important Info Box */}
                 <Card className="bg-blue-50 border-blue-200">
                     <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                             <div>
-                                <p className="font-medium text-blue-900">Withdrawal Information</p>
-                                <p className="text-sm text-blue-700 mt-1">
-                                    Withdrawal requests are processed within 24-48 hours.
-                                    You will receive an SMS notification once your withdrawal has been approved and processed.
-                                    Minimum withdrawal amount is ₦1,000.
-                                </p>
+                                <p className="font-medium text-blue-900">Important: How Withdrawals Work</p>
+                                <ul className="text-sm text-blue-700 mt-2 space-y-1 list-disc list-inside">
+                                    <li>You can only withdraw money that is "available" (shown in green above).</li>
+                                    <li>The minimum amount you can withdraw at once is <strong>₦1,000</strong>.</li>
+                                    <li>Your money will reach your bank within <strong>1 to 2 working days</strong>.</li>
+                                    <li>You will receive an SMS on your phone when it has been sent.</li>
+                                </ul>
                             </div>
                         </div>
                     </CardContent>

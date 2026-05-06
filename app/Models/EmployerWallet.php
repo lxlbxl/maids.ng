@@ -198,20 +198,6 @@ class EmployerWallet extends Model
         $this->last_activity_at = now();
         $this->save();
 
-        // Credit maid's wallet
-        $maidWallet = MaidWallet::firstOrCreate(
-            ['maid_id' => $maidId],
-            [
-                'balance' => 0,
-                'total_earned' => 0,
-                'total_withdrawn' => 0,
-                'currency' => $this->currency,
-                'is_active' => true,
-            ]
-        );
-
-        $maidWallet->credit($amount, $description, $referenceId, 'salary_payment');
-
         return WalletTransaction::create([
             'wallet_type' => 'employer',
             'employer_id' => $this->employer_id,

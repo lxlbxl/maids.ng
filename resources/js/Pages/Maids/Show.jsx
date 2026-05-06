@@ -27,8 +27,12 @@ export default function Show({ maid }) {
                         </div>
                         <div className="px-8 pb-8 -mt-12 relative z-10">
                             <div className="flex flex-col md:flex-row items-start gap-6">
-                                <div className="w-24 h-24 bg-teal rounded-full flex items-center justify-center text-4xl text-white font-bold border-4 border-white shadow-brand-2">
-                                    {maid.name?.charAt(0)}
+                                <div className="w-24 h-24 bg-teal rounded-full flex items-center justify-center text-4xl text-white font-bold border-4 border-white shadow-brand-2 overflow-hidden">
+                                    {maid.avatar ? (
+                                        <img src={maid.avatar} alt={maid.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        maid.name?.charAt(0)
+                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -45,8 +49,8 @@ export default function Show({ maid }) {
                                             <span className="text-sm text-muted ml-1">({maid.total_reviews} reviews)</span>
                                         </div>
                                         <div className="text-sm text-muted">{maid.experience_years} yrs experience</div>
-                                        {maid.rate > 0 && (
-                                            <div className="text-lg font-bold text-espresso">₦{Number(maid.rate).toLocaleString()}<span className="text-sm text-muted font-normal">/mo</span></div>
+                                        {maid.expected_salary > 0 && (
+                                            <div className="text-lg font-bold text-espresso">₦{Number(maid.expected_salary).toLocaleString()}<span className="text-sm text-muted font-normal">/mo</span></div>
                                         )}
                                     </div>
                                 </div>
@@ -72,6 +76,18 @@ export default function Show({ maid }) {
                                     <div className="flex flex-wrap gap-2">
                                         {maid.skills.map(skill => (
                                             <span key={skill} className="bg-teal/5 text-teal px-4 py-2 rounded-full text-sm capitalize font-medium">{skill}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Languages */}
+                            {maid.languages?.length > 0 && (
+                                <div className="bg-white rounded-brand-lg border border-gray-100 shadow-brand-1 p-6">
+                                    <h3 className="font-display text-lg text-espresso mb-4 border-b border-gray-50 pb-3">Languages Spoken</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {maid.languages.map(lang => (
+                                            <span key={lang} className="bg-espresso/5 text-espresso px-4 py-2 rounded-full text-sm capitalize font-medium">{lang}</span>
                                         ))}
                                     </div>
                                 </div>
@@ -123,10 +139,10 @@ export default function Show({ maid }) {
                                     <span className="text-xs font-mono uppercase tracking-widest text-teal font-bold">Trust & Safety</span>
                                 </div>
                                 <ul className="space-y-2 text-sm text-muted">
-                                    <li className="flex items-center gap-2">{maid.verified ? '✅' : '⬜'} Identity Verified</li>
-                                    <li className="flex items-center gap-2">{maid.verified ? '✅' : '⬜'} Background Check</li>
-                                    <li className="flex items-center gap-2">🔒 Secure Payments</li>
-                                    <li className="flex items-center gap-2">⚖️ Dispute Resolution</li>
+                                    <li className="flex items-center gap-2">{maid.nin_verified ? '✅' : '⏳'} Identity Verified (NIN)</li>
+                                    <li className="flex items-center gap-2">{maid.background_verified ? '✅' : '⏳'} Background Check</li>
+                                    <li className="flex items-center gap-2">✅ Secure Payments</li>
+                                    <li className="flex items-center gap-2">✅ Dispute Resolution</li>
                                 </ul>
                             </div>
                         </div>

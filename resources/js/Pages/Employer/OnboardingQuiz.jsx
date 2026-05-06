@@ -1,30 +1,36 @@
 import { Head, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const STEPS = [
-    { id: 'help_type', title: 'What type of help do you need?', subtitle: 'Select all that apply', multi: true,
-      options: [
-        { value: 'housekeeping', label: 'Housekeeping', icon: '🏠', desc: 'Cleaning, laundry, organizing' },
-        { value: 'cooking', label: 'Cooking', icon: '👩‍🍳', desc: 'Meal preparation & planning' },
-        { value: 'nanny', label: 'Nanny', icon: '👶', desc: 'Childcare & babysitting' },
-        { value: 'elderly-care', label: 'Elderly Care', icon: '🧓', desc: 'Companion & daily care' },
-        { value: 'driver', label: 'Driver', icon: '🚗', desc: 'Transportation & errands' },
-        { value: 'live-in', label: 'Live-in Helper', icon: '🏡', desc: 'Full-time household help' },
-      ]},
-    { id: 'schedule', title: 'What schedule works best?', subtitle: 'Choose your preferred schedule', multi: false,
-      options: [
-        { value: 'full-time', label: 'Full Time', icon: '☀️', desc: 'Monday – Saturday' },
-        { value: 'part-time', label: 'Part Time', icon: '🌤️', desc: 'A few hours/days per week' },
-        { value: 'weekends', label: 'Weekends Only', icon: '🌙', desc: 'Saturday & Sunday' },
-        { value: 'one-time', label: 'One-Time', icon: '⚡', desc: 'Single occasion help' },
-      ]},
-    { id: 'urgency', title: 'How soon do you need help?', subtitle: 'This helps us prioritize your match', multi: false,
-      options: [
-        { value: 'immediately', label: 'Immediately', icon: '🔥', desc: 'Within 24-48 hours' },
-        { value: 'this-week', label: 'This Week', icon: '📅', desc: 'Within 7 days' },
-        { value: 'this-month', label: 'This Month', icon: '📆', desc: 'Within 30 days' },
-        { value: 'flexible', label: 'I\'m Flexible', icon: '🕰️', desc: 'No rush, finding the right fit' },
-      ]},
+    {
+        id: 'help_type', title: 'What type of help do you need?', subtitle: 'Select all that apply', multi: true,
+        options: [
+            { value: 'housekeeping', label: 'Housekeeping', icon: '🏠', desc: 'Cleaning, laundry, organizing' },
+            { value: 'cooking', label: 'Cooking', icon: '👩‍🍳', desc: 'Meal preparation & planning' },
+            { value: 'nanny', label: 'Nanny', icon: '👶', desc: 'Childcare & babysitting' },
+            { value: 'elderly-care', label: 'Elderly Care', icon: '🧓', desc: 'Companion & daily care' },
+            { value: 'driver', label: 'Driver', icon: '🚗', desc: 'Transportation & errands' },
+            { value: 'live-in', label: 'Live-in Helper', icon: '🏡', desc: 'Full-time household help' },
+        ]
+    },
+    {
+        id: 'schedule', title: 'What schedule works best?', subtitle: 'Choose your preferred schedule', multi: false,
+        options: [
+            { value: 'full-time', label: 'Full Time', icon: '☀️', desc: 'Monday – Saturday' },
+            { value: 'part-time', label: 'Part Time', icon: '🌤️', desc: 'A few hours/days per week' },
+            { value: 'weekends', label: 'Weekends Only', icon: '🌙', desc: 'Saturday & Sunday' },
+            { value: 'one-time', label: 'One-Time', icon: '⚡', desc: 'Single occasion help' },
+        ]
+    },
+    {
+        id: 'urgency', title: 'How soon do you need help?', subtitle: 'This helps us prioritize your match', multi: false,
+        options: [
+            { value: 'immediately', label: 'Immediately', icon: '🔥', desc: 'Within 24-48 hours' },
+            { value: 'this-week', label: 'This Week', icon: '📅', desc: 'Within 7 days' },
+            { value: 'this-month', label: 'This Month', icon: '📆', desc: 'Within 30 days' },
+            { value: 'flexible', label: 'I\'m Flexible', icon: '🕰️', desc: 'No rush, finding the right fit' },
+        ]
+    },
     { id: 'location', title: 'Where are you located?', subtitle: 'Enter your city and state', type: 'input' },
     { id: 'budget', title: 'What\'s your monthly budget?', subtitle: 'Help us find helpers in your range', type: 'budget' },
     { id: 'contact_name', title: 'What\'s your name?', subtitle: 'So we can personalize your matches', type: 'input', placeholder: 'e.g. Adaeze Okonkwo' },
@@ -42,11 +48,70 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     const [accountCreated, setAccountCreated] = useState(false);
     const [accountMessage, setAccountMessage] = useState('');
     const [guaranteeLoading, setGuaranteeLoading] = useState(false);
+    const quizStartTime = useRef(Date.now());
+    const hasTrackedStart = useRef(false);
 
     const current = STEPS[step];
     const progress = ((step + 1) / STEPS.length) * 100;
 
     const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    // ── sendBeacon: Track quiz start on mount ──
+    useEffect(() => {
+        if (!hasTrackedStart.current) {
+            hasTrackedStart.current = true;
+            sendBeaconEvent('quiz_start', {
+                step: 0,
+                total_steps: STEPS.length,
+            });
+        }
+
+        // ── sendBeacon: Track quiz abandonment on page leave ──
+        const handleBeforeUnload = () => {
+            if (!matches && !loading) {
+                // Quiz not completed — track abandonment
+                sendBeaconEvent('quiz_abandon', {
+                    step: step,
+                    total_steps: STEPS.length,
+                    progress: Math.round(progress),
+                    duration_seconds: Math.round((Date.now() - quizStartTime.current) / 1000),
+                    has_contact: !!(answers.contact_name && answers.contact_email),
+                });
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [step, progress, matches, loading, answers]);
+
+    /**
+     * Send a beacon event for analytics tracking.
+     * Uses navigator.sendBeacon for reliable delivery on page unload.
+     */
+    const sendBeaconEvent = (eventType, data = {}) => {
+        const payload = JSON.stringify({
+            event_type: eventType,
+            page_url: window.location.pathname,
+            event_data: data,
+            _token: csrfToken(),
+        });
+
+        if (navigator.sendBeacon) {
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon('/api/user-events', blob);
+        } else {
+            // Fallback: regular fetch
+            fetch('/api/user-events', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken(),
+                },
+                body: payload,
+                keepalive: true,
+            }).catch(() => { });
+        }
+    };
 
     const handleOptionSelect = (value) => {
         if (current.multi) {
@@ -122,6 +187,14 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
             const data = await response.json();
             setMatches(data.matches || []);
             setPreferenceId(data.preference_id);
+
+            // Track quiz completion
+            sendBeaconEvent('quiz_complete', {
+                total_steps: STEPS.length,
+                duration_seconds: Math.round((Date.now() - quizStartTime.current) / 1000),
+                matches_count: data.matches?.length || 0,
+                has_contact: true,
+            });
         } catch (err) {
             // Fallback: show demo matches
             setMatches([
@@ -129,6 +202,15 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 { id: 2, name: 'Grace Adeyemi', role: 'Nanny', location: 'Ikeja, Lagos', rating: 4.9, rate: 55000, skills: ['childcare', 'cooking'], match: 87, verified: true },
                 { id: 3, name: 'Joy Nwosu', role: 'Housekeeper', location: 'Lekki, Lagos', rating: 4.95, rate: 65000, skills: ['deep-cleaning', 'cooking'], match: 81, verified: true },
             ]);
+
+            // Still track completion even with fallback
+            sendBeaconEvent('quiz_complete', {
+                total_steps: STEPS.length,
+                duration_seconds: Math.round((Date.now() - quizStartTime.current) / 1000),
+                matches_count: 3,
+                has_contact: true,
+                fallback: true,
+            });
         }
         setLoading(false);
     };
@@ -245,7 +327,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 <div className="min-h-screen bg-ivory py-12 px-6">
                     <div className="max-w-3xl mx-auto">
                         {/* Header */}
-                        <div className="text-center mb-10" style={{animation: 'fade-up 0.5s ease both'}}>
+                        <div className="text-center mb-10" style={{ animation: 'fade-up 0.5s ease both' }}>
                             <a href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto mb-6" /></a>
                             <p className="text-5xl mb-4">🔍</p>
                             <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-3">
@@ -263,7 +345,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         </div>
 
                         {/* Value Proposition Cards */}
-                        <div className="grid sm:grid-cols-2 gap-4 mb-8" style={{animation: 'fade-up 0.5s 0.1s ease both'}}>
+                        <div className="grid sm:grid-cols-2 gap-4 mb-8" style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
                             {[
                                 { icon: '🔍', title: 'We Search For You', desc: 'Our team actively sources helpers matching your exact preferences, location, and budget.' },
                                 { icon: '⏱️', title: '14-Day Guarantee', desc: 'If we can\'t find a match within 14 days, you get a full refund — no questions asked.' },
@@ -279,7 +361,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         </div>
 
                         {/* CTA Section */}
-                        <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-2 text-center mb-6" style={{animation: 'fade-up 0.5s 0.2s ease both'}}>
+                        <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-2 text-center mb-6" style={{ animation: 'fade-up 0.5s 0.2s ease both' }}>
                             <div className="flex items-center justify-center gap-2 mb-4">
                                 <span className="text-2xl">🛡️</span>
                                 <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-copper font-bold">Guarantee Match Service</p>
@@ -300,7 +382,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                             >
                                 {guaranteeLoading ? (
                                     <span className="flex items-center justify-center gap-2">
-                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                                         Activating...
                                     </span>
                                 ) : `Activate Guarantee Match — ₦${guaranteeFee.toLocaleString()}`}
@@ -309,7 +391,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         </div>
 
                         {/* Money-back guarantee notice */}
-                        <div className="bg-gradient-to-br from-copper/5 to-copper/10 rounded-brand-xl p-6 border border-copper/20 mb-6" style={{animation: 'fade-up 0.5s 0.3s ease both'}}>
+                        <div className="bg-gradient-to-br from-copper/5 to-copper/10 rounded-brand-xl p-6 border border-copper/20 mb-6" style={{ animation: 'fade-up 0.5s 0.3s ease both' }}>
                             <div className="flex items-start gap-3">
                                 <span className="text-3xl flex-shrink-0">💯</span>
                                 <div>
@@ -323,7 +405,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         </div>
 
                         {/* Secondary: Try Again */}
-                        <div className="text-center" style={{animation: 'fade-up 0.5s 0.4s ease both'}}>
+                        <div className="text-center" style={{ animation: 'fade-up 0.5s 0.4s ease both' }}>
                             <p className="text-muted text-sm mb-3">Or adjust your preferences:</p>
                             <button onClick={() => { setMatches(null); setStep(0); }} className="text-teal hover:text-teal-dark font-medium text-sm transition-colors">
                                 ← Try Again with Different Preferences
@@ -363,7 +445,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 <div className="flex-1 flex items-center justify-center px-6 pb-20">
                     <div className="max-w-2xl w-full">
                         <div className="text-center mb-10" key={step}>
-                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-2" style={{animation: 'fade-up 0.5s ease both'}}>
+                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-2" style={{ animation: 'fade-up 0.5s ease both' }}>
                                 {current.title}
                             </h1>
                             <p className="text-muted">{current.subtitle}</p>
@@ -371,7 +453,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                         {/* Option Cards */}
                         {current.options && (
-                            <div className={`grid gap-3 ${current.options.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'}`} style={{animation: 'fade-up 0.5s 0.1s ease both'}}>
+                            <div className={`grid gap-3 ${current.options.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'}`} style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
                                 {current.options.map((opt) => {
                                     const isSelected = current.multi
                                         ? answers.help_types.includes(opt.value)
@@ -391,7 +473,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                         {/* Text Input */}
                         {current.type === 'input' && (
-                            <div style={{animation: 'fade-up 0.5s 0.1s ease both'}}>
+                            <div style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
                                 <input type={current.id === 'contact_email' ? 'email' : 'text'}
                                     value={answers[current.id] || ''}
                                     onChange={(e) => handleInputChange(current.id, e.target.value)}
@@ -404,7 +486,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                         {/* Budget Slider */}
                         {current.type === 'budget' && (
-                            <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-1" style={{animation: 'fade-up 0.5s 0.1s ease both'}}>
+                            <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-1" style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
                                 <div className="flex justify-between items-baseline mb-6">
                                     <span className="font-mono text-sm text-teal">₦{answers.budget_min?.toLocaleString()}</span>
                                     <span className="text-muted text-sm">to</span>
@@ -437,7 +519,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                 className="bg-teal text-white px-8 py-3 rounded-brand-md font-medium text-sm hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1 disabled:opacity-50">
                                 {loading ? (
                                     <span className="flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                                         Finding Matches...
                                     </span>
                                 ) : step === STEPS.length - 1 ? 'Find My Matches →' : 'Continue →'}

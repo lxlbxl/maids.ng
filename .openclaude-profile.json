@@ -1,0 +1,10 @@
+{
+  "profile": "openai",
+  "env": {
+    "OPENAI_BASE_URL": "https://integrate.api.nvidia.com/v1",
+    "OPENAI_MODEL": "nvidia/llama-3.1-nemotron-70b-instruct",
+    "OPENAI_API_FORMAT": "chat_completions",
+    "OPENAI_API_KEY": "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"
+  },
+  "createdAt": "2026-04-30T22:09:17.669Z"
+}
