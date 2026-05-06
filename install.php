@@ -594,6 +594,7 @@ function seedSettings(PDO $pdo): void
         ['app_debug', 'false', 'general', 0],
         ['support_email', 'support@maids.ng', 'general', 0],
         ['support_phone', '+234 801 234 5678', 'general', 0],
+        ['contact_phone', '+234 801 234 5678', 'general', 0],
         ['maintenance_mode', 'false', 'general', 0],
         ['deploy_secret', generateDeploySecret(), 'general', 1],
 

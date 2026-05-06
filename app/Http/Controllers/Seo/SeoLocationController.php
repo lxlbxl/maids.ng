@@ -20,12 +20,16 @@ class SeoLocationController extends Controller
         return response()->view('seo.locations.hub', compact('cities'));
     }
 
-    public function city($citySlug)
+    public function city(string $citySlug)
     {
         $city = SeoLocation::where('type', 'city')
             ->where('slug', $citySlug)
             ->where('is_active', true)
-            ->firstOrFail();
+            ->first();
+
+        if (!$city) {
+            abort(404);
+        }
 
         $page = SeoPage::where('page_type', 'location_city')
             ->where('location_id', $city->id)
@@ -49,17 +53,26 @@ class SeoLocationController extends Controller
             ->with('service')
             ->get();
 
+        if ($page->page_status === 'noindex') {
+            return response()->view('seo.locations.city', compact('page', 'city', 'areas', 'servicePages'), 200)
+                ->header('X-Robots-Tag', 'noindex');
+        }
+
         return response()->view('seo.locations.city', compact('page', 'city', 'areas', 'servicePages'));
     }
 
-    public function area($citySlug, $areaSlug)
+    public function area(string $citySlug, string $areaSlug)
     {
         $area = SeoLocation::where('type', 'area')
             ->where('slug', $areaSlug)
             ->whereHas('parent', fn($q) => $q->where('slug', $citySlug))
             ->where('is_active', true)
             ->with('parent')
-            ->firstOrFail();
+            ->first();
+
+        if (!$area) {
+            abort(404);
+        }
 
         $page = SeoPage::where('page_type', 'location_area')
             ->where('location_id', $area->id)
@@ -67,11 +80,6 @@ class SeoLocationController extends Controller
 
         if (!$page || $page->page_status === 'redirected') {
             abort(404);
-        }
-
-        if ($page->page_status === 'noindex') {
-            return response()->view('seo.locations.area', compact('page', 'area'), 200)
-                ->header('X-Robots-Tag', 'noindex');
         }
 
         $schemaBuilder = app(SeoSchemaBuilder::class);
@@ -83,6 +91,11 @@ class SeoLocationController extends Controller
             ->where('is_active', true)
             ->take(6)
             ->get();
+
+        if ($page->page_status === 'noindex') {
+            return response()->view('seo.locations.area', compact('page', 'area', 'nearbyAreas'), 200)
+                ->header('X-Robots-Tag', 'noindex');
+        }
 
         return response()->view('seo.locations.area', compact('page', 'area', 'nearbyAreas'));
     }

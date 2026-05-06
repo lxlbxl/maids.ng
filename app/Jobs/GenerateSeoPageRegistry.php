@@ -15,6 +15,13 @@ class GenerateSeoPageRegistry implements ShouldQueue
 
     public int $timeout = 600;
 
+    public bool $force = false;
+
+    public function __construct(bool $force = false)
+    {
+        $this->force = $force;
+    }
+
     public function handle(SeoUrlBuilder $urls): void
     {
         $services  = SeoService::where('is_active', true)->get();
@@ -137,9 +144,16 @@ class GenerateSeoPageRegistry implements ShouldQueue
 
     private function upsert(array $data): void
     {
-        SeoPage::updateOrCreate(
-            ['url_path' => $data['url_path']],
-            array_merge($data, ['page_status' => 'draft'])
-        );
+        if ($this->force) {
+            SeoPage::updateOrCreate(
+                ['url_path' => $data['url_path']],
+                array_merge($data, ['page_status' => 'draft'])
+            );
+        } else {
+            SeoPage::firstOrCreate(
+                ['url_path' => $data['url_path']],
+                array_merge($data, ['page_status' => 'draft'])
+            );
+        }
     }
 }

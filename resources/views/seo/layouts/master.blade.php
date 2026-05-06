@@ -27,6 +27,9 @@
     @endforeach
     @endif
 
+    <link rel="alternate" hreflang="en-NG" href="{{ url($page->url_path ?? '/') }}">
+    <link rel="alternate" hreflang="en" href="{{ url($page->url_path ?? '/') }}">
+
     <link rel="stylesheet" href="{{ asset('css/seo.css') }}">
     <link rel="preconnect" href="{{ config('app.url') }}">
 </head>

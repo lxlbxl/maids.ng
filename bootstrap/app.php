@@ -20,11 +20,16 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\TrackLastLogin::class,
         ]);
 
+        $middleware->api(append: [
+            \App\Http\Middleware\ApiNoCrawl::class,
+        ]);
+
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'throttle.custom' => \App\Http\Middleware\RateLimitMiddleware::class,
+            'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

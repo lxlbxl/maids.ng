@@ -46,6 +46,11 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'message' => fn () => $request->session()->get('message'),
             ],
+            'meta' => [
+                'title'       => 'Maids.ng — Find Verified Domestic Staff in Nigeria',
+                'description' => 'Nigeria\'s leading platform for finding verified housekeepers, nannies, cooks, and drivers. AI-matched. NIN-verified. 10-day guarantee.',
+                'canonical'   => url()->current(),
+            ],
         ];
     }
 }

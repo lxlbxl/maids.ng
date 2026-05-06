@@ -80,6 +80,7 @@ class AdminSettingsController extends Controller
             'app_debug' => 'general',
             'support_email' => 'general',
             'support_phone' => 'general',
+            'contact_phone' => 'general',
             'maintenance_mode' => 'general',
             // Financial Settings
             'service_fee_percentage' => 'finance',

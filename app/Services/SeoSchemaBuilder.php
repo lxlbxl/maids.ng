@@ -97,7 +97,7 @@ class SeoSchemaBuilder
             'name'     => 'Maids.ng',
             'image'    => url('/maids-logo.png'),
             'url'      => url($page->url_path),
-            'telephone' => '+234-801-234-5678',
+            'telephone' => \App\Models\Setting::get('contact_phone', '+234-801-234-5678'),
             'priceRange' => '₦₦',
             'areaServed' => [
                 '@type'           => 'City',

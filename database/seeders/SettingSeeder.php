@@ -26,6 +26,7 @@ class SettingSeeder extends Seeder
         $s('app_debug', 'false', 'general');
         $s('support_email', 'support@maids.ng', 'general');
         $s('support_phone', '+234 801 234 5678', 'general');
+        $s('contact_phone', '+234 801 234 5678', 'general');
         $s('maintenance_mode', 'false', 'general');
 
         // ═══════════════════════════════════════════

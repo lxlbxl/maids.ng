@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description"
-        content="Maids.ng — Nigeria's most trusted platform for finding verified domestic helpers.">
+        content="{{ $page['props']['meta']['description'] ?? 'Find verified housekeepers, nannies, cooks and drivers in Nigeria. NIN-verified staff. 10-day money-back guarantee.' }}">
+    <link rel="canonical" href="{{ $page['props']['meta']['canonical'] ?? url()->current() }}">
+    <meta property="og:title" content="{{ $page['props']['meta']['title'] ?? 'Maids.ng — Nigeria\'s Domestic Staff Platform' }}">
+    <meta property="og:description" content="{{ $page['props']['meta']['description'] ?? 'Find verified domestic staff in Nigeria.' }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ asset('images/og-default.png') }}">
+    <meta property="og:site_name" content="Maids.ng">
 
     <script type="application/ld+json">
     {

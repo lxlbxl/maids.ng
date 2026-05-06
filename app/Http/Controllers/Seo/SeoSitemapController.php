@@ -14,6 +14,7 @@ class SeoSitemapController extends Controller
         $xml .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
         $sitemaps = [
+            route('sitemap.main'),
             route('sitemap.locations'),
             route('sitemap.services'),
             route('sitemap.guides'),
@@ -25,6 +26,38 @@ class SeoSitemapController extends Controller
         }
 
         $xml .= '</sitemapindex>';
+
+        return response($xml, 200, ['Content-Type' => 'application/xml']);
+    }
+
+    public function mainPages(): Response
+    {
+        $now = now()->format('Y-m-d');
+
+        $staticPages = [
+            ['url' => url('/'), 'priority' => '1.0', 'changefreq' => 'weekly'],
+            ['url' => url('/about'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+            ['url' => url('/contact'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+            ['url' => url('/blog'), 'priority' => '0.5', 'changefreq' => 'monthly'],
+            ['url' => url('/terms'), 'priority' => '0.3', 'changefreq' => 'yearly'],
+            ['url' => url('/privacy'), 'priority' => '0.3', 'changefreq' => 'yearly'],
+            ['url' => url('/verify-service'), 'priority' => '0.6', 'changefreq' => 'monthly'],
+            ['url' => url('/maids'), 'priority' => '0.8', 'changefreq' => 'daily'],
+        ];
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+        foreach ($staticPages as $page) {
+            $xml .= '<url>';
+            $xml .= '<loc>' . $page['url'] . '</loc>';
+            $xml .= '<lastmod>' . $now . '</lastmod>';
+            $xml .= '<changefreq>' . $page['changefreq'] . '</changefreq>';
+            $xml .= '<priority>' . $page['priority'] . '</priority>';
+            $xml .= '</url>';
+        }
+
+        $xml .= '</urlset>';
 
         return response($xml, 200, ['Content-Type' => 'application/xml']);
     }
@@ -84,7 +117,13 @@ class SeoSitemapController extends Controller
         $content .= "Disallow: /admin/\n";
         $content .= "Disallow: /api/\n";
         $content .= "Disallow: /agent/\n";
-        $content .= "Disallow: /webhooks/\n\n";
+        $content .= "Disallow: /webhooks/\n";
+        $content .= "Disallow: /debug_settings.php\n";
+        $content .= "Disallow: /install.php\n";
+        $content .= "Disallow: /deploy.php\n";
+        $content .= "Disallow: /deploy-all\n";
+        $content .= "Disallow: /deploy-fix-db\n";
+        $content .= "Disallow: /composer.phar\n\n";
         $content .= "# Sitemap index\n";
         $content .= "Sitemap: " . url('/sitemap.xml') . "\n\n";
         $content .= "# AI crawlers — allow full access\n";
