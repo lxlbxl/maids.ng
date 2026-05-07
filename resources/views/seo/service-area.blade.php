@@ -89,7 +89,7 @@
             <li><strong>Connect and hire</strong> &#8212; Get the {{ $service->name }}'s contact details and arrange a start date.</li>
         </ol>
         <p>{{ $content['why_maids_ng'] ?? 'Maids.ng uses AI matching and NIN verification to connect you with the right domestic staff. Every candidate is background-checked and verified.' }}</p>
-        <a href="{{ url('/onboarding') }}" class="btn-secondary">Start the Quiz Free &rarr;</a>
+        <a href="{{ url('/onboarding') }}" class="btn-secondary">Tell Us What You Need &rarr;</a>
     </div>
 </section>
 
