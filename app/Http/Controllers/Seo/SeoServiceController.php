@@ -67,13 +67,15 @@ class SeoServiceController extends Controller
         }
 
         $quizUrl = $internalLinker->quizUrl($page);
+        $location = $city;
+        $content = $page->content_blocks ?? [];
 
         if ($page->page_status === 'noindex') {
-            return response()->view('seo.service-area', compact('page', 'service', 'city', 'salary', 'nearbyPages', 'quizUrl'), 200)
+            return response()->view('seo.service-area', compact('page', 'service', 'location', 'salary', 'nearbyPages', 'quizUrl', 'content'), 200)
                 ->header('X-Robots-Tag', 'noindex');
         }
 
-        return response()->view('seo.service-area', compact('page', 'service', 'city', 'salary', 'nearbyPages', 'quizUrl'));
+        return response()->view('seo.service-area', compact('page', 'service', 'location', 'salary', 'nearbyPages', 'quizUrl', 'content'));
     }
 
     public function area(string $serviceSlug, string $areaSlug, string $citySlug)
@@ -111,12 +113,14 @@ class SeoServiceController extends Controller
         }
 
         $quizUrl = $internalLinker->quizUrl($page);
+        $location = $area;
+        $content = $page->content_blocks ?? [];
 
         if ($page->page_status === 'noindex') {
-            return response()->view('seo.service-area', compact('page', 'service', 'area', 'salary', 'nearbyPages', 'quizUrl'), 200)
+            return response()->view('seo.service-area', compact('page', 'service', 'location', 'salary', 'nearbyPages', 'quizUrl', 'content'), 200)
                 ->header('X-Robots-Tag', 'noindex');
         }
 
-        return response()->view('seo.service-area', compact('page', 'service', 'area', 'salary', 'nearbyPages', 'quizUrl'));
+        return response()->view('seo.service-area', compact('page', 'service', 'location', 'salary', 'nearbyPages', 'quizUrl', 'content'));
     }
 }
