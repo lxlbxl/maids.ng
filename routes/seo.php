@@ -24,12 +24,12 @@ Route::middleware(['throttle:120,1', 'cache.headers:public;max_age=86400,s-maxag
     Route::get('/locations/{city}',        [SeoLocationController::class, 'city'])->name('seo.location.city');
     Route::get('/locations/{city}/{area}', [SeoLocationController::class, 'area'])->name('seo.location.area');
 
-    Route::get('/find/{serviceSlug}',                        [SeoServiceController::class, 'hub'])->name('seo.service')
-        ->where('serviceSlug', '[a-z0-9-]+');
-    Route::get('/find/{serviceSlug}-in-{locationSlug}',     [SeoServiceController::class, 'city'])->name('seo.service.city')
-        ->where('serviceSlug', '[a-z0-9-]+')->where('locationSlug', '[a-z]+');
     Route::get('/find/{serviceSlug}-in-{areaSlug}-{citySlug}', [SeoServiceController::class, 'area'])->name('seo.service.area')
         ->where('serviceSlug', '[a-z0-9-]+')->where('areaSlug', '[a-z]+')->where('citySlug', '[a-z]+');
+    Route::get('/find/{serviceSlug}-in-{locationSlug}',     [SeoServiceController::class, 'city'])->name('seo.service.city')
+        ->where('serviceSlug', '[a-z0-9-]+')->where('locationSlug', '[a-z]+');
+    Route::get('/find/{serviceSlug}',                        [SeoServiceController::class, 'hub'])->name('seo.service')
+        ->where('serviceSlug', '[a-z0-9-]+');
 
     Route::get('/hire/{serviceSlug}',                              [SeoGuideController::class, 'hire'])->name('seo.hire')
         ->where('serviceSlug', '[a-z0-9-]+');
