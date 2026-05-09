@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class GatekeeperAgent extends AgentService
 {
     protected QoreIDService $qoreid;
+    protected string $agentName = 'gatekeeper';
 
     public function __construct()
     {
@@ -185,35 +186,57 @@ class GatekeeperAgent extends AgentService
         $action = "standalone_verification";
 
         try {
-            // Call QoreID NIN Premium API
             $apiResult = $this->qoreid->verifyNinPremium($nin, $firstName, $lastName, $optional);
 
             if (!$apiResult['success']) {
+                $statusCode = $apiResult['status_code'] ?? 0;
+                $errorMsg = $apiResult['error'] ?? 'Verification failed.';
+
+                $result = [
+                    'success' => false,
+                    'data' => null,
+                    'error' => $errorMsg,
+                    'status_code' => $statusCode,
+                    'confidence' => 0,
+                    'name_match' => false,
+                ];
+
+                if ($statusCode === 404) {
+                    $result['is_product_denied'] = true;
+                    $result['product_available'] = false;
+                    $result['error'] = 'QoreID NIN Premium is not available for this account. Please check your product subscription.';
+                } elseif ($statusCode === 402) {
+                    $result['is_insufficient_balance'] = true;
+                    $result['product_available'] = true;
+                    $result['error'] = 'QoreID account has insufficient credits. Please top up your balance.';
+                } elseif (in_array($statusCode, [401, 403])) {
+                    $result['is_invalid_credentials'] = true;
+                    $result['product_available'] = false;
+                    $result['error'] = 'QoreID authentication or access issue. Please verify your API credentials and product subscription.';
+                } elseif (in_array($statusCode, [500, 502, 503, 0])) {
+                    $result['is_service_unavailable'] = true;
+                    $result['product_available'] = null;
+                    $result['error'] = 'QoreID service is temporarily unavailable. Please try again later.';
+                }
+
                 $this->logDecision(
                     action: $action,
                     decision: "failed",
                     confidenceScore: 0,
-                    reasoning: "QoreID API error for NIN {$nin}: " . ($apiResult['error'] ?? 'Unknown'),
+                    reasoning: "QoreID API error for NIN {$nin} (HTTP {$statusCode}): {$errorMsg}",
                     subject: null
                 );
 
-                return [
-                    'success' => false,
-                    'data' => null,
-                    'error' => $apiResult['error'] ?? 'Verification failed.',
-                    'status_code' => $apiResult['status_code'] ?? 0,
-                ];
+                return $result;
             }
 
             $qoreData = $apiResult['data'] ?? [];
             $identityData = $qoreData['nin'] ?? $qoreData['nin_premium'] ?? $qoreData['data'] ?? $qoreData;
 
-            // Compare names
             $nameComparison = $this->qoreid->compareNames($firstName, $lastName, $qoreData);
             $confidence = $nameComparison['confidence'];
             $isMatch = $nameComparison['match'];
 
-            // Build verification data
             $verificationData = [
                 'status' => ($isMatch && $confidence >= 80) ? 'verified' : 'failed',
                 'confidence' => $confidence,
@@ -260,12 +283,20 @@ class GatekeeperAgent extends AgentService
                 subject: null
             );
 
-            return [
+            $result = [
                 'success' => ($isMatch && $confidence >= 80),
                 'data' => $verificationData,
                 'confidence' => $confidence,
                 'name_match' => $isMatch,
+                'status_code' => $apiResult['status_code'] ?? 200,
+                'product_available' => true,
             ];
+
+            if (!$isMatch || $confidence < 80) {
+                $result['is_name_mismatch'] = true;
+            }
+
+            return $result;
 
         } catch (\Exception $e) {
             Log::error('GatekeeperAgent verifyNinStandalone error', [
@@ -277,6 +308,8 @@ class GatekeeperAgent extends AgentService
                 'success' => false,
                 'data' => null,
                 'error' => $e->getMessage(),
+                'is_service_unavailable' => true,
+                'status_code' => 500,
             ];
         }
     }

@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AmbassadorChatController extends Controller
+class AmbassadorChatController extends ApiController
 {
     public function __construct(
         private readonly AmbassadorAgent $ambassador,
@@ -43,12 +43,11 @@ class AmbassadorChatController extends Controller
         // Process through Ambassador Agent
         $result = $this->ambassador->handle($inbound);
 
-        return response()->json([
-            'success' => true,
+        return $this->success([
             'content' => $result['content'],
             'conversation_id' => $result['conversation_id'],
             'tool_calls' => $result['tool_calls'] ?? [],
-        ]);
+        ], 'Message processed');
     }
 
     /**
@@ -70,12 +69,12 @@ class AmbassadorChatController extends Controller
             })
             ->firstOrFail();
 
-        return response()->json([
+        return $this->success([
             'conversation' => $conversation,
             'messages' => $conversation->messages()
                 ->whereIn('role', ['user', 'assistant'])
                 ->orderBy('created_at')
                 ->get(),
-        ]);
+        ], 'Conversation history retrieved');
     }
 }

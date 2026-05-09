@@ -650,4 +650,42 @@ class AssignmentService
                 ->first()?->maid,
         ];
     }
+
+    /**
+     * Resolve a dispute for an assignment. Wraps dispute logic for HITL workflow.
+     */
+    public function resolveDispute(int $assignmentId, string $resolution, float $refundAmount = 0): array
+    {
+        $assignment = MaidAssignment::findOrFail($assignmentId);
+
+        $dispute = \App\Models\Dispute::whereHas('booking', function ($q) use ($assignment) {
+            $q->where('maid_id', $assignment->maid_id)
+              ->where('employer_id', $assignment->employer_id);
+        })->latest()->first();
+
+        if ($dispute) {
+            $dispute->update([
+                'status'     => 'resolved',
+                'resolution' => $resolution,
+            ]);
+        }
+
+        if ($refundAmount > 0 && $assignment->employer_id) {
+            $this->walletService->processAssignmentRefund(
+                $assignment->employer_id,
+                $refundAmount,
+                $assignmentId,
+                "Dispute resolution: {$resolution}"
+            );
+        }
+
+        $assignment->update(['status' => 'cancelled']);
+
+        return [
+            'assignment_id' => $assignmentId,
+            'dispute_id'    => $dispute?->id,
+            'resolution'    => $resolution,
+            'refund_amount' => $refundAmount,
+        ];
+    }
 }

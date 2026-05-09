@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminDisputeController;
 use App\Http\Controllers\AdminFinancialController;
 use App\Http\Controllers\AdminVerificationController;
 use App\Http\Controllers\AdminSettingsController;
+use App\Http\Controllers\AdminApiDocsController;
 use App\Http\Controllers\Api\Admin\AdminController as ApiAdminController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -68,6 +69,7 @@ Route::get('/verify-service', function () {
 Route::post('/standalone-verification/initialize', [App\Http\Controllers\StandaloneVerificationController::class, 'initialize'])->name('standalone-verification.initialize');
 Route::get('/standalone-verification/verify', [App\Http\Controllers\StandaloneVerificationController::class, 'verifyPayment'])->name('standalone-verification.verify');
 Route::get('/standalone-verification/report/{reference}', [App\Http\Controllers\StandaloneVerificationController::class, 'showReport'])->name('standalone-verification.report');
+Route::get('/standalone-verification/status/{reference}', [App\Http\Controllers\StandaloneVerificationController::class, 'status'])->name('standalone-verification.status');
 
 // Maid Search (Public)
 Route::get('/maids', [MaidSearchController::class, 'index'])->name('maids.search');
@@ -262,6 +264,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit', [AdminAuditLogController::class, 'index'])->name('audit');
         Route::delete('/audit/purge', [AdminAuditLogController::class, 'destroyAll'])->name('audit.purge');
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
+        Route::post('/settings/api-token', [AdminSettingsController::class, 'generateApiToken'])->name('settings.api-token');
+        Route::post('/settings/revoke-tokens', [AdminSettingsController::class, 'revokeApiTokens'])->name('settings.revoke-tokens');
+        Route::get('/api-docs', [AdminApiDocsController::class, 'index'])->name('api_docs');
 
         // Agent Command Center
         Route::get('/agents', function () {
@@ -1161,3 +1166,4 @@ Route::get('/run-seo-setup', function () use ($deploySecret) {
 });
 
 require __DIR__ . '/seo.php';
+require __DIR__ . '/control_room.php';

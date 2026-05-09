@@ -1,17 +1,246 @@
-# Maids.ng SEO Engine — Deployment Instructions
+# Maids.ng — Deployment Guide
 
-## The Problem
+## Quick Deploy: Control Room (Single Script)
 
-Your server has a **stale route cache** file. This means Laravel is serving old cached routes and ignoring all new route files (`routes/seo.php` and the updated `routes/web.php`).
+Upload `public/deploy-control-room.php` to your server, then visit:
 
-This is why:
-- `/run-setup` worked (it was in the old cache)
-- `/deploy-all` gave 404 (it was inside auth middleware in the old cache)
-- `/locations`, `/about`, etc. gave 404 (they are new routes not in the cache)
+```
+https://maids.ng/deploy-control-room.php?token=setup-now
+```
+
+This runs: migrations → seeder → cache clear → verification. Output shown inline.
+
+**Then upload** the frontend build:
+```bash
+npm run build              # run locally
+# Upload public/build/ to server
+rm public/deploy-control-room.php # delete after done
+```
+
+The Control Room is at `/admin/control-room` (admin login required).
 
 ---
 
-## Step 1: Clear the Route Cache via File Manager
+## Full File Upload List — Control Room
+
+If the single-script deploy fails or you prefer manual upload, here is every new file:
+
+### Database
+```
+database/migrations/2026_05_02_000001_create_agent_events_table.php
+database/migrations/2026_05_02_000002_create_human_task_queue_table.php
+database/migrations/2026_05_02_000003_create_agent_overrides_table.php
+database/migrations/2026_05_07_000001_create_agent_campaigns_social_tables.php
+database/seeders/AgentOverrideSeeder.php
+```
+
+### Models (NEW)
+```
+app/Models/AgentEvent.php
+app/Models/AgentOverride.php
+app/Models/HumanTask.php
+app/Models/AgentCampaign.php
+app/Models/AgentOutreachLog.php
+app/Models/SocialPost.php
+app/Models/SocialTheme.php
+app/Models/SocialPostMedia.php
+```
+
+### Services (NEW + UPDATED)
+```
+app/Services/AgentEventLogger.php            ← NEW
+app/Services/ActionDispatcher.php            ← NEW
+app/Services/AgentOverrideService.php        ← NEW
+app/Services/HumanExecutionService.php       ← NEW
+app/Services/ChannelSender.php               ← NEW
+app/Services/AgentService.php                ← UPDATED (LogsEvents trait + bridge)
+app/Services/WalletService.php               ← UPDATED (transferToMaid)
+app/Services/AssignmentService.php           ← UPDATED (resolveDispute)
+app/Services/Ai/OpenAiDriver.php             ← UPDATED (.env fallback)
+app/Services/Ai/OpenRouterDriver.php         ← UPDATED (.env fallback)
+```
+
+### Agents (NEW + UPDATED)
+```
+app/Agents/Concerns/LogsEvents.php           ← NEW
+app/Services/Agents/MarketerAgent.php        ← NEW
+app/Services/Agents/SeoContentAgent.php      ← NEW
+app/Services/Agents/OutreachEngine.php       ← NEW
+app/Services/Agents/ScoutAgent.php           ← UPDATED (findMatches + logging)
+app/Services/Agents/AmbassadorAgent.php      ← UPDATED (LogsEvents + model fix)
+app/Services/Agents/GatekeeperAgent.php      ← UPDATED ($agentName)
+app/Services/Agents/TreasurerAgent.php       ← UPDATED ($agentName)
+app/Services/Agents/ConciergeAgent.php       ← UPDATED ($agentName)
+app/Services/Agents/RefereeAgent.php         ← UPDATED ($agentName)
+app/Services/Agents/SentinelAgent.php        ← UPDATED ($agentName)
+```
+
+### Controllers (NEW)
+```
+app/Http/Controllers/Admin/AgentControlRoom/ControlRoomController.php
+app/Http/Controllers/Admin/AgentControlRoom/EventStreamController.php
+```
+
+### Commands & Jobs (NEW)
+```
+app/Console/Commands/EmergencyStopAllAgents.php
+app/Console/Commands/ResumeAllAgents.php
+app/Jobs/CheckAiProviderHealth.php
+```
+
+### Mail (NEW)
+```
+app/Mail/AiProviderDownAlert.php
+resources/views/emails/ai-provider-down.blade.php
+```
+
+### Routes (UPDATED)
+```
+routes/control_room.php                     ← NEW
+routes/web.php                              ← UPDATED (includes control_room.php)
+routes/console.php                          ← UPDATED (daily spend reset + AI health)
+```
+
+### Middleware & Providers (UPDATED)
+```
+app/Http/Middleware/HandleInertiaRequests.php  ← UPDATED (controlRoom shared data)
+app/Providers/AppServiceProvider.php           ← UPDATED (6 new singletons)
+```
+
+### Frontend (NEW)
+```
+resources/js/Pages/Admin/ControlRoom/Index.jsx
+resources/js/Pages/Admin/ControlRoom/Components/AgentControlBar.jsx
+resources/js/Pages/Admin/ControlRoom/Panels/LiveFeedPanel.jsx
+resources/js/Pages/Admin/ControlRoom/Panels/QueueHealthPanel.jsx
+resources/js/Pages/Admin/ControlRoom/Panels/HumanTaskPanel.jsx
+resources/js/Pages/Admin/ControlRoom/Panels/CampaignCommandPanel.jsx
+resources/js/Pages/Admin/ControlRoom/Panels/TokenCostPanel.jsx
+resources/js/Pages/Admin/ControlRoom/HumanTask/Show.jsx
+```
+
+### Frontend (UPDATED)
+```
+resources/js/Layouts/AdminLayout.jsx          ← UPDATED (Control Room nav + badge)
+```
+
+### Models (UPDATED)
+```
+app/Models/AgentChannelIdentity.php           ← UPDATED (outreachLogs relation)
+```
+
+---
+
+## Manual Deploy Steps (No Script)
+
+### 1. Clear route cache
+```
+# Via cPanel File Manager: delete everything in bootstrap/cache/ except .gitignore
+# Or visit: https://maids.ng/clear-route-cache.php?token=setup-now
+```
+
+### 2. Upload ALL files listed above
+Overwrite existing files. Create directories as needed:
+- `app/Agents/Concerns/`
+- `app/Http/Controllers/Admin/AgentControlRoom/`
+- `resources/js/Pages/Admin/ControlRoom/Components/`
+- `resources/js/Pages/Admin/ControlRoom/Panels/`
+- `resources/js/Pages/Admin/ControlRoom/HumanTask/`
+
+### 3. Run deployment
+```
+https://maids.ng/deploy-control-room.php?token=setup-now
+```
+
+### 4. Build and upload frontend
+```bash
+npm install && npm run build   # run locally
+# Upload public/build/ folder to server
+```
+
+### 5. Verify
+Visit `/admin/control-room` as admin. You should see:
+- Agent Control Bar with 10 color-coded agent pills
+- Live Agent Feed panel (empty until agents run)
+- Queue Health panel with per-agent stats
+- Human Task Queue panel
+- Token Cost Tracker
+- Campaign Command panel
+
+### 6. Clean up
+```
+rm public/deploy-control-room.php
+```
+
+---
+
+## Post-Deploy: Scheduler Setup
+
+Add these entries to your hosting cron (every 5 min recommended):
+
+```
+# Reset agent daily spend at midnight
+0 0 * * * cd /path/to/project && php artisan schedule:run
+
+# Or set up a single cron entry if using Laravel scheduler:
+* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+The scheduler handles: daily spend reset, AI provider health checks, notification processing, matching queue, salary reminders.
+
+---
+
+## One-Line SSH Deploy (if available)
+
+```bash
+git pull origin v2-refactor && composer install --no-dev -o && php artisan migrate --force && php artisan db:seed --class=AgentOverrideSeeder --force && php artisan cache:clear && php artisan config:clear && php artisan route:clear
+```
+
+---
+
+## Command Reference
+
+| Command | Purpose |
+|---------|---------|
+| `php artisan agents:emergency-stop "reason"` | Kill-switch all agents immediately |
+| `php artisan agents:resume-all` | Restore all agents to active |
+| `php artisan schedule:list` | Verify scheduler is configured |
+
+---
+
+## Troubleshooting
+
+### 404 on /admin/control-room
+- Route cache not cleared — delete `bootstrap/cache/routes-*.php`
+- Confirm `require __DIR__ . '/control_room.php';` is at the bottom of `routes/web.php`
+- Confirm `app/Http/Controllers/Admin/AgentControlRoom/ControlRoomController.php` exists
+
+### Blank page or JS error
+- Run `npm run build` locally and upload `public/build/`
+- Check browser console for missing JS chunks
+
+### SSE stream not connecting
+- Shared hosting may buffer output — add `X-Accel-Buffering: no` header (already in controller)
+- If using Nginx, add `proxy_buffering off;` to location block
+- Try accessing `/admin/control-room/stream` directly to test
+
+### "No override record" warnings in logs
+- Run the seeder: `php artisan db:seed --class=AgentOverrideSeeder --force`
+- Or visit the deploy script URL
+
+### Migration fails
+- Check `database/database.sqlite` permissions if using SQLite
+- For MySQL, verify credentials in `.env`
+
+---
+
+---
+
+## Legacy: SEO Engine Deployment
+
+*The sections below cover the SEO engine deployment. These remain unchanged.*
+
+### SEO Engine — Step 1: Clear the Route Cache via File Manager
 
 ### Method A — cPanel File Manager (Recommended)
 

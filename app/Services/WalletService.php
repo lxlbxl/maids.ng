@@ -452,4 +452,34 @@ class WalletService
         $wallet = $this->getOrCreateMaidWallet($maidId);
         return $wallet->hasSufficientBalance($amount);
     }
+
+    /**
+     * Transfer directly to maid wallet. Convenience wrapper for payout operations.
+     * If employerId is provided, transfers from employer escrow; otherwise credits directly.
+     */
+    public function transferToMaid(
+        ?int $employerId,
+        int $maidId,
+        float $amount,
+        ?int $assignmentId = null,
+        string $description = 'Payout to maid'
+    ): ?WalletTransaction {
+        if ($employerId) {
+            return $this->transferEscrowToMaid(
+                $employerId,
+                $maidId,
+                $amount,
+                $description,
+                $assignmentId
+            );
+        }
+
+        return $this->creditMaidWallet(
+            $maidId,
+            $amount,
+            $description,
+            $assignmentId,
+            'salary_payment'
+        );
+    }
 }

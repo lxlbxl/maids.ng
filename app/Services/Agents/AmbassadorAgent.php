@@ -13,9 +13,11 @@ use App\Services\Agents\Tools\FindMaidMatchesTool;
 use App\Services\Agents\Tools\GetPricingTool;
 use App\Services\Agents\Tools\ResolveIdentityTool;
 use App\Services\Agents\Tools\SendOtpTool;
+use App\Agents\Concerns\LogsEvents;
 use App\Services\KnowledgeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
 
 /**
  * Ambassador Agent — the front-facing SDR + support agent.
@@ -32,6 +34,9 @@ use Illuminate\Support\Facades\Log;
  */
 class AmbassadorAgent
 {
+    use LogsEvents;
+
+    protected string $agentName = 'ambassador';
     /** Available tools — each is a callable class with __invoke() */
     private const TOOLS = [
         'resolve_identity' => ResolveIdentityTool::class,
@@ -54,34 +59,57 @@ class AmbassadorAgent
      */
     public function handle(InboundMessage $message): array
     {
+        $stepLogs = [];
+        $step = fn($n, $msg) => $stepLogs[] = "Step {$n}: {$msg}";
+
         DB::beginTransaction();
         try {
+            $step(1, 'Begin transaction');
+
             // Step 1: Find or create the channel identity
+            $step(2, 'Resolving identity...');
             $identity = $this->resolveOrCreateIdentity($message);
+            $step(2, "Identity resolved: id={$identity->id}, tier={$identity->getTier()}");
 
             // Step 2: Find or create the conversation
+            $step(3, 'Resolving conversation...');
             $conversation = $this->getOrCreateConversation($identity, $message);
+            $step(3, "Conversation resolved: id={$conversation->id}");
 
             // Step 3: Store the user message
+            $step(4, 'Storing user message...');
             AgentMessage::create([
                 'conversation_id' => $conversation->id,
                 'role' => 'user',
                 'content' => $message->content,
                 'external_message_id' => $message->externalMessageId,
             ]);
+            $step(4, 'User message stored');
 
             // Step 4: Build the system prompt from KnowledgeService
+            $step(5, 'Building system prompt...');
             $systemPrompt = $this->knowledge->buildContext('ambassador', $identity->getTier());
+            $step(5, 'System prompt built (' . strlen($systemPrompt) . ' chars)');
 
             // Step 5: Get conversation history
+            $step(6, 'Fetching conversation history...');
             $history = $conversation->getHistory(20);
+            $step(6, 'History fetched: ' . count($history) . ' messages');
 
             // Step 6: Build tool definitions for the LLM
+            $step(7, 'Building tool definitions...');
             $toolDefinitions = $this->buildToolDefinitions();
+            $step(7, 'Tools built: ' . count($toolDefinitions) . ' available');
 
             // Step 7: Call the LLM
-            $response = $this->ai->chat([
-                'model' => 'gpt-4o',
+            $step(8, 'Calling AI provider...');
+            $model = Setting::get('ai_active_provider') === 'openrouter'
+                ? Setting::get('openrouter_model', 'google/gemini-flash-1.5')
+                : Setting::get('openai_model', 'gpt-4o-mini');
+            $step(8, "Model selected: {$model}");
+
+            $aiPayload = [
+                'model' => $model,
                 'messages' => array_merge(
                     [['role' => 'system', 'content' => $systemPrompt]],
                     $history,
@@ -89,21 +117,40 @@ class AmbassadorAgent
                 ),
                 'tools' => $toolDefinitions,
                 'tool_choice' => 'auto',
-                'temperature' => 0.7,
-            ]);
+            ];
+
+            // Reasoning models (o1, o3, o4, gpt-5) only support temperature=1
+            $modelBase = str_contains($model, '/') ? explode('/', $model)[1] : $model;
+            $isReasoning = str_starts_with($modelBase, 'o1')
+                || str_starts_with($modelBase, 'o3')
+                || str_starts_with($modelBase, 'o4')
+                || str_starts_with($modelBase, 'gpt-5');
+            if (!$isReasoning) {
+                $aiPayload['temperature'] = 0.7;
+            }
+            $step(8, "Model base: {$modelBase}, reasoning: " . ($isReasoning ? 'yes' : 'no') . ", temp: " . ($isReasoning ? 'skipped' : '0.7'));
+
+            $response = $this->ai->chat($aiPayload);
+            $step(8, 'AI response received');
 
             // Handle AI Provider errors (e.g. missing API keys)
             if (isset($response['error'])) {
+                $step(8, 'AI returned error: ' . ($response['message'] ?? 'unknown'));
                 DB::rollBack();
                 return [
-                    'content' => "AI Service Unavailable: " . $response['message'],
+                    'content' => "AI Service Unavailable: " . ($response['message'] ?? 'Unknown AI error'),
                     'conversation_id' => $conversation->id,
+                    '_step_logs' => $stepLogs,
+                    '_debug_payload_keys' => array_keys($aiPayload),
+                    '_debug_model' => $model,
+                    '_debug_model_base' => $modelBase,
                 ];
             }
 
             // Step 8: Handle tool calls if present
             $toolResults = [];
             if (!empty($response['tool_calls'])) {
+                $step(9, 'Processing ' . count($response['tool_calls']) . ' tool call(s)...');
                 foreach ($response['tool_calls'] as $toolCall) {
                     $result = $this->executeTool($toolCall, $identity, $message);
                     $toolResults[] = $result;
@@ -116,10 +163,12 @@ class AmbassadorAgent
                         'tool_call' => $toolCall,
                     ]);
                 }
+                $step(9, 'Tool calls completed');
 
                 // Get final response after tool execution
-                $response = $this->ai->chat([
-                    'model' => 'gpt-4o',
+                $step(10, 'Calling AI for final response...');
+                $finalPayload = [
+                    'model' => $model,
                     'messages' => array_merge(
                         [['role' => 'system', 'content' => $systemPrompt]],
                         $history,
@@ -131,46 +180,115 @@ class AmbassadorAgent
                             'content' => $r['result'],
                         ], $toolResults),
                     ),
-                    'temperature' => 0.7,
-                ]);
+                ];
+                if (!str_starts_with($modelBase, 'o1')
+                    && !str_starts_with($modelBase, 'o3')
+                    && !str_starts_with($modelBase, 'o4')
+                    && !str_starts_with($modelBase, 'gpt-5')) {
+                    $finalPayload['temperature'] = 0.7;
+                }
+                $response = $this->ai->chat($finalPayload);
+                $step(10, 'Final response received');
             }
 
             // Step 9: Store the assistant response
             $assistantContent = $response['content'] ?? '';
+            $step(11, 'Storing assistant response (' . strlen($assistantContent) . ' chars)...');
             AgentMessage::create([
                 'conversation_id' => $conversation->id,
                 'role' => 'assistant',
                 'content' => $assistantContent,
                 'tokens_used' => $response['usage']['total_tokens'] ?? null,
             ]);
+            $step(11, 'Assistant response stored');
 
             // Step 10: Update conversation metadata
             $conversation->update([
                 'last_message_at' => now(),
                 'status' => $conversation->status === 'open' ? 'open' : $conversation->status,
             ]);
+            $step(12, 'Conversation metadata updated');
 
             // Step 11: Update identity last seen
             $identity->update(['last_seen_at' => now()]);
+            $step(13, 'Identity last_seen updated');
 
             DB::commit();
+            $step(14, 'Transaction committed');
+
+            $this->logEvent(
+                'message.sent',
+                'info',
+                "Replied on {$message->channel} to " . ($identity->display_name ?? $identity->external_id),
+                [
+                    'channel'         => $message->channel,
+                    'user_message'    => substr($message->content, 0, 200),
+                    'reply_preview'   => substr($assistantContent, 0, 200),
+                    'tools_called'    => $toolResults ? array_column($toolResults, 'function_name') : [],
+                    'conversation_id' => $conversation->id,
+                    'identity_id'     => $identity->id,
+                    'tier'            => $identity->getTier(),
+                ],
+                [
+                    'related_user_id' => $identity->user_id,
+                    'related_model'   => 'AgentConversation',
+                    'related_id'      => $conversation->id,
+                    'tokens'          => $response['usage'] ?? null,
+                    'model'           => $model,
+                    'channel'         => $message->channel,
+                ]
+            );
 
             return [
                 'content' => $assistantContent,
                 'conversation_id' => $conversation->id,
                 'tool_calls' => $toolResults,
+                '_step_logs' => $stepLogs,
             ];
         } catch (\Throwable $e) {
             DB::rollBack();
+            $errorDetail = class_basename($e) . ': ' . $e->getMessage();
+            $errorFile = $e->getFile() . ':' . $e->getLine();
+
             Log::error('AmbassadorAgent error: ' . $e->getMessage(), [
                 'channel' => $message->channel,
                 'external_id' => $message->externalId,
                 'trace' => $e->getTraceAsString(),
+                'step_logs' => $stepLogs,
             ]);
 
+            // Always log to agent_events for visibility in Control Room
+            try {
+                $this->logEvent(
+                    'message.error',
+                    'error',
+                    'AmbassadorAgent failed at step ' . count($stepLogs) . ': ' . $e->getMessage(),
+                    [
+                        'channel' => $message->channel,
+                        'external_id' => $message->externalId,
+                        'error_class' => get_class($e),
+                        'error_file' => $errorFile,
+                        'user_message' => substr($message->content, 0, 200),
+                        'step_logs' => $stepLogs,
+                    ],
+                    [
+                        'channel' => $message->channel,
+                    ]
+                );
+            } catch (\Throwable $logEx) {
+                // If logging itself fails, just continue
+            }
+
+            $debug = config('app.debug');
+
             return [
-                'content' => "I'm sorry, I encountered an error. Let me connect you with our team.",
+                'content' => $debug
+                    ? "[Agent Error] " . $errorDetail
+                    : "I'm sorry, I encountered an error. [Ref: " . substr(md5($e->getMessage()), 0, 8) . "]",
                 'conversation_id' => $conversation->id ?? 0,
+                '_error' => $errorDetail,
+                '_file' => $errorFile,
+                '_step_logs' => $stepLogs,
             ];
         }
     }

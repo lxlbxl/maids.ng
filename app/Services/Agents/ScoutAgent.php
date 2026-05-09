@@ -8,9 +8,84 @@ use App\Services\AgentService;
 
 class ScoutAgent extends AgentService
 {
+    protected string $agentName = 'scout';
+
     public function getName(): string
     {
         return 'Scout';
+    }
+
+    /**
+     * Find and score all available maids against an employer's preferences.
+     * This is the main entry point — used by both automated jobs and human HITL execution.
+     */
+    public function findMatches(EmployerPreference $preference, int $limit = 10): array
+    {
+        if (!$this->canProceed(
+            'match.score',
+            'match_employer',
+            "Find matches for Employer #{$preference->employer_id}",
+            ['preference_id' => $preference->id, 'employer_id' => $preference->employer_id],
+            ['related_user_id' => $preference->employer_id]
+        )) {
+            return [];
+        }
+
+        $startTime = now();
+
+        $candidates = MaidProfile::where('availability_status', 'available')
+            ->whereHas('user', fn($q) => $q->where('status', 'active'))
+            ->with('user')
+            ->when($preference->state, fn($q) => $q->where('state', $preference->state))
+            ->get();
+
+        $results = [];
+        foreach ($candidates as $maid) {
+            $score = $this->scoreMatch($maid, $preference);
+            $results[] = array_merge($score, [
+                'maid_id'    => $maid->user_id,
+                'name'       => $maid->user->name ?? 'Unknown',
+                'location'   => $maid->location,
+                'skills'     => $maid->skills ?? [],
+                'rating'     => $maid->rating ?? 0,
+                'salary'     => $maid->expected_salary ?? 0,
+                'verified'   => $maid->nin_verified,
+                'profile_id' => $maid->id,
+            ]);
+        }
+
+        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
+        $results = array_slice($results, 0, $limit);
+
+        $topMessage = !empty($results)
+            ? "Matched Employer #{$preference->employer_id} — top: {$results[0]['name']} (" . round($results[0]['score']) . "%)"
+            : "No matches found for Employer #{$preference->employer_id}";
+
+        $this->logEvent(
+            'match.scored',
+            !empty($results) ? 'success' : 'warning',
+            $topMessage,
+            [
+                'employer_id'               => $preference->employer_id,
+                'preference_id'             => $preference->id,
+                'help_type'                 => $preference->help_types ?? [],
+                'location'                  => $preference->location,
+                'budget'                    => $preference->budget_max ?? 0,
+                'top_matches'               => array_map(fn($r) => [
+                    'id' => $r['maid_id'], 'name' => $r['name'], 'score' => round($r['score'])
+                ], array_slice($results, 0, 3)),
+                'total_candidates_evaluated' => count($candidates),
+                'matches_returned'           => count($results),
+            ],
+            [
+                'related_user_id' => $preference->employer_id,
+                'related_model'   => 'EmployerPreference',
+                'related_id'      => $preference->id,
+                'duration_ms'     => now()->diffInMilliseconds($startTime),
+            ]
+        );
+
+        return $results;
     }
 
     /**

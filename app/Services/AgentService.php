@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Models\AgentActivityLog;
+use App\Agents\Concerns\LogsEvents;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 abstract class AgentService
 {
+    use LogsEvents;
+
+    protected string $agentName;
     protected $aiService;
     protected KnowledgeService $knowledge;
 
@@ -33,6 +37,8 @@ abstract class AgentService
 
     /**
      * Log a decision made by the agent.
+     * Now also writes to agent_events so all agents automatically appear
+     * in the Control Room live feed without per-agent code changes.
      */
     protected function logDecision(
         string $action,
@@ -53,6 +59,43 @@ abstract class AgentService
             'reasoning' => $reasoning,
             'requires_review' => $requiresReview,
         ]);
+
+        $severity = match (true) {
+            $requiresReview                => 'pending',
+            $decision === 'auto_suspended' => 'error',
+            $decision === 'warning'        => 'warning',
+            str_contains($decision, 'rejected')  => 'error',
+            str_contains($decision, 'approved')  => 'success',
+            str_contains($decision, 'refund')    => 'warning',
+            $confidenceScore >= 80         => 'success',
+            $confidenceScore >= 50         => 'info',
+            default                        => 'warning',
+        };
+
+        $summary = $reasoning ?? "{$this->getName()} — {$action}: {$decision}";
+        if ($confidenceScore < 100) {
+            $summary .= " ({$confidenceScore}% confidence)";
+        }
+
+        $this->logEvent(
+            strtolower($this->getName()) . '.' . $action,
+            $severity,
+            $summary,
+            [
+                'action'           => $action,
+                'decision'         => $decision,
+                'confidence_score' => $confidenceScore,
+                'reasoning'        => $reasoning,
+                'subject_type'     => $subject ? get_class($subject) : null,
+                'subject_id'       => $subject ? $subject->id : null,
+            ],
+            [
+                'related_user_id' => $subject->user_id ?? $subject->employer_id ?? $subject->maid_id ?? null,
+                'related_model'   => $subject ? class_basename($subject) : null,
+                'related_id'      => $subject ? $subject->id : null,
+                'requires_approval' => $requiresReview,
+            ]
+        );
 
         if ($requiresReview) {
             Log::info("Agent [{$this->getName()}] ESCALATED action [{$action}]. Reason: {$reasoning}");

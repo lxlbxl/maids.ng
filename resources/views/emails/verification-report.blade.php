@@ -135,21 +135,35 @@
                         <td style="padding: 24px 24px 0; background-color:#FFFFFF;" class="padding-mobile">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td
-                                        style="background-color:{{ $verification->verification_status === 'success' ? '#E8F5E9' : '#FFEBEE' }}; border-radius:12px; padding:20px; text-align:center; border: 1px solid {{ $verification->verification_status === 'success' ? '#C8E6C9' : '#FFCDD2' }};">
-                                        <div style="font-size:32px; margin-bottom:8px;">
-                                            {{ $verification->verification_status === 'success' ? '✓' : '✕' }}
-                                        </div>
-                                        <h2
-                                            style="margin:0 0 4px; font-size:18px; font-weight:700; color:{{ $verification->verification_status === 'success' ? '#2E7D32' : '#C62828' }};">
-                                            {{ $verification->verification_status === 'success' ? 'Verification Successful' : 'Verification Failed' }}
-                                        </h2>
-                                        <p style="margin:0; font-size:13px; color:#636E72;">
-                                            {{ $verification->verification_status === 'success'
-    ? 'The identity details match the National Identity Database (NIMC).'
-    : 'The details could not be matched with NIMC records.'
-                                            }}
-                                        </p>
+                                @php
+                                    $isSuccess = $verification->verification_status === 'success';
+                                    $isProcessing = in_array($verification->verification_status, ['processing', 'pending']);
+                                    $isUnavailable = $verification->verification_status === 'service_unavailable';
+                                    $bgColor = $isSuccess ? '#E8F5E9' : ($isProcessing ? '#E3F2FD' : ($isUnavailable ? '#FFF8E1' : '#FFEBEE'));
+                                    $borderColor = $isSuccess ? '#C8E6C9' : ($isProcessing ? '#BBDEFB' : ($isUnavailable ? '#FFECB3' : '#FFCDD2'));
+                                    $textColor = $isSuccess ? '#2E7D32' : ($isProcessing ? '#1565C0' : ($isUnavailable ? '#F57F17' : '#C62828'));
+                                    $icon = $isSuccess ? '✓' : ($isProcessing ? '⟳' : ($isUnavailable ? '⚠' : '✕'));
+                                    $title = $isSuccess ? 'Verification Successful' : ($isProcessing ? 'Verification Pending' : ($isUnavailable ? 'Service Delay' : 'Verification Failed'));
+                                    $message = $isSuccess
+                                        ? 'The identity details match the National Identity Database (NIMC).'
+                                        : ($isProcessing
+                                            ? 'Your verification is being processed. You will receive another email with results shortly.'
+                                            : ($isUnavailable
+                                                ? 'Our verification provider is temporarily unavailable. Your request has been queued and will be processed automatically when service is restored.'
+                                                : 'The details could not be matched with NIMC records.'));
+                                @endphp
+                                <td
+                                    style="background-color:{{ $bgColor }}; border-radius:12px; padding:20px; text-align:center; border: 1px solid {{ $borderColor }};">
+                                    <div style="font-size:32px; margin-bottom:8px;">
+                                        {{ $icon }}
+                                    </div>
+                                    <h2
+                                        style="margin:0 0 4px; font-size:18px; font-weight:700; color:{{ $textColor }};">
+                                        {{ $title }}
+                                    </h2>
+                                    <p style="margin:0; font-size:13px; color:#636E72;">
+                                        {{ $message }}
+                                    </p>
                                     </td>
                                 </tr>
                             </table>

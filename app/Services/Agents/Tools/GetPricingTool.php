@@ -53,7 +53,7 @@ class GetPricingTool
     {
         return [
             'type' => 'object',
-            'properties' => [],
+            'properties' => new \stdClass(),
             'required' => [],
         ];
     }

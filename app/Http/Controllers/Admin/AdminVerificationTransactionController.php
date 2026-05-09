@@ -52,7 +52,8 @@ class AdminVerificationTransactionController extends Controller
             'pending_payment' => StandaloneVerification::where('payment_status', 'pending')->count(),
             'completed' => StandaloneVerification::where('verification_status', 'success')->count(),
             'failed' => StandaloneVerification::where('verification_status', 'failed')->count(),
-            'pending_verification' => StandaloneVerification::where('verification_status', 'pending')->count(),
+            'pending_verification' => StandaloneVerification::whereIn('verification_status', ['pending', 'processing'])->count(),
+            'service_unavailable' => StandaloneVerification::where('verification_status', 'service_unavailable')->count(),
         ];
 
         return Inertia::render('Admin/VerificationTransactions', [
@@ -96,6 +97,11 @@ class AdminVerificationTransactionController extends Controller
                 'gateway' => $verification->gateway,
                 'payment_status' => $verification->payment_status,
                 'verification_status' => $verification->verification_status,
+                'verification_status_detail' => $verification->verification_status_detail,
+                'verification_attempts' => $verification->verification_attempts,
+                'last_api_status_code' => $verification->last_api_status_code,
+                'last_api_error' => $verification->last_api_error,
+                'qoreid_product_available' => $verification->qoreid_product_available,
                 'confidence_score' => $verification->confidence_score,
                 'name_matched' => $verification->name_matched,
                 'qoreid_data' => $qoreData,
@@ -112,7 +118,7 @@ class AdminVerificationTransactionController extends Controller
     public function update($id, Request $request)
     {
         $validated = $request->validate([
-            'verification_status' => 'nullable|in:success,failed,pending',
+            'verification_status' => 'nullable|in:success,failed,pending,processing,service_unavailable',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -196,7 +202,8 @@ class AdminVerificationTransactionController extends Controller
             'pending_payment' => StandaloneVerification::where('payment_status', 'pending')->count(),
             'completed' => StandaloneVerification::where('verification_status', 'success')->count(),
             'failed' => StandaloneVerification::where('verification_status', 'failed')->count(),
-            'pending_verification' => StandaloneVerification::where('verification_status', 'pending')->count(),
+            'pending_verification' => StandaloneVerification::whereIn('verification_status', ['pending', 'processing'])->count(),
+            'service_unavailable' => StandaloneVerification::where('verification_status', 'service_unavailable')->count(),
             'today_count' => StandaloneVerification::whereDate('created_at', today())->count(),
             'today_revenue' => StandaloneVerification::whereDate('created_at', today())->where('payment_status', 'paid')->sum('amount'),
             'this_week_count' => StandaloneVerification::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),

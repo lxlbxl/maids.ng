@@ -13,8 +13,8 @@ class OpenAiDriver implements AiProvider
 
     public function __construct()
     {
-        $this->apiKey = Setting::get('openai_key');
-        $this->model = Setting::get('openai_model', 'gpt-4o-mini');
+        $this->apiKey = Setting::get('openai_key') ?: env('OPENAI_API_KEY');
+        $this->model = Setting::get('openai_model') ?: env('OPENAI_MODEL', 'gpt-4o-mini');
     }
 
     public function chat(string|array $prompt, array $options = []): array
@@ -23,10 +23,19 @@ class OpenAiDriver implements AiProvider
             return ['error' => 'OpenAI API key missing.', 'message' => 'Please configure your OpenAI key in System Settings.'];
         }
 
+        $model = $options['model'] ?? $this->model;
+
         $payload = [
-            'model' => $options['model'] ?? $this->model,
-            'temperature' => $options['temperature'] ?? 0.7,
+            'model' => $model,
         ];
+
+        // Reasoning models (o1, o3, o4, gpt-5) only support temperature=1
+        if (!str_starts_with($model, 'o1')
+            && !str_starts_with($model, 'o3')
+            && !str_starts_with($model, 'o4')
+            && !str_starts_with($model, 'gpt-5')) {
+            $payload['temperature'] = $options['temperature'] ?? 0.7;
+        }
 
         if (is_array($prompt)) {
             $payload['messages'] = $prompt;

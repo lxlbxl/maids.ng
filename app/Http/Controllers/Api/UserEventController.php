@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
  * Receives analytics events from the frontend via sendBeacon/fetch.
  * Used by OnboardingQuiz for tracking quiz lifecycle events.
  */
-class UserEventController extends Controller
+class UserEventController extends ApiController
 {
     /**
      * Record a user event from the frontend.
@@ -38,6 +38,6 @@ class UserEventController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return response()->json(['success' => true]);
+        return $this->success(null, 'Event recorded');
     }
 }

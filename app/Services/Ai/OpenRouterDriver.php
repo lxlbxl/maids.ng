@@ -13,8 +13,8 @@ class OpenRouterDriver implements AiProvider
 
     public function __construct()
     {
-        $this->apiKey = Setting::get('openrouter_key');
-        $this->model = Setting::get('openrouter_model', 'google/gemini-flash-1.5');
+        $this->apiKey = Setting::get('openrouter_key') ?: env('OPENROUTER_API_KEY');
+        $this->model = Setting::get('openrouter_model') ?: env('OPENROUTER_MODEL', 'google/gemini-flash-1.5');
     }
 
     public function chat(string|array $prompt, array $options = []): array
@@ -23,10 +23,20 @@ class OpenRouterDriver implements AiProvider
             return ['error' => 'OpenRouter API key missing.', 'message' => 'Please configure your OpenRouter key in System Settings.'];
         }
 
+        $model = $options['model'] ?? $this->model;
+
         $payload = [
-            'model' => $options['model'] ?? $this->model,
-            'temperature' => $options['temperature'] ?? 0.7,
+            'model' => $model,
         ];
+
+        // Reasoning models (o1, o3, o4, gpt-5) only support temperature=1
+        $modelBase = str_contains($model, '/') ? explode('/', $model)[1] : $model;
+        if (!str_starts_with($modelBase, 'o1')
+            && !str_starts_with($modelBase, 'o3')
+            && !str_starts_with($modelBase, 'o4')
+            && !str_starts_with($modelBase, 'gpt-5')) {
+            $payload['temperature'] = $options['temperature'] ?? 0.7;
+        }
 
         if (is_array($prompt)) {
             $payload['messages'] = $prompt;

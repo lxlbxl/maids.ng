@@ -8,6 +8,8 @@ use App\Services\AgentService;
 
 class SentinelAgent extends AgentService
 {
+    protected string $agentName = 'sentinel';
+
     public function getName(): string
     {
         return 'Sentinel';

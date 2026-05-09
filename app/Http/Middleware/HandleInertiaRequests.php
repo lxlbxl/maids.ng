@@ -51,6 +51,17 @@ class HandleInertiaRequests extends Middleware
                 'description' => 'Nigeria\'s leading platform for finding verified housekeepers, nannies, cooks, and drivers. AI-matched. NIN-verified. 10-day guarantee.',
                 'canonical'   => url()->current(),
             ],
+            'controlRoom' => function () {
+                if (!auth()->check() || !auth()->user()->hasRole('admin')) {
+                    return null;
+                }
+                return [
+                    'pendingHitl' => \App\Models\HumanTask::pending()->count(),
+                    'agentErrors' => \App\Models\AgentEvent::where('severity', 'error')
+                        ->where('created_at', '>=', now()->subHour())
+                        ->count(),
+                ];
+            },
         ];
     }
 }

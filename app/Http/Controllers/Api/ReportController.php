@@ -2,7 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Report\{
+    FinancialReportRequest,
+    UserActivityReportRequest,
+    AiMatchingReportRequest,
+    NotificationReportRequest,
+    AgentActivityLogsRequest,
+    ExportReportRequest
+};
 use App\Models\AgentActivityLog;
 use App\Models\AiMatchingQueue;
 use App\Models\EmployerWallet;
@@ -19,9 +26,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
-class ReportController extends Controller
+class ReportController extends ApiController
 {
     /**
      * Get platform overview statistics (Admin only).
@@ -31,10 +37,7 @@ class ReportController extends Controller
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
         // User statistics
@@ -65,64 +68,46 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'users' => [
-                    'total' => $totalUsers,
-                    'maids' => $totalMaids,
-                    'employers' => $totalEmployers,
-                    'verified_maids' => $verifiedMaids,
-                    'available_maids' => $availableMaids,
-                ],
-                'assignments' => [
-                    'total' => $totalAssignments,
-                    'active' => $activeAssignments,
-                    'completed' => $completedAssignments,
-                    'pending_acceptance' => $pendingAcceptance,
-                ],
-                'financial' => [
-                    'total_revenue' => (float) $totalRevenue,
-                    'total_salary_paid' => (float) $totalSalaryPaid,
-                    'total_maid_earnings_balance' => (float) $totalMaidEarnings,
-                    'total_employer_balances' => (float) $totalEmployerBalances,
-                ],
-                'recent_assignments' => $recentAssignments,
+        return $this->success([
+            'users' => [
+                'total' => $totalUsers,
+                'maids' => $totalMaids,
+                'employers' => $totalEmployers,
+                'verified_maids' => $verifiedMaids,
+                'available_maids' => $availableMaids,
             ],
-        ]);
+            'assignments' => [
+                'total' => $totalAssignments,
+                'active' => $activeAssignments,
+                'completed' => $completedAssignments,
+                'pending_acceptance' => $pendingAcceptance,
+            ],
+            'financial' => [
+                'total_revenue' => (float) $totalRevenue,
+                'total_salary_paid' => (float) $totalSalaryPaid,
+                'total_maid_earnings_balance' => (float) $totalMaidEarnings,
+                'total_employer_balances' => (float) $totalEmployerBalances,
+            ],
+            'recent_assignments' => $recentAssignments,
+        ], 'Platform overview retrieved successfully');
     }
 
     /**
      * Get financial reports (Admin only).
      */
-    public function financialReport(Request $request): JsonResponse
+    public function financialReport(FinancialReportRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'group_by' => 'nullable|string|in:day,week,month,year',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $startDate = $request->input('start_date', now()->subMonths(6)->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
-        $groupBy = $request->input('group_by', 'month');
+        $validated = $request->validated();
+ 
+        $startDate = $validated['start_date'] ?? now()->subMonths(6)->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
+        $groupBy = $validated['group_by'] ?? 'month';
 
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
@@ -144,57 +129,39 @@ class ReportController extends Controller
         $totalSalaries = $salaryQuery->sum('amount');
         $totalTransactions = WalletTransaction::whereBetween('created_at', [$start, $end])->count();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'period' => [
-                    'start' => $startDate,
-                    'end' => $endDate,
-                    'group_by' => $groupBy,
-                ],
-                'summary' => [
-                    'total_revenue' => (float) $totalRevenue,
-                    'total_salaries_paid' => (float) $totalSalaries,
-                    'total_transactions' => $totalTransactions,
-                    'net_platform_revenue' => (float) ($totalRevenue - $totalSalaries),
-                ],
-                'revenue_trend' => $revenueData,
-                'salary_trend' => $salaryData,
+        return $this->success([
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate,
+                'group_by' => $groupBy,
             ],
-        ]);
+            'summary' => [
+                'total_revenue' => (float) $totalRevenue,
+                'total_salaries_paid' => (float) $totalSalaries,
+                'total_transactions' => $totalTransactions,
+                'net_platform_revenue' => (float) ($totalRevenue - $totalSalaries),
+            ],
+            'revenue_trend' => $revenueData,
+            'salary_trend' => $salaryData,
+        ], 'Financial report retrieved successfully');
     }
 
     /**
      * Get user activity reports (Admin only).
      */
-    public function userActivityReport(Request $request): JsonResponse
+    public function userActivityReport(UserActivityReportRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'user_type' => 'nullable|string|in:maid,employer,all',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $startDate = $request->input('start_date', now()->subMonths(1)->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
-        $userType = $request->input('user_type', 'all');
+        $validated = $request->validated();
+ 
+        $startDate = $validated['start_date'] ?? now()->subMonths(1)->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
+        $userType = $validated['user_type'] ?? 'all';
 
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
@@ -234,20 +201,17 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'period' => [
-                    'start' => $startDate,
-                    'end' => $endDate,
-                ],
-                'new_registrations' => $newRegistrations,
-                'active_employers' => $activeEmployers,
-                'active_maids' => $activeMaids,
-                'top_employers' => $topEmployers,
-                'top_maids' => $topMaids,
+        return $this->success([
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate,
             ],
-        ]);
+            'new_registrations' => $newRegistrations,
+            'active_employers' => $activeEmployers,
+            'active_maids' => $activeMaids,
+            'top_employers' => $topEmployers,
+            'top_maids' => $topMaids,
+        ], 'User activity report retrieved successfully');
     }
 
     /**
@@ -258,10 +222,7 @@ class ReportController extends Controller
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
         // Status distribution
@@ -311,48 +272,30 @@ class ReportController extends Controller
             ];
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'status_distribution' => $statusDistribution,
-                'type_distribution' => $typeDistribution,
-                'average_time_to_accept_hours' => $avgTimeToAccept?->avg_hours ?? 0,
-                'completion_rate' => round($completionRate, 2),
-                'acceptance_rate' => round($acceptanceRate, 2),
-                'monthly_trend' => $monthlyTrend,
-            ],
-        ]);
+        return $this->success([
+            'status_distribution' => $statusDistribution,
+            'type_distribution' => $typeDistribution,
+            'average_time_to_accept_hours' => $avgTimeToAccept?->avg_hours ?? 0,
+            'completion_rate' => round($completionRate, 2),
+            'acceptance_rate' => round($acceptanceRate, 2),
+            'monthly_trend' => $monthlyTrend,
+        ], 'Assignment analytics retrieved successfully');
     }
 
     /**
      * Get AI matching reports (Admin only).
      */
-    public function aiMatchingReport(Request $request): JsonResponse
+    public function aiMatchingReport(AiMatchingReportRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $startDate = $request->input('start_date', now()->subMonths(1)->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $validated = $request->validated();
+        $startDate = $validated['start_date'] ?? now()->subMonths(1)->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
 
@@ -382,56 +325,38 @@ class ReportController extends Controller
             ->limit(20)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'period' => [
-                    'start' => $startDate,
-                    'end' => $endDate,
-                ],
-                'queue_statistics' => [
-                    'total_jobs' => $totalJobs,
-                    'completed' => $completedJobs,
-                    'failed' => $failedJobs,
-                    'pending' => $pendingJobs,
-                    'processing' => $processingJobs,
-                    'success_rate' => round($successRate, 2),
-                    'average_processing_minutes' => $avgProcessingTime?->avg_minutes ?? 0,
-                ],
-                'recent_jobs' => $recentJobs,
+        return $this->success([
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate,
             ],
-        ]);
+            'queue_statistics' => [
+                'total_jobs' => $totalJobs,
+                'completed' => $completedJobs,
+                'failed' => $failedJobs,
+                'pending' => $pendingJobs,
+                'processing' => $processingJobs,
+                'success_rate' => round($successRate, 2),
+                'average_processing_minutes' => $avgProcessingTime?->avg_minutes ?? 0,
+            ],
+            'recent_jobs' => $recentJobs,
+        ], 'AI matching report retrieved successfully');
     }
 
     /**
      * Get notification delivery reports (Admin only).
      */
-    public function notificationReport(Request $request): JsonResponse
+    public function notificationReport(NotificationReportRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $startDate = $request->input('start_date', now()->subDays(7)->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $validated = $request->validated();
+        $startDate = $validated['start_date'] ?? now()->subDays(7)->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
 
@@ -462,72 +387,52 @@ class ReportController extends Controller
             ->limit(50)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'period' => [
-                    'start' => $startDate,
-                    'end' => $endDate,
-                ],
-                'channel_distribution' => $channelDistribution,
-                'status_distribution' => $statusDistribution,
-                'delivery_rate' => round($deliveryRate, 2),
-                'total_notifications' => $totalNotifications,
-                'recent_notifications' => $recentNotifications,
+        return $this->success([
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate,
             ],
-        ]);
+            'channel_distribution' => $channelDistribution,
+            'status_distribution' => $statusDistribution,
+            'delivery_rate' => round($deliveryRate, 2),
+            'total_notifications' => $totalNotifications,
+            'recent_notifications' => $recentNotifications,
+        ], 'Notification report retrieved successfully');
     }
 
     /**
      * Get agent activity logs (Admin only).
      */
-    public function agentActivityLogs(Request $request): JsonResponse
+    public function agentActivityLogs(AgentActivityLogsRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'agent_type' => 'nullable|string|in:ai_matching,assignment_manager,salary_manager,notification_manager,all',
-            'action' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'per_page' => 'nullable|integer|min:1|max:100',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
+        $validated = $request->validated();
+ 
         $query = AgentActivityLog::query();
-
-        if ($request->filled('agent_type') && $request->agent_type !== 'all') {
-            $query->where('agent_type', $request->agent_type);
+ 
+        if (!empty($validated['agent_type']) && $validated['agent_type'] !== 'all') {
+            $query->where('agent_type', $validated['agent_type']);
         }
-
-        if ($request->filled('action')) {
-            $query->where('action', 'like', '%' . $request->action . '%');
+ 
+        if (!empty($validated['action'])) {
+            $query->where('action', 'like', '%' . $validated['action'] . '%');
         }
-
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
+ 
+        if (!empty($validated['start_date'])) {
+            $query->whereDate('created_at', '>=', $validated['start_date']);
         }
-
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
+ 
+        if (!empty($validated['end_date'])) {
+            $query->whereDate('created_at', '<=', $validated['end_date']);
         }
-
+ 
         $logs = $query->orderBy('created_at', 'desc')
-            ->paginate($request->input('per_page', 25));
+            ->paginate($validated['per_page'] ?? 25);
 
         // Summary statistics
         $summary = [
@@ -538,52 +443,34 @@ class ReportController extends Controller
             'notification_logs' => AgentActivityLog::where('agent_type', 'notification_manager')->count(),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'logs' => $logs,
-            ],
-        ]);
+        return $this->paginated($logs, [
+            'summary' => $summary,
+        ], 'Agent activity logs retrieved successfully');
     }
 
     /**
      * Export report data (Admin only).
      */
-    public function export(Request $request): JsonResponse
+    public function export(ExportReportRequest $request): JsonResponse
     {
         $user = Auth::user();
 
         if (!$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only admins can access this endpoint.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Only admins can access this endpoint.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'report_type' => 'required|string|in:assignments,financial,users,notifications,ai_matching',
-            'format' => 'required|string|in:csv,json',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $startDate = $request->input('start_date', now()->subMonths(1)->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        $validated = $request->validated();
+ 
+        $startDate = $validated['start_date'] ?? now()->subMonths(1)->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
+        $reportType = $validated['report_type'];
+        $format = $validated['format'];
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
 
         $data = [];
 
-        switch ($request->report_type) {
+        switch ($reportType) {
             case 'assignments':
                 $data = MaidAssignment::with(['employer:id,name,email', 'maid:id,name,email'])
                     ->whereBetween('created_at', [$start, $end])
@@ -615,19 +502,16 @@ class ReportController extends Controller
                 break;
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'report_type' => $request->report_type,
-                'format' => $request->format,
-                'period' => [
-                    'start' => $startDate,
-                    'end' => $endDate,
-                ],
-                'record_count' => $data->count(),
-                'records' => $data,
+        return $this->success([
+            'report_type' => $reportType,
+            'format' => $format,
+            'period' => [
+                'start' => $startDate,
+                'end' => $endDate,
             ],
-        ]);
+            'record_count' => $data->count(),
+            'records' => $data,
+        ], 'Report data exported successfully');
     }
 
     /**

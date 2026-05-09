@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Setting;
 use App\Services\Agents\GatekeeperAgent;
 use App\Services\PaymentService;
+use App\Jobs\ProcessStandaloneVerification;
 use App\Mail\VerificationReportMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -248,46 +249,14 @@ class StandaloneVerificationController extends Controller
         // Mark as paid
         $verification->update([
             'payment_status' => 'paid',
+            'verification_status' => 'processing',
+            'verification_status_detail' => 'processing',
         ]);
 
-        // Trigger verification via GatekeeperAgent
-        $gatekeeper = new GatekeeperAgent();
+        // Dispatch async verification job (processes in background, auto-retries on failure)
+        ProcessStandaloneVerification::dispatch($verification->id);
 
-        // Parse optional fields for QoreID
-        $optionalFields = [];
-        if ($verification->optional_fields) {
-            $decoded = json_decode($verification->optional_fields, true);
-            if (is_array($decoded)) {
-                $optionalFields = $decoded;
-            }
-        }
-
-        $result = $gatekeeper->verifyNinStandalone(
-            $verification->maid_nin,
-            $verification->maid_first_name,
-            $verification->maid_last_name,
-            $optionalFields
-        );
-
-        $verification->update([
-            'verification_status' => $result['success'] ? 'success' : 'failed',
-            'verification_data' => $result['data'] ?? null,
-            'confidence_score' => $result['confidence'] ?? 0,
-            'name_matched' => $result['name_match'] ?? false,
-            'external_reference' => ($result['data']['qoreid_data']['id'] ?? null) ?
-                'QOREID-' . $result['data']['qoreid_data']['id'] : null,
-        ]);
-
-        // Send Email with report — use stored email, fallback to requester relationship
-        $emailToSend = $verification->requester_email ?? ($verification->requester?->email);
-        if ($emailToSend) {
-            try {
-                Mail::to($emailToSend)->send(new VerificationReportMail($verification));
-            } catch (\Exception $e) {
-                Log::error("Failed to send verification report email: " . $e->getMessage());
-            }
-        }
-
+        // Redirect immediately — user sees "processing" state on report page
         return redirect()->route('standalone-verification.report', $reference);
     }
 
@@ -302,7 +271,26 @@ class StandaloneVerificationController extends Controller
         }
 
         return Inertia::render('VerificationReport', [
-            'verification' => $verification
+            'verification' => $verification,
+            'showProcessing' => in_array($verification->verification_status, ['pending', 'processing']),
+        ]);
+    }
+
+    /**
+     * AJAX endpoint: poll verification status after payment.
+     */
+    public function status($reference)
+    {
+        $verification = StandaloneVerification::where('payment_reference', $reference)->firstOrFail();
+
+        return response()->json([
+            'verification_status' => $verification->verification_status,
+            'verification_status_detail' => $verification->verification_status_detail,
+            'confidence_score' => $verification->confidence_score,
+            'name_matched' => $verification->name_matched,
+            'last_api_error' => $verification->last_api_error,
+            'last_api_status_code' => $verification->last_api_status_code,
+            'verification_attempts' => $verification->verification_attempts,
         ]);
     }
 }

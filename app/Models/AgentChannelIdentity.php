@@ -54,6 +54,11 @@ class AgentChannelIdentity extends Model
             ->latestOfMany();
     }
 
+    public function outreachLogs(): HasMany
+    {
+        return $this->hasMany(AgentOutreachLog::class, 'channel_identity_id');
+    }
+
     public function isOtpValid(string $otp): bool
     {
         return $this->otp === $otp

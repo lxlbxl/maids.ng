@@ -891,5 +891,35 @@ class AdminSettingsController extends Controller
                 'message' => 'Could not fetch live models. Showing defaults.',
             ]);
         }
+    /**
+     * Generate a new API token for the current admin.
+     */
+    public function generateApiToken(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $token = $user->createToken($request->name)->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'message' => 'New API token generated successfully. Make sure to copy it now, as it won\'t be shown again.'
+        ]);
+    }
+
+    /**
+     * Revoke all API tokens for the current admin.
+     */
+    public function revokeApiTokens(Request $request): JsonResponse
+    {
+        auth()->user()->tokens()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All API tokens have been revoked.'
+        ]);
     }
 }

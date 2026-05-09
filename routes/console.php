@@ -46,3 +46,27 @@ Schedule::job(new \App\Jobs\RefreshSeoContent)
     ->monthly()
     ->name('refresh-seo-content')
     ->withoutOverlapping();
+
+// ============================================
+// CONTROL ROOM SCHEDULES
+// ============================================
+
+// Reset agent daily spend counter at midnight
+Schedule::call(function () {
+    \App\Models\AgentOverride::query()->update([
+        'current_daily_spend_usd' => 0,
+        'spend_reset_at'          => now(),
+    ]);
+    \Illuminate\Support\Facades\Cache::flush();
+})->dailyAt('00:00')->name('reset-agent-daily-spend');
+
+// Check AI provider health every 5 minutes
+Schedule::job(new \App\Jobs\CheckAiProviderHealth)
+    ->everyFiveMinutes()
+    ->name('check-ai-health');
+
+// Check QoreID NIN Premium availability every 30 minutes
+Schedule::command('qoreid:health')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->name('check-qoreid-health');

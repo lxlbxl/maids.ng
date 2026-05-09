@@ -8,6 +8,8 @@ use App\Services\AgentService;
 
 class RefereeAgent extends AgentService
 {
+    protected string $agentName = 'referee';
+
     public function getName(): string
     {
         return 'Referee';

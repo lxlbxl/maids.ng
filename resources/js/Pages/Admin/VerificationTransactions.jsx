@@ -168,6 +168,8 @@ export default function VerificationTransactions({ auth, transactions, stats, fi
                                     <td className="px-6 py-4 text-center">
                                         <span className={`px-2 py-1 rounded text-[9px] font-mono uppercase tracking-widest ${tx.verification_status === 'success' ? 'bg-success/10 text-success' :
                                                 tx.verification_status === 'failed' ? 'bg-danger/10 text-danger' :
+                                                tx.verification_status === 'processing' ? 'bg-blue-500/10 text-blue-400' :
+                                                tx.verification_status === 'service_unavailable' ? 'bg-yellow-500/10 text-yellow-400' :
                                                     'bg-copper/10 text-copper'
                                             }`}>
                                             {tx.verification_status || 'pending'}

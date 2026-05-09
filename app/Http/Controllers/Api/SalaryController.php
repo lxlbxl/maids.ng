@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\SalaryPaymentProcessed;
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Salary\ProcessSalaryRequest;
 use App\Models\SalarySchedule;
 use App\Services\SalaryManagementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
-class SalaryController extends Controller
+class SalaryController extends ApiController
 {
     protected SalaryManagementService $salaryService;
 
@@ -55,10 +55,7 @@ class SalaryController extends Controller
             ->orderBy('next_salary_due_date', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $schedules,
-        ]);
+        return $this->paginated($schedules, 'Salary schedules retrieved successfully');
     }
 
     /**
@@ -72,71 +69,42 @@ class SalaryController extends Controller
 
         // Check authorization
         if ($user->role === 'employer' && $schedule->assignment->employer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden();
         }
 
         if ($user->role === 'maid' && $schedule->assignment->maid_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden();
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $schedule,
-        ]);
+        return $this->success($schedule, 'Salary schedule retrieved successfully');
     }
 
     /**
      * Process salary payment (employer only).
      */
-    public function pay(Request $request, int $id): JsonResponse
+    public function pay(ProcessSalaryRequest $request, int $id): JsonResponse
     {
         $user = Auth::user();
+        $validated = $request->validated();
 
         if ($user->role !== 'employer') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only employers can process salary payments.',
-            ], 403);
+            return $this->forbidden('Only employers can process salary payments.');
         }
 
         $schedule = SalarySchedule::with('assignment')->findOrFail($id);
 
         if ($schedule->assignment->employer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden();
         }
 
         if ($schedule->payment_status === 'paid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Salary has already been paid for this period.',
-            ], 422);
+            return $this->error('Salary has already been paid for this period.', Response::HTTP_UNPROCESSABLE_ENTITY, null, 'ALREADY_PAID');
         }
 
-        $validator = Validator::make($request->all(), [
-            'amount' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $amount = $request->amount ?? $schedule->monthly_salary;
+        $amount = $validated['amount'] ?? $schedule->monthly_salary;
         $description = 'Salary payment for period ending ' . ($schedule->current_period_end?->format('Y-m-d') ?? now()->format('Y-m-d'));
-        if ($request->notes) {
-            $description .= ' - ' . $request->notes;
+        if (!empty($validated['notes'])) {
+            $description .= ' - ' . $validated['notes'];
         }
 
         $result = $this->salaryService->processSalaryPayment(
@@ -149,18 +117,10 @@ class SalaryController extends Controller
             // Fire event
             SalaryPaymentProcessed::dispatch($schedule, $result);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Salary payment processed successfully.',
-                'data' => $result,
-            ]);
+            return $this->success($result, 'Salary payment processed successfully.');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to process salary payment.',
-            'error' => 'Insufficient balance or processing error',
-        ], 400);
+        return $this->error('Failed to process salary payment.', Response::HTTP_BAD_REQUEST, null, 'PAYMENT_FAILED');
     }
 
     /**
@@ -171,10 +131,7 @@ class SalaryController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'employer') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only employers can view upcoming payments.',
-            ], 403);
+            return $this->forbidden('Only employers can view upcoming payments.');
         }
 
         $upcoming = SalarySchedule::whereHas('assignment', function ($q) use ($user) {
@@ -187,10 +144,7 @@ class SalaryController extends Controller
             ->orderBy('next_salary_due_date')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $upcoming,
-        ]);
+        return $this->success($upcoming, 'Upcoming salary payments retrieved successfully');
     }
 
     /**
@@ -201,10 +155,7 @@ class SalaryController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'maid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only maids can view salary history.',
-            ], 403);
+            return $this->forbidden('Only maids can view salary history.');
         }
 
         $history = SalarySchedule::whereHas('assignment', function ($q) use ($user) {
@@ -221,14 +172,17 @@ class SalaryController extends Controller
             ->where('payment_status', 'paid')
             ->sum('monthly_salary');
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'history' => $history,
-                'total_earned' => $totalEarned,
-                'total_earned_formatted' => '₦' . number_format($totalEarned, 2),
+        return $this->success([
+            'history' => $history->items(),
+            'total_earned' => $totalEarned,
+            'total_earned_formatted' => '₦' . number_format($totalEarned, 2),
+            'pagination' => [
+                'current_page' => $history->currentPage(),
+                'last_page' => $history->lastPage(),
+                'per_page' => $history->perPage(),
+                'total' => $history->total(),
             ],
-        ]);
+        ], 'Salary history retrieved successfully');
     }
 
     /**
@@ -239,18 +193,12 @@ class SalaryController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $overdue = $this->salaryService->getOverdueSalaries();
 
-        return response()->json([
-            'success' => true,
-            'data' => $overdue,
-        ]);
+        return $this->success($overdue, 'Overdue salaries retrieved successfully');
     }
 
     /**
@@ -261,10 +209,7 @@ class SalaryController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $stats = [
@@ -280,9 +225,6 @@ class SalaryController extends Controller
             'overdue_amount' => SalarySchedule::where('payment_status', 'overdue')->sum('monthly_salary'),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
+        return $this->success($stats, 'Salary statistics retrieved successfully');
     }
 }

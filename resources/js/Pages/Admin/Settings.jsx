@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 
 export default function Settings({ auth, settings, aiManifest }) {
     const [activeTab, setActiveTab] = useState('ai');
@@ -10,6 +11,7 @@ export default function Settings({ auth, settings, aiManifest }) {
     const [fetchError, setFetchError] = useState(null);
     const [fetchSuccess, setFetchSuccess] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [testResults, setTestResults] = useState({});
     const dropdownRef = useRef(null);
     const initialFetchDone = useRef({});
 
@@ -157,6 +159,26 @@ export default function Settings({ auth, settings, aiManifest }) {
         fetchModels(provider, '', true);
     };
 
+    const testConnection = async (provider) => {
+        setTestResults(prev => ({ ...prev, [provider]: { loading: true } }));
+        try {
+            const endpoint = provider === 'openai'
+                ? route('admin.settings.test.openai')
+                : route('admin.settings.test.openrouter');
+            const res = await axios.post(endpoint);
+            setTestResults(prev => ({ ...prev, [provider]: { loading: false, ...res.data } }));
+        } catch (e) {
+            setTestResults(prev => ({
+                ...prev,
+                [provider]: {
+                    loading: false,
+                    success: false,
+                    message: e.response?.data?.message || e.message,
+                }
+            }));
+        }
+    };
+
     const currentProvider = data.settings.ai_active_provider?.value || 'openai';
     const allModels = fetchedModels[currentProvider] || aiManifest?.[currentProvider]?.models || {};
     const modelKey = `${currentProvider}_model`;
@@ -191,6 +213,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                         { id: 'verification', name: 'Verification', icon: '✓' },
                         { id: 'sms', name: 'SMS Gateway', icon: '💬' },
                         { id: 'email', name: 'Email Settings', icon: '✉️' },
+                        { id: 'api', name: 'API & Security', icon: '🔑' },
                         { id: 'deployment', name: 'Deployment & Cron', icon: '🚀' },
                     ].map(tab => (
                         <button
@@ -345,7 +368,17 @@ export default function Settings({ auth, settings, aiManifest }) {
 
                                         <div className="grid grid-cols-1 gap-6">
                                             <div className="space-y-2">
-                                                <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">OpenAI API Key</p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">OpenAI API Key</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => testConnection('openai')}
+                                                        disabled={testResults.openai?.loading}
+                                                        className="text-[10px] font-mono uppercase tracking-wider text-teal/70 hover:text-teal transition-colors disabled:opacity-40"
+                                                    >
+                                                        {testResults.openai?.loading ? 'Testing...' : 'Test Connection'}
+                                                    </button>
+                                                </div>
                                                 <input
                                                     type="password"
                                                     value={data.settings.openai_key?.value || ''}
@@ -353,9 +386,24 @@ export default function Settings({ auth, settings, aiManifest }) {
                                                     placeholder="sk-..."
                                                     className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                                 />
+                                                {testResults.openai && !testResults.openai.loading && (
+                                                    <p className={`text-xs ${testResults.openai.success ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {testResults.openai.success ? '✓' : '✗'} {testResults.openai.message}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">OpenRouter API Key</p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">OpenRouter API Key</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => testConnection('openrouter')}
+                                                        disabled={testResults.openrouter?.loading}
+                                                        className="text-[10px] font-mono uppercase tracking-wider text-teal/70 hover:text-teal transition-colors disabled:opacity-40"
+                                                    >
+                                                        {testResults.openrouter?.loading ? 'Testing...' : 'Test Connection'}
+                                                    </button>
+                                                </div>
                                                 <input
                                                     type="password"
                                                     value={data.settings.openrouter_key?.value || ''}
@@ -363,6 +411,11 @@ export default function Settings({ auth, settings, aiManifest }) {
                                                     placeholder="sk-or-v1-..."
                                                     className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                                 />
+                                                {testResults.openrouter && !testResults.openrouter.loading && (
+                                                    <p className={`text-xs ${testResults.openrouter.success ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {testResults.openrouter.success ? '✓' : '✗'} {testResults.openrouter.message}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -737,7 +790,91 @@ export default function Settings({ auth, settings, aiManifest }) {
                             </div>
                         )}
 
-                        {activeTab === 'email' && (
+                        {activeTab === 'api' && (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div>
+                                    <h2 className="text-2xl font-display mb-2 text-teal">API & Developer Access</h2>
+                                    <p className="text-white/40 text-xs italic">Generate personal access tokens and view system documentation.</p>
+                                </div>
+
+                                <div className="p-8 bg-teal/5 border border-teal/10 rounded-brand-xl flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <h3 className="font-display text-lg text-white/90">API Documentation</h3>
+                                        <p className="text-white/40 text-xs">View all available endpoints, parameters, and request examples.</p>
+                                    </div>
+                                    <a 
+                                        href={route('admin.api_docs')} 
+                                        className="px-6 py-3 bg-teal text-black font-mono text-[10px] uppercase tracking-widest font-bold rounded-brand-lg hover:bg-teal-light transition-all shadow-lg shadow-teal/20"
+                                    >
+                                        Open API Docs
+                                    </a>
+                                </div>
+
+                                <div className="pt-8 border-t border-white/5 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-display text-lg text-white/80">Bearer Token Generation</h3>
+                                        <span className="text-[10px] font-mono text-amber-400 uppercase bg-amber-400/10 px-2 py-0.5 rounded tracking-widest">Master Key</span>
+                                    </div>
+                                    
+                                    <p className="text-white/40 text-sm leading-relaxed">
+                                        Generate a permanent API token for integration with external agents or custom tools. 
+                                        <span className="text-amber-400/80 font-bold"> Warning:</span> Keep these keys secure. They grant full administrative access to the platform's standardized API endpoints.
+                                    </p>
+
+                                    <div className="flex items-end gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Token Label (e.g., 'Agent Scout')</p>
+                                            <input 
+                                                type="text"
+                                                id="token-name"
+                                                placeholder="Enter a descriptive name..."
+                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={async () => {
+                                                const name = document.getElementById('token-name').value;
+                                                if (!name) return alert('Please enter a label for the token.');
+                                                
+                                                try {
+                                                    const res = await axios.post(route('admin.settings.api-token'), { name });
+                                                    if (res.data.success) {
+                                                        const token = res.data.token;
+                                                        // Using a simple prompt to show the token since it's a one-time view
+                                                        window.prompt("YOUR NEW API TOKEN (Copy this now!):", token);
+                                                        document.getElementById('token-name').value = '';
+                                                    }
+                                                } catch (err) {
+                                                    alert('Failed to generate token. ' + (err.response?.data?.message || err.message));
+                                                }
+                                            }}
+                                            className="h-[58px] px-8 bg-white/5 border border-white/10 rounded-brand-lg text-white font-mono text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                                        >
+                                            Generate Key
+                                        </button>
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <button 
+                                            type="button"
+                                            onClick={async () => {
+                                                if (!confirm('Are you sure? This will immediately invalidate ALL your existing API tokens.')) return;
+                                                try {
+                                                    const res = await axios.post(route('admin.settings.revoke-tokens'));
+                                                    if (res.data.success) alert(res.data.message);
+                                                } catch (err) {
+                                                    alert('Failed to revoke tokens.');
+                                                }
+                                            }}
+                                            className="text-[10px] font-mono uppercase tracking-widest text-red-400/60 hover:text-red-400 transition-colors"
+                                        >
+                                            Revoke All My Active Tokens
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                             <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div>
                                     <h2 className="text-2xl font-display mb-2 text-teal">Email Configuration</h2>

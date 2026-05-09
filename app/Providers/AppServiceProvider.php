@@ -12,6 +12,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Services\KnowledgeService::class);
+        $this->app->singleton(\App\Services\AgentEventLogger::class);
+        $this->app->singleton(\App\Services\ActionDispatcher::class);
+        $this->app->singleton(\App\Services\AgentOverrideService::class);
+        $this->app->singleton(\App\Services\HumanExecutionService::class);
+        $this->app->singleton(\App\Services\ChannelSender::class);
     }
 
     /**

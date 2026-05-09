@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\Api\Verification\{VerifyNinRequest, BatchVerifyNinRequest};
 use App\Models\StandaloneVerification;
 use App\Models\User;
 use App\Services\Agents\GatekeeperAgent;
 use App\Services\QoreIDService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class VerificationController extends \App\Http\Controllers\Controller
+class VerificationController extends ApiController
 {
     protected QoreIDService $qoreid;
     protected GatekeeperAgent $gatekeeper;
@@ -52,19 +55,10 @@ class VerificationController extends \App\Http\Controllers\Controller
      *   "errors": { ... }
      * }
      */
-    public function verifyNin(Request $request)
+    public function verifyNin(VerifyNinRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'nin' => 'required|string|size:11|regex:/^[0-9]{11}$/',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'dob' => 'nullable|date|before:today',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'gender' => 'nullable|in:male,female,m,f',
-        ]);
-
+        $validated = $request->validated();
+ 
         // Build optional fields
         $optionalFields = [];
         if (!empty($validated['middle_name'])) {
@@ -93,58 +87,48 @@ class VerificationController extends \App\Http\Controllers\Controller
         );
 
         if (!$result['success']) {
-            return response()->json([
-                'success' => false,
-                'message' => $result['error'] ?? 'Verification failed.',
-                'status_code' => $result['status_code'] ?? 500,
-            ], 422);
+            return $this->error($result['error'] ?? 'Verification failed.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'status' => $result['data']['status'] ?? 'verified',
-                'confidence' => $result['confidence'] ?? 0,
-                'name_match' => $result['name_match'] ?? false,
-                'name_details' => $result['data']['name_details'] ?? [],
-                'verified_at' => $result['data']['verified_at'] ?? now()->toIso8601String(),
-                'qoreid_data' => $result['data']['qoreid_data'] ?? null,
-                'normalized_data' => $result['data']['data'] ?? null,
-            ],
-        ]);
+        return $this->success([
+            'status' => $result['data']['status'] ?? 'verified',
+            'confidence' => $result['confidence'] ?? 0,
+            'name_match' => $result['name_match'] ?? false,
+            'name_details' => $result['data']['name_details'] ?? [],
+            'verified_at' => $result['data']['verified_at'] ?? now()->toIso8601String(),
+            'qoreid_data' => $result['data']['qoreid_data'] ?? null,
+            'normalized_data' => $result['data']['data'] ?? null,
+        ], 'NIN verification successful');
     }
 
     /**
      * GET /api/v1/verification/nin/{reference}
      * Get verification status by reference.
      */
-    public function getStatus(string $reference)
+    public function getStatus(string $reference): JsonResponse
     {
         $verification = StandaloneVerification::where('payment_reference', $reference)
             ->with('requester')
             ->firstOrFail();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $verification->id,
-                'reference' => $verification->payment_reference,
-                'nin' => $verification->maid_nin,
-                'first_name' => $verification->maid_first_name,
-                'last_name' => $verification->maid_last_name,
-                'payment_status' => $verification->payment_status,
-                'verification_status' => $verification->verification_status,
-                'confidence_score' => $verification->confidence_score,
-                'name_matched' => $verification->name_matched,
-                'external_reference' => $verification->external_reference,
-                'verification_data' => $verification->verification_data,
-                'qoreid_data' => $verification->qore_id_data,
-                'normalized_data' => $verification->normalized_data,
-                'is_verified' => $verification->is_verified,
-                'created_at' => $verification->created_at->toIso8601String(),
-                'updated_at' => $verification->updated_at->toIso8601String(),
-            ],
-        ]);
+ 
+        return $this->success([
+            'id' => $verification->id,
+            'reference' => $verification->payment_reference,
+            'nin' => $verification->maid_nin,
+            'first_name' => $verification->maid_first_name,
+            'last_name' => $verification->maid_last_name,
+            'payment_status' => $verification->payment_status,
+            'verification_status' => $verification->verification_status,
+            'confidence_score' => $verification->confidence_score,
+            'name_matched' => $verification->name_matched,
+            'external_reference' => $verification->external_reference,
+            'verification_data' => $verification->verification_data,
+            'qoreid_data' => $verification->qore_id_data,
+            'normalized_data' => $verification->normalized_data,
+            'is_verified' => $verification->is_verified,
+            'created_at' => $verification->created_at->toIso8601String(),
+            'updated_at' => $verification->updated_at->toIso8601String(),
+        ], 'Verification status retrieved successfully');
     }
 
     /**
@@ -161,19 +145,9 @@ class VerificationController extends \App\Http\Controllers\Controller
      * @bodyParam verifications.*.email string optional
      * @bodyParam verifications.*.gender string optional
      */
-    public function batchVerify(Request $request)
+    public function batchVerify(BatchVerifyNinRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'verifications' => 'required|array|max:10',
-            'verifications.*.nin' => 'required|string|size:11|regex:/^[0-9]{11}$/',
-            'verifications.*.first_name' => 'required|string|max:255',
-            'verifications.*.last_name' => 'required|string|max:255',
-            'verifications.*.middle_name' => 'nullable|string|max:255',
-            'verifications.*.dob' => 'nullable|date|before:today',
-            'verifications.*.phone' => 'nullable|string|max:20',
-            'verifications.*.email' => 'nullable|email|max:255',
-            'verifications.*.gender' => 'nullable|in:male,female,m,f',
-        ]);
+        $validated = $request->validated();
 
         $results = [];
 
@@ -214,14 +188,11 @@ class VerificationController extends \App\Http\Controllers\Controller
             ];
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total' => count($results),
-                'verified' => count(array_filter($results, fn($r) => $r['success'])),
-                'failed' => count(array_filter($results, fn($r) => !$r['success'])),
-                'results' => $results,
-            ],
-        ]);
+        return $this->success([
+            'total' => count($results),
+            'verified' => count(array_filter($results, fn($r) => $r['success'])),
+            'failed' => count(array_filter($results, fn($r) => !$r['success'])),
+            'results' => $results,
+        ], 'Batch verification processed');
     }
 }

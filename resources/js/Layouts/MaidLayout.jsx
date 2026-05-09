@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import Toast from '@/Components/Toast';
 import AmbassadorChatWidget from '@/Components/AmbassadorChatWidget';
 import BottomNavBar from '@/Components/BottomNavBar';
@@ -21,7 +21,7 @@ export default function MaidLayout({ children, user }) {
     const navItems = [...primaryNavItems, ...secondaryNavItems];
 
     const handleLogout = () => {
-        document.getElementById('logout-form')?.submit();
+        router.post('/logout', {}, { preserveScroll: false });
     };
 
     return (
@@ -109,10 +109,6 @@ export default function MaidLayout({ children, user }) {
                 onLogout={handleLogout}
             />
 
-            {/* Hidden logout form for mobile */}
-            <form id="logout-form" action="/logout" method="POST" className="hidden">
-                <button type="submit">Logout</button>
-            </form>
         </div>
     );
 }

@@ -1,9 +1,11 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import Toast from '@/Components/Toast';
 import BottomNavBar from '@/Components/BottomNavBar';
 
 export default function AdminLayout({ children }) {
-    const { auth, agentHealth = {} } = usePage().props;
+    const { auth, agentHealth = {}, controlRoom } = usePage().props;
+
+    const pendingHitlCount = controlRoom?.pendingHitl ?? 0;
 
     // Primary nav items for bottom bar (most important)
     const primaryNavItems = [
@@ -16,6 +18,7 @@ export default function AdminLayout({ children }) {
     // Secondary nav items (shown in "More" menu)
     const secondaryNavItems = [
         { name: 'Agent Control', href: '/admin/agents', icon: '🤖' },
+        { name: 'Control Room', href: '/admin/control-room', icon: '🎛️', badge: pendingHitlCount },
         { name: 'Agent Activity', href: '/admin/audit', icon: '📋' },
         { name: 'Escalations', href: '/admin/escalations', icon: '⚖️' },
         { name: 'Verification Hub', href: '/admin/verifications', icon: '🛡️' },
@@ -26,6 +29,7 @@ export default function AdminLayout({ children }) {
         { name: 'Knowledge Base', href: '/admin/agent/knowledge', icon: '📚' },
         { name: 'Salary Ops', href: '/admin/salary', icon: '💸' },
         { name: 'Financial Control', href: '/admin/payments', icon: '💰' },
+        { name: 'API Documentation', href: '/admin/api-docs', icon: '🔌' },
         { name: 'System Settings', href: '/admin/settings', icon: '⚙️' },
     ];
 
@@ -39,7 +43,7 @@ export default function AdminLayout({ children }) {
     ];
 
     const handleLogout = () => {
-        document.getElementById('logout-form')?.submit();
+        router.post('/logout', {}, { preserveScroll: false });
     };
 
     return (
@@ -95,6 +99,11 @@ export default function AdminLayout({ children }) {
                                 >
                                     <span className={`text-lg transition-transform group-hover:scale-110 ${isActive ? 'grayscale-0' : 'grayscale'}`}>{item.icon}</span>
                                     <span className="tracking-tight font-medium">{item.name}</span>
+                                    {item.badge > 0 && (
+                                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                            {item.badge > 99 ? '99+' : item.badge}
+                                        </span>
+                                    )}
                                 </Link>
                             );
                         })}
@@ -148,10 +157,6 @@ export default function AdminLayout({ children }) {
                 onLogout={handleLogout}
             />
 
-            {/* Hidden logout form for mobile */}
-            <form id="logout-form" action="/logout" method="POST" className="hidden">
-                <button type="submit">Logout</button>
-            </form>
         </div>
     );
 }

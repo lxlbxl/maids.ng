@@ -35,6 +35,8 @@ export default function VerificationTransactionDetail({ auth, verification }) {
                         </span>
                         <span className={`px-4 py-1.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest border ${verification?.verification_status === 'success' ? 'bg-success/10 text-success border-success/20' :
                                 verification?.verification_status === 'failed' ? 'bg-danger/10 text-danger border-danger/20' :
+                                verification?.verification_status === 'processing' ? 'bg-blue-500/10 text-blue-400 border-blue-400/20' :
+                                verification?.verification_status === 'service_unavailable' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-400/20' :
                                     'bg-copper/10 text-copper border-copper/20'
                             }`}>
                             Verification: {verification?.verification_status || 'pending'}
@@ -58,6 +60,13 @@ export default function VerificationTransactionDetail({ auth, verification }) {
                     className="bg-danger/20 text-danger border border-danger/30 px-6 py-2.5 rounded-brand-md text-[10px] font-mono uppercase tracking-widest font-bold hover:bg-danger hover:text-white transition-all"
                 >
                     Mark Failed
+                </button>
+                <button
+                    onClick={() => handleStatusUpdate('service_unavailable')}
+                    disabled={processing}
+                    className="bg-yellow-500/20 text-yellow-400 border border-yellow-400/30 px-6 py-2.5 rounded-brand-md text-[10px] font-mono uppercase tracking-widest font-bold hover:bg-yellow-500 hover:text-espresso transition-all"
+                >
+                    Mark Unavailable
                 </button>
                 {verification?.payment_reference && (
                     <a
@@ -164,6 +173,42 @@ export default function VerificationTransactionDetail({ auth, verification }) {
                     </div>
                 </div>
             </div>
+
+            {/* API Diagnostics */}
+            {(verification?.last_api_status_code || verification?.last_api_error || verification?.verification_status_detail) && (
+                <div className="mt-6 bg-[#121214] border border-white/5 rounded-brand-xl p-6">
+                    <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-6 font-bold">API Diagnostics</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex justify-between bg-white/[0.02] rounded px-3 py-2">
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Status Detail</span>
+                            <span className="text-white text-xs font-medium">{verification?.verification_status_detail || '—'}</span>
+                        </div>
+                        <div className="flex justify-between bg-white/[0.02] rounded px-3 py-2">
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">API HTTP Code</span>
+                            <span className={`text-xs font-bold ${verification?.last_api_status_code === '200' ? 'text-success' : 'text-danger'}`}>
+                                {verification?.last_api_status_code || '—'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between bg-white/[0.02] rounded px-3 py-2">
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-white/30">Retry Attempts</span>
+                            <span className="text-white text-xs font-medium">{verification?.verification_attempts || 0}</span>
+                        </div>
+                        {verification?.last_api_error && (
+                            <div className="md:col-span-3 bg-danger/5 border border-danger/10 rounded px-4 py-3">
+                                <span className="text-[10px] font-mono uppercase tracking-widest text-danger/60 block mb-1">Last API Error</span>
+                                <span className="text-white text-xs">{verification.last_api_error}</span>
+                            </div>
+                        )}
+                        {verification?.qoreid_product_available !== undefined && (
+                            <div className="md:col-span-3 bg-white/[0.02] rounded px-4 py-3">
+                                <span className={`text-xs font-bold ${verification.qoreid_product_available ? 'text-success' : 'text-danger'}`}>
+                                    QoreID NIN Premium: {verification.qoreid_product_available ? 'Available' : 'NOT Available'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* QoreID Response Data */}
             {Object.keys(qoreData).length > 0 && (

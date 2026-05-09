@@ -231,6 +231,105 @@ class QoreIDService
     }
 
     /**
+     * Health check — verify QoreID connectivity and product availability.
+     * Cached for 15 minutes to avoid excessive API calls.
+     *
+     * @return array ['healthy' => bool, 'product_available' => bool|null, 'error' => string|null, 'status_code' => int]
+     */
+    public function healthCheck(): array
+    {
+        return Cache::remember('qoreid_health_check', now()->addMinutes(15), function () {
+            if (empty($this->clientId) || empty($this->clientSecret)) {
+                return [
+                    'healthy' => false,
+                    'product_available' => false,
+                    'error' => 'QoreID Client ID or Secret is missing.',
+                    'status_code' => 0,
+                ];
+            }
+
+            $token = $this->getAccessToken();
+            if (empty($token)) {
+                return [
+                    'healthy' => false,
+                    'product_available' => false,
+                    'error' => 'QoreID authentication failed. Unable to obtain access token.',
+                    'status_code' => 401,
+                ];
+            }
+
+            $testNin = '00000000000';
+            $endpoint = "{$this->baseUrl}/ng/identities/nin-premium/" . urlencode($testNin);
+
+            try {
+                $response = $this->client->post($endpoint, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ],
+                    'json' => [
+                        'firstname' => 'TEST',
+                        'lastname' => 'USER',
+                    ],
+                ]);
+
+                $statusCode = $response->getStatusCode();
+
+                if ($statusCode === 200) {
+                    return [
+                        'healthy' => true,
+                        'product_available' => true,
+                        'error' => null,
+                        'status_code' => 200,
+                    ];
+                }
+
+                return [
+                    'healthy' => true,
+                    'product_available' => false,
+                    'error' => "QoreID returned unexpected status: {$statusCode}",
+                    'status_code' => $statusCode,
+                ];
+
+            } catch (\GuzzleHttp\Exception\GuzzleException $e) {
+                $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
+
+                $productAvailable = match ($statusCode) {
+                    401 => false,
+                    402 => true,  // Auth works, just no credits
+                    403 => false, // No access to product
+                    404 => false, // Product not available for this account
+                    429 => true,  // Rate limited, but product exists
+                    default => null,
+                };
+
+                return [
+                    'healthy' => $statusCode === 404 ? false : ($statusCode === 429),
+                    'product_available' => $productAvailable,
+                    'error' => "QoreID NIN Premium endpoint returned HTTP {$statusCode}.",
+                    'status_code' => $statusCode,
+                ];
+            } catch (\Exception $e) {
+                return [
+                    'healthy' => false,
+                    'product_available' => null,
+                    'error' => 'Health check failed: ' . $e->getMessage(),
+                    'status_code' => 500,
+                ];
+            }
+        });
+    }
+
+    /**
+     * Clear the cached health check result.
+     */
+    public function clearHealthCache(): void
+    {
+        Cache::forget('qoreid_health_check');
+    }
+
+    /**
      * Compare provided name with QoreID response and calculate confidence.
      *
      * @param string $providedFirst

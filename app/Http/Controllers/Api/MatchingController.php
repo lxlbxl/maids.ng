@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\MatchingJobCompleted;
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Matching\{RequestMatchRequest, ReviewMatchRequest};
 use App\Models\AiMatchingQueue;
 use App\Services\MatchingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
-class MatchingController extends Controller
+class MatchingController extends ApiController
 {
     protected MatchingService $matchingService;
 
@@ -23,38 +23,13 @@ class MatchingController extends Controller
     /**
      * Request AI matching for an employer.
      */
-    public function requestMatch(Request $request): JsonResponse
+    public function requestMatch(RequestMatchRequest $request): JsonResponse
     {
         $user = Auth::user();
+        $validated = $request->validated();
 
         if ($user->role !== 'employer') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only employers can request matching.',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'job_type' => 'required|string|in:full_time,part_time,live_in,live_out',
-            'location' => 'required|string|max:255',
-            'salary_min' => 'required|numeric|min:10000',
-            'salary_max' => 'required|numeric|gte:salary_min',
-            'salary_day' => 'nullable|integer|min:1|max:31',
-            'skills' => 'nullable|array',
-            'skills.*' => 'string',
-            'experience_years' => 'nullable|integer|min:0',
-            'age_preference' => 'nullable|string',
-            'language' => 'nullable|string',
-            'religion' => 'nullable|string',
-            'additional_requirements' => 'nullable|string|max:2000',
-            'priority' => 'nullable|integer|min:1|max:10',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->forbidden('Only employers can request matching.');
         }
 
         // Check employer has sufficient balance for matching fee
@@ -63,52 +38,44 @@ class MatchingController extends Controller
         $balanceCheck = $walletService->checkBalance($user->id, $matchingFee);
 
         if (!$balanceCheck['has_sufficient']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Insufficient wallet balance for matching fee.',
-                'data' => [
-                    'required' => $matchingFee,
-                    'available' => $balanceCheck['balance'],
-                ],
-            ], 422);
+            return $this->error('Insufficient wallet balance for matching fee.', Response::HTTP_UNPROCESSABLE_ENTITY, [
+                'required' => $matchingFee,
+                'available' => $balanceCheck['balance'],
+            ]);
         }
 
         // Create matching job
         $job = AiMatchingQueue::create([
             'job_type' => 'auto_match',
             'employer_id' => $user->id,
-            'priority' => $request->priority ?? 5,
+            'priority' => $validated['priority'] ?? 5,
             'payload' => [
                 'requirements' => [
-                    'job_type' => $request->job_type,
-                    'location' => $request->location,
+                    'job_type' => $validated['job_type'],
+                    'location' => $validated['location'],
                     'salary_range' => [
-                        'min' => $request->salary_min,
-                        'max' => $request->salary_max,
+                        'min' => $validated['salary_min'],
+                        'max' => $validated['salary_max'],
                     ],
-                    'salary_day' => $request->salary_day ?? 1,
-                    'skills' => $request->skills ?? [],
-                    'experience_years' => $request->experience_years,
-                    'age_preference' => $request->age_preference,
-                    'language' => $request->language,
-                    'religion' => $request->religion,
-                    'additional_requirements' => $request->additional_requirements,
+                    'salary_day' => $validated['salary_day'] ?? 1,
+                    'skills' => $validated['skills'] ?? [],
+                    'experience_years' => $validated['experience_years'] ?? null,
+                    'age_preference' => $validated['age_preference'] ?? null,
+                    'language' => $validated['language'] ?? null,
+                    'religion' => $validated['religion'] ?? null,
+                    'additional_requirements' => $validated['additional_requirements'] ?? null,
                 ],
             ],
             'status' => 'pending',
             'max_attempts' => 3,
             'retry_delay_minutes' => 5,
         ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Matching request submitted successfully.',
-            'data' => [
-                'job_id' => $job->job_id,
-                'status' => $job->status,
-                'estimated_processing_time' => '5-15 minutes',
-            ],
-        ]);
+ 
+        return $this->success([
+            'job_id' => $job->job_id,
+            'status' => $job->status,
+            'estimated_processing_time' => '5-15 minutes',
+        ], 'Matching request submitted successfully.');
     }
 
     /**
@@ -122,31 +89,25 @@ class MatchingController extends Controller
 
         // Check authorization
         if ($user->role === 'employer' && $job->employer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden('Unauthorized access.');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'job_id' => $job->job_id,
-                'status' => $job->status,
-                'job_type' => $job->job_type,
-                'priority' => $job->priority,
-                'created_at' => $job->created_at,
-                'started_at' => $job->started_at,
-                'completed_at' => $job->completed_at,
-                'processing_duration' => $job->duration_formatted,
-                'result' => $job->status === 'completed' ? $job->result : null,
-                'match_candidates' => $job->status === 'completed' ? $job->match_candidates : null,
-                'ai_confidence_score' => $job->ai_confidence_score,
-                'ai_reasoning' => $job->ai_reasoning,
-                'requires_review' => $job->requires_review,
-                'error' => $job->last_error,
-            ],
-        ]);
+        return $this->success([
+            'job_id' => $job->job_id,
+            'status' => $job->status,
+            'job_type' => $job->job_type,
+            'priority' => $job->priority,
+            'created_at' => $job->created_at,
+            'started_at' => $job->started_at,
+            'completed_at' => $job->completed_at,
+            'processing_duration' => $job->duration_formatted,
+            'result' => $job->status === 'completed' ? $job->result : null,
+            'match_candidates' => $job->status === 'completed' ? $job->match_candidates : null,
+            'ai_confidence_score' => $job->ai_confidence_score,
+            'ai_reasoning' => $job->ai_reasoning,
+            'requires_review' => $job->requires_review,
+            'error' => $job->last_error,
+        ], 'Job status retrieved successfully');
     }
 
     /**
@@ -160,31 +121,22 @@ class MatchingController extends Controller
 
         // Check authorization
         if ($user->role === 'employer' && $job->employer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden('Unauthorized access.');
         }
 
         if ($job->status !== 'completed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Matching job not yet completed. Current status: ' . $job->status,
-            ], 422);
+            return $this->error('Matching job not yet completed. Current status: ' . $job->status, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'job_id' => $job->job_id,
-                'matches' => $job->match_candidates ?? [],
-                'ai_confidence_score' => $job->ai_confidence_score,
-                'ai_reasoning' => $job->ai_reasoning,
-                'ai_analysis_data' => $job->ai_analysis_data,
-                'assignment_created' => $job->assignment_id !== null,
-                'assignment_id' => $job->assignment_id,
-            ],
-        ]);
+        return $this->success([
+            'job_id' => $job->job_id,
+            'matches' => $job->match_candidates ?? [],
+            'ai_confidence_score' => $job->ai_confidence_score,
+            'ai_reasoning' => $job->ai_reasoning,
+            'ai_analysis_data' => $job->ai_analysis_data,
+            'assignment_created' => $job->assignment_id !== null,
+            'assignment_id' => $job->assignment_id,
+        ], 'Matching results retrieved successfully');
     }
 
     /**
@@ -207,11 +159,8 @@ class MatchingController extends Controller
 
         $jobs = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
-
-        return response()->json([
-            'success' => true,
-            'data' => $jobs,
-        ]);
+ 
+        return $this->paginated($jobs, 'Matching history retrieved successfully');
     }
 
     /**
@@ -224,25 +173,16 @@ class MatchingController extends Controller
         $job = AiMatchingQueue::where('job_id', $jobId)->firstOrFail();
 
         if ($job->employer_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access.',
-            ], 403);
+            return $this->forbidden('Unauthorized access.');
         }
 
         if (!in_array($job->status, ['pending', 'scheduled'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot cancel job with status: ' . $job->status,
-            ], 422);
+            return $this->error('Cannot cancel job with status: ' . $job->status, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $job->cancel();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Matching job cancelled successfully.',
-        ]);
+ 
+        return $this->success(null, 'Matching job cancelled successfully.');
     }
 
     /**
@@ -253,10 +193,7 @@ class MatchingController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $stats = [
@@ -273,10 +210,7 @@ class MatchingController extends Controller
                 ->count(),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
+        return $this->success($stats, 'Matching queue statistics retrieved successfully');
     }
 
     /**
@@ -287,10 +221,7 @@ class MatchingController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $jobs = AiMatchingQueue::requiresReview()
@@ -299,44 +230,27 @@ class MatchingController extends Controller
             ->orderBy('created_at')
             ->paginate(20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $jobs,
-        ]);
+        return $this->paginated($jobs, 'Jobs requiring review retrieved successfully');
     }
 
     /**
      * Review a matching job (admin only).
      */
-    public function review(Request $request, string $jobId): JsonResponse
+    public function review(ReviewMatchRequest $request, string $jobId): JsonResponse
     {
         $user = Auth::user();
-
+        $validated = $request->validated();
+ 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $job = AiMatchingQueue::where('job_id', $jobId)->firstOrFail();
 
-        $validator = Validator::make($request->all(), [
-            'decision' => 'required|string|in:approve,reject,retry',
-            'notes' => 'nullable|string|max:2000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $job->review($user->id, $request->decision, $request->notes);
-
+        $job->review($user->id, $validated['decision'], $validated['notes'] ?? null);
+ 
         // If approved and has results, fire completion event
-        if ($request->decision === 'approve' && $job->result) {
+        if ($validated['decision'] === 'approve' && $job->result) {
             MatchingJobCompleted::dispatch(
                 $job,
                 $job->result,
@@ -345,15 +259,11 @@ class MatchingController extends Controller
                 ['admin_reviewed' => true, 'reviewer_id' => $user->id]
             );
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Job review submitted successfully.',
-            'data' => [
-                'job_id' => $job->job_id,
-                'decision' => $request->decision,
-                'reviewed_at' => $job->reviewed_at,
-            ],
-        ]);
+ 
+        return $this->success([
+            'job_id' => $job->job_id,
+            'decision' => $validated['decision'],
+            'reviewed_at' => $job->reviewed_at,
+        ], 'Job review submitted successfully.');
     }
 }

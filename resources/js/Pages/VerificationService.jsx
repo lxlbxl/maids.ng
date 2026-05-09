@@ -18,6 +18,11 @@ export default function VerificationService({ fee }) {
         maid_nin: '',
         maid_first_name: '',
         maid_last_name: '',
+        maid_middle_name: '',
+        maid_dob: '',
+        maid_phone: '',
+        maid_email: '',
+        maid_gender: '',
         requester_name: '',
         requester_email: '',
         requester_phone: '',
@@ -318,6 +323,44 @@ export default function VerificationService({ fee }) {
                                                 />
                                             </div>
                                         </div>
+                                        <details className="group">
+                                            <summary className="text-xs text-teal cursor-pointer hover:underline font-mono uppercase tracking-widest">+ Optional Details (improves accuracy)</summary>
+                                            <div className="mt-4 space-y-4 pl-2 border-l-2 border-teal/20">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Middle Name</label>
+                                                        <input type="text" value={data.maid_middle_name} onChange={e => setData('maid_middle_name', e.target.value)}
+                                                            className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none" placeholder="Ngozi" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Date of Birth</label>
+                                                        <input type="date" value={data.maid_dob} onChange={e => setData('maid_dob', e.target.value)}
+                                                            className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Phone</label>
+                                                        <input type="tel" value={data.maid_phone} onChange={e => setData('maid_phone', e.target.value)}
+                                                            className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none" placeholder="080..." />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Email</label>
+                                                        <input type="email" value={data.maid_email} onChange={e => setData('maid_email', e.target.value)}
+                                                            className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none" placeholder="maid@email.com" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-mono uppercase tracking-widest text-muted mb-2">Gender</label>
+                                                    <select value={data.maid_gender} onChange={e => setData('maid_gender', e.target.value)}
+                                                        className="w-full border-2 border-gray-100 rounded-brand-md px-4 py-3 text-sm focus:border-teal outline-none bg-white">
+                                                        <option value="">— Select —</option>
+                                                        <option value="female">Female</option>
+                                                        <option value="male">Male</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </details>
                                     </div>
                                     <div className="flex gap-4">
                                         <button onClick={prevStep} className="flex-1 bg-gray-100 text-espresso py-4 rounded-brand-md text-sm font-bold hover:bg-gray-200">Back</button>

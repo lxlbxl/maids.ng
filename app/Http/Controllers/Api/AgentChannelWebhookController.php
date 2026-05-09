@@ -7,6 +7,7 @@ use App\Services\Agents\Channels\EmailChannelHandler;
 use App\Services\Agents\Channels\WhatsAppChannelHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Log;
  * - POST /api/agent/webhook/instagram (Instagram Graph API)
  * - POST /api/agent/webhook/facebook  (Facebook Messenger API)
  */
-class AgentChannelWebhookController extends Controller
+class AgentChannelWebhookController extends ApiController
 {
     public function __construct(
         private readonly EmailChannelHandler $emailHandler,
@@ -39,7 +40,9 @@ class AgentChannelWebhookController extends Controller
 
         $result = $this->emailHandler->handleInbound($payload);
 
-        return response()->json($result, $result['success'] ? 200 : 500);
+        return $result['success'] 
+            ? $this->success($result, 'Email processed')
+            : $this->error($result['message'] ?? 'Email processing failed', 500, $result);
     }
 
     /**
@@ -53,7 +56,9 @@ class AgentChannelWebhookController extends Controller
 
         $result = $this->whatsappHandler->handleInbound($payload);
 
-        return response()->json($result, $result['success'] ? 200 : 500);
+        return $result['success'] 
+            ? $this->success($result, 'WhatsApp message processed')
+            : $this->error($result['message'] ?? 'WhatsApp processing failed', 500, $result);
     }
 
     /**
@@ -62,7 +67,7 @@ class AgentChannelWebhookController extends Controller
     public function instagramWebhook(Request $request): JsonResponse
     {
         // TODO: Implement Instagram handler
-        return response()->json(['success' => false, 'message' => 'Instagram channel not yet implemented.']);
+        return $this->error('Instagram channel not yet implemented.', Response::HTTP_NOT_IMPLEMENTED);
     }
 
     /**
@@ -71,23 +76,24 @@ class AgentChannelWebhookController extends Controller
     public function facebookWebhook(Request $request): JsonResponse
     {
         // TODO: Implement Facebook handler
-        return response()->json(['success' => false, 'message' => 'Facebook channel not yet implemented.']);
+        return $this->error('Facebook channel not yet implemented.', Response::HTTP_NOT_IMPLEMENTED);
     }
 
     /**
      * Handle Facebook webhook verification challenge.
      */
-    public function facebookVerify(Request $request): JsonResponse
+    public function facebookVerify(Request $request): mixed
     {
         $mode = $request->input('hub_mode');
         $token = $request->input('hub_verify_token');
         $challenge = $request->input('hub_challenge');
-
+ 
         if ($mode === 'subscribe' && $token === config('services.facebook.webhook_verify_token')) {
-            return response()->json(['challenge' => $challenge]);
+            // Facebook verification challenge MUST return the raw challenge string as text/plain or json
+            return response($challenge, 200);
         }
-
-        return response()->json(['error' => 'Verification failed.'], 403);
+ 
+        return $this->forbidden('Verification failed.');
     }
 
     // ─── Payload Normalizers ──────────────────────────────────────────────────
