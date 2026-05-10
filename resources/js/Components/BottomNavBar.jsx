@@ -34,7 +34,7 @@ export default function BottomNavBar({
     return (
         <>
             {/* Bottom Navigation Bar - Mobile Only */}
-            <nav className={`md:hidden fixed bottom-0 left-0 right-0 ${bgColor} ${borderColor} border-t z-50 safe-area-bottom`}>
+            <nav className={`md:hidden fixed bottom-0 left-0 right-0 ${bgColor} ${borderColor} border-t z-50 safe-area-bottom dark:bg-[#121214] dark:border-white/10`}>
                 <div className="flex items-center justify-around h-16 px-2">
                     {items.map((item) => (
                         <Link
@@ -42,7 +42,7 @@ export default function BottomNavBar({
                             href={item.href}
                             className={`flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-lg transition-all min-w-[60px] ${isActive(item.href)
                                     ? `${activeColor} ${activeBg}`
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                         >
                             <span className="text-xl">{item.icon}</span>
@@ -56,7 +56,7 @@ export default function BottomNavBar({
                             onClick={() => setShowMore(!showMore)}
                             className={`flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-lg transition-all min-w-[60px] ${showMore
                                     ? `${activeColor} ${activeBg}`
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                                 }`}
                         >
                             <span className="text-xl">{showMore ? '✕' : '⋯'}</span>
@@ -76,7 +76,7 @@ export default function BottomNavBar({
                     />
 
                     {/* Menu Panel */}
-                    <div className={`md:hidden fixed bottom-16 left-0 right-0 ${bgColor} ${borderColor} border-t z-50 shadow-2xl`}>
+                    <div className={`md:hidden fixed bottom-16 left-0 right-0 ${bgColor} ${borderColor} border-t z-50 shadow-2xl dark:bg-[#121214] dark:border-white/10`}>
                         <div className="p-4 space-y-1 max-h-[60vh] overflow-y-auto">
                             <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-gray-400 mb-3 px-3">More Options</p>
                             {moreItems.map((item) => (
@@ -86,7 +86,7 @@ export default function BottomNavBar({
                                     onClick={() => setShowMore(false)}
                                     className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${isActive(item.href)
                                             ? `${activeColor} ${activeBg}`
-                                            : 'text-gray-600 hover:bg-gray-50'
+                                            : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
                                         }`}
                                 >
                                     <span className="text-lg">{item.icon}</span>
@@ -94,10 +94,10 @@ export default function BottomNavBar({
                                 </Link>
                             ))}
                             {onLogout && (
-                                <div className="pt-3 mt-3 border-t border-gray-100">
+                                <div className="pt-3 mt-3 border-t border-gray-100 dark:border-white/5">
                                     <button
                                         onClick={onLogout}
-                                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                                        className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                                     >
                                         <span className="text-lg">🚪</span>
                                         <span>Logout</span>

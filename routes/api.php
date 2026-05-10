@@ -60,11 +60,9 @@ Route::prefix('v1')->group(function () {
     });
 
     // Public Maid Discovery
-    Route::get('/maids', [MaidController::class, 'index']);
-    Route::get('/maids/search', [MaidController::class, 'search']);
-    Route::get('/maids/top-rated', [MaidController::class, 'getTopRated']);
-    Route::get('/maids/verified', [MaidController::class, 'getVerified']);
-    Route::get('/maids/{id}', [MaidController::class, 'show']);
+    Route::get('/maids', [MaidController::class, 'listAvailable']);
+    // Removed unimplemented /search, /top-rated, /verified. Use query params on /maids instead (e.g. ?location=... &verified_only=true)
+    Route::get('/maids/{id}', [MaidController::class, 'publicProfile']);
 
     // Reference Data
     Route::get('/reference/skills', [MaidController::class, 'getSkills']);
@@ -72,7 +70,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/reference/payment-methods', [PaymentController::class, 'getPaymentMethods']);
 
     // Public Matching API
-    Route::post('/matching/find', [ApiMatchingController::class, 'findMatches']);
+    Route::post('/matching/find', [\App\Http\Controllers\MatchingController::class, 'findMatches']);
 
     /*
     |--------------------------------------------------------------------------
@@ -429,7 +427,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Public matching API - no authentication required
-Route::post('/matching/find', [ApiMatchingController::class, 'findMatches']);
+Route::post('/matching/find', [\App\Http\Controllers\MatchingController::class, 'findMatches']);
 
 /*
 |--------------------------------------------------------------------------

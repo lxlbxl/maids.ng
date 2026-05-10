@@ -18,7 +18,7 @@ class AdminUserController extends Controller
     { 
         // Employers are users who are not maids and not admins, or explicitly have employer role
         $users = \App\Models\User::role('employer')
-            ->with('roles')
+            ->with(['roles', 'employerPreferences'])
             ->when($request->search, fn($q, $s) => $q->where(fn($q2) => $q2->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")))
             ->latest()
             ->paginate(20);

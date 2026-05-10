@@ -97,7 +97,8 @@ export default function AgentControlBar({ agents, agentList, onAgentUpdate }) {
                             <span>{AGENT_LABELS[agent]}</span>
                         </button>
 
-                        <div className="hidden group-hover:block absolute top-8 left-0 z-50 bg-gray-800 rounded-lg shadow-xl border border-gray-700 w-56 py-1">
+                        <div className="hidden group-hover:block absolute top-full left-0 z-50 pt-2">
+                            <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 w-56 py-1">
                             {mode !== "active" && !isKilled && (
                                 <button onClick={(e) => { e.stopPropagation(); openModal(agent, "resume"); }}
                                     className="w-full text-left px-3 py-2 text-sm text-green-400 hover:bg-gray-700">
@@ -139,6 +140,7 @@ export default function AgentControlBar({ agents, agentList, onAgentUpdate }) {
                                     Release Kill Switch
                                 </button>
                             )}
+                            </div>
                         </div>
                     </div>
                 );

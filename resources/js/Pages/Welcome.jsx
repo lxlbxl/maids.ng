@@ -7,16 +7,16 @@ export default function Welcome({ auth }) {
             <Head title="Where Trust Begins" />
 
             {/* ── Navigation ── */}
-            <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/60">
+            <nav className="fixed top-0 w-full z-50 bg-white/90 dark:bg-[#121214]/90 backdrop-blur-md border-b border-gray-200/60 dark:border-white/10 transition-theme">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8" />
+                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8 dark:brightness-0 dark:invert transition-all" />
                     </div>
                     <div className="hidden md:flex items-center gap-8">
-                        <a href="#how" className="text-sm text-gray-500 hover:text-teal transition-colors">How It Works</a>
-                        <a href="#services" className="text-sm text-gray-500 hover:text-teal transition-colors">Services</a>
+                        <a href="#how" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">How It Works</a>
+                        <a href="#services" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">Services</a>
                         <Link href="/verify-service" className="text-sm text-teal font-medium hover:text-teal-dark transition-colors">Verify a Maid</Link>
-                        <a href="#trust" className="text-sm text-gray-500 hover:text-teal transition-colors">Trust & Safety</a>
+                        <a href="#trust" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">Trust & Safety</a>
                     </div>
                     <div className="flex items-center gap-3">
                         {auth?.user ? (
@@ -78,13 +78,13 @@ export default function Welcome({ auth }) {
             </section>
 
             {/* ── How It Works ── */}
-            <section id="how" className="py-24 px-6 bg-ivory">
+            <section id="how" className="py-24 px-6 bg-ivory dark:bg-[#0f0f10] transition-theme">
                 <div className="max-w-5xl mx-auto text-center mb-16">
                     <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-3">How It Works</p>
-                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso mb-4">
+                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso dark:text-[#f0ede8] mb-4 transition-theme">
                         Three Steps to <em className="italic">Peace of Mind</em>
                     </h2>
-                    <p className="text-muted text-lg max-w-md mx-auto">From quiz to matched helper in under 5 minutes.</p>
+                    <p className="text-muted dark:text-gray-400 text-lg max-w-md mx-auto">From quiz to matched helper in under 5 minutes.</p>
                 </div>
                 <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
                     {[
@@ -92,21 +92,21 @@ export default function Welcome({ auth }) {
                         { step: '02', title: 'Get Matched Instantly', desc: 'Our AI-powered algorithm finds the top helpers in your area with real match scores.', icon: '🎯' },
                         { step: '03', title: 'Connect & Start', desc: 'Pay a one-time ₦5,000 matching fee, get your helper\'s contact, and schedule your start date.', icon: '🤝' },
                     ].map((item) => (
-                        <div key={item.step} className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-1 hover:shadow-brand-2 hover:-translate-y-1.5 transition-all duration-300 group">
+                        <div key={item.step} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-8 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-2 hover:-translate-y-1.5 transition-all duration-300 group">
                             <div className="text-3xl mb-4">{item.icon}</div>
                             <p className="font-mono text-[10px] tracking-[0.1em] text-teal mb-2">{item.step}</p>
                             <h3 className="font-display text-2xl font-semibold text-teal mb-3">{item.title}</h3>
-                            <p className="text-muted text-sm leading-relaxed">{item.desc}</p>
+                            <p className="text-muted dark:text-gray-400 text-sm leading-relaxed">{item.desc}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
             {/* ── Services ── */}
-            <section id="services" className="py-24 px-6 bg-linen">
+            <section id="services" className="py-24 px-6 bg-linen dark:bg-[#1a1a1c] transition-theme">
                 <div className="max-w-5xl mx-auto text-center mb-16">
                     <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-3">Our Services</p>
-                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso">
+                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso dark:text-[#f0ede8] transition-theme">
                         Help for <em className="italic">Every</em> Home
                     </h2>
                 </div>
@@ -119,10 +119,10 @@ export default function Welcome({ auth }) {
                         { title: 'Live-in Helpers', desc: 'Full-time household management and support.', icon: '🏡' },
                         { title: 'Drivers', desc: 'School runs, errands, and family transportation.', icon: '🚗' },
                     ].map((s) => (
-                        <div key={s.title} className="bg-white rounded-brand-xl p-8 border border-espresso/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <div key={s.title} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-8 border border-espresso/5 dark:border-white/10 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                             <div className="text-3xl mb-4">{s.icon}</div>
-                            <h3 className="font-semibold text-lg text-espresso mb-2">{s.title}</h3>
-                            <p className="text-espresso/60 text-sm leading-relaxed">{s.desc}</p>
+                            <h3 className="font-semibold text-lg text-espresso dark:text-[#f0ede8] mb-2">{s.title}</h3>
+                            <p className="text-espresso/60 dark:text-gray-400 text-sm leading-relaxed">{s.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -185,12 +185,12 @@ export default function Welcome({ auth }) {
             </section>
 
             {/* ── CTA ── */}
-            <section className="py-24 px-6 bg-ivory text-center">
+            <section className="py-24 px-6 bg-ivory dark:bg-[#0f0f10] text-center transition-theme">
                 <div className="max-w-2xl mx-auto">
-                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso mb-4">
+                    <h2 className="font-display text-4xl md:text-5xl font-light text-espresso dark:text-[#f0ede8] mb-4 transition-theme">
                         Ready to Find Your <em className="italic text-teal">Perfect Helper</em>?
                     </h2>
-                    <p className="text-muted mb-8">Join 2,000+ Nigerian families who trust Maids.ng</p>
+                    <p className="text-muted dark:text-gray-400 mb-8">Join 2,000+ Nigerian families who trust Maids.ng</p>
                     <Link href="/onboarding" className="inline-block bg-teal text-white px-10 py-4 rounded-brand-md text-base font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-2">
                         Start Matching Now →
                     </Link>

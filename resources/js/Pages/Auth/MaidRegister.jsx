@@ -179,11 +179,11 @@ export default function MaidRegister() {
                 return (
                     <div className="space-y-6 animate-fade-in text-center">
                         <div className="relative inline-block group">
-                            <div className={`w-48 h-48 rounded-full border-4 ${preview ? 'border-teal' : 'border-gray-200 border-dashed'} overflow-hidden bg-white shadow-inner flex items-center justify-center transition-all`}>
+                            <div className={`w-48 h-48 rounded-full border-4 ${preview ? 'border-teal' : 'border-gray-200 border-dashed'} overflow-hidden bg-white dark:bg-[#1c1c1e] shadow-inner flex items-center justify-center transition-all`}>
                                 {preview ? (
                                     <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="text-muted flex flex-col items-center">
+                                    <div className="text-muted dark:text-gray-400 flex flex-col items-center">
                                         <span className="text-5xl mb-2">📸</span>
                                         <span className="text-xs font-bold uppercase tracking-widest">Tap to Upload</span>
                                     </div>
@@ -202,8 +202,8 @@ export default function MaidRegister() {
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                         </div>
-                        <div className="bg-amber-50 border border-amber-200 rounded-brand-md p-4 text-left">
-                            <p className="text-amber-800 text-xs leading-relaxed">
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-brand-md p-4 text-left">
+                            <p className="text-amber-800 dark:text-amber-200 text-xs leading-relaxed">
                                 💡 <strong>Tip:</strong> Use a bright, clear photo where your face is visible. This helps employers trust you and hire you faster!
                             </p>
                         </div>
@@ -218,7 +218,7 @@ export default function MaidRegister() {
                             value={data[step.field]}
                             onChange={e => setData(step.field, e.target.value)}
                             placeholder={step.placeholder}
-                            className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                            className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
                             autoFocus
                         />
                         {errors[step.field] && <p className="text-danger text-sm">{errors[step.field]}</p>}
@@ -228,24 +228,24 @@ export default function MaidRegister() {
                 return (
                     <div className="space-y-4 animate-fade-in">
                         <div>
-                            <label className="block text-sm font-medium text-muted mb-1">Phone Number</label>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Phone Number</label>
                             <input
                                 type="tel"
                                 value={data.phone}
                                 onChange={e => setData('phone', e.target.value)}
                                 placeholder="080 1234 5678"
-                                className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
                             />
                             {errors.phone && <p className="text-danger text-sm">{errors.phone}</p>}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted mb-1">Email (Optional)</label>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Email (Optional)</label>
                             <input
                                 type="email"
                                 value={data.email}
                                 onChange={e => setData('email', e.target.value)}
                                 placeholder="you@email.com"
-                                className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
                             />
                             {errors.email && <p className="text-danger text-sm">{errors.email}</p>}
                         </div>
@@ -258,11 +258,11 @@ export default function MaidRegister() {
                             <button
                                 key={opt.value}
                                 onClick={() => handleOptionSelect(step.field, opt.value, true)}
-                                className={`p-4 rounded-brand-lg border-2 text-left transition-all ${data[step.field].includes(opt.value) ? 'border-teal bg-teal-ghost shadow-brand-1' : 'border-gray-100 bg-white'}`}
+                                className={`p-4 rounded-brand-lg border-2 text-left transition-all ${data[step.field].includes(opt.value) ? 'border-teal bg-teal-ghost dark:bg-teal/10 shadow-brand-1' : 'border-gray-100 dark:border-white/5 bg-white dark:bg-[#1c1c1e]'}`}
                             >
                                 <span className="text-2xl block mb-1">{opt.icon}</span>
                                 <span className="font-bold text-sm block">{opt.label}</span>
-                                <span className="text-[10px] text-muted leading-tight block">{opt.desc}</span>
+                                <span className="text-[10px] text-muted dark:text-gray-400 leading-tight block">{opt.desc}</span>
                             </button>
                         ))}
                     </div>
@@ -274,7 +274,7 @@ export default function MaidRegister() {
                             <button
                                 key={opt.value}
                                 onClick={() => handleOptionSelect(step.field, opt.value, true)}
-                                className={`p-3 rounded-brand-md border-2 text-center transition-all ${data[step.field].includes(opt.value) ? 'border-teal bg-teal-ghost' : 'border-gray-50 bg-white'}`}
+                                className={`p-3 rounded-brand-md border-2 text-center transition-all ${data[step.field].includes(opt.value) ? 'border-teal bg-teal-ghost dark:bg-teal/10' : 'border-gray-50 dark:border-white/5 bg-white dark:bg-[#1c1c1e]'}`}
                             >
                                 <span className="text-xl block mb-1">{opt.icon}</span>
                                 <span className="font-bold text-[10px] block truncate">{opt.label}</span>
@@ -289,12 +289,12 @@ export default function MaidRegister() {
                             <button
                                 key={opt.value}
                                 onClick={() => handleOptionSelect(step.field, opt.value)}
-                                className={`p-4 rounded-brand-lg border-2 flex items-center gap-4 text-left transition-all ${data[step.field] === opt.value ? 'border-teal bg-teal-ghost shadow-brand-1' : 'border-gray-100 bg-white'}`}
+                                className={`p-4 rounded-brand-lg border-2 flex items-center gap-4 text-left transition-all ${data[step.field] === opt.value ? 'border-teal bg-teal-ghost dark:bg-teal/10 shadow-brand-1' : 'border-gray-100 dark:border-white/5 bg-white dark:bg-[#1c1c1e]'}`}
                             >
                                 <span className="text-3xl">{opt.icon}</span>
                                 <div>
                                     <span className="font-bold text-base block">{opt.label}</span>
-                                    <span className="text-xs text-muted block">{opt.desc}</span>
+                                    <span className="text-xs text-muted dark:text-gray-400 block">{opt.desc}</span>
                                 </div>
                             </button>
                         ))}
@@ -303,27 +303,27 @@ export default function MaidRegister() {
             case 'nin':
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <div className="bg-teal-ghost border border-teal/20 rounded-brand-lg p-5">
+                        <div className="bg-teal-ghost dark:bg-teal/10 border border-teal/20 rounded-brand-lg p-5">
                             <h4 className="font-bold text-teal flex items-center gap-2 mb-2 text-sm">
                                 <span>🛡️</span> Identity Verification
                             </h4>
-                            <p className="text-xs text-muted leading-relaxed">
+                            <p className="text-xs text-muted dark:text-gray-400 leading-relaxed">
                                 Nigerian law requires all domestic workers to be verified. Your data is encrypted and secure.
                             </p>
                         </div>
                         <div className={`${data.is_foreigner ? 'opacity-40 pointer-events-none' : ''}`}>
-                            <label className="block text-sm font-medium text-muted mb-1">Enter your 11-digit NIN</label>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Enter your 11-digit NIN</label>
                             <input
                                 type="text"
                                 maxLength="11"
                                 value={data.nin}
                                 onChange={e => setData('nin', e.target.value.replace(/\D/g, ''))}
                                 placeholder="12345678901"
-                                className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-2xl tracking-[0.2em] font-mono focus:border-teal outline-none transition-all text-center"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-2xl tracking-[0.2em] font-mono focus:border-teal outline-none transition-all text-center"
                             />
                             {errors.nin && <p className="text-danger text-sm">{errors.nin}</p>}
                         </div>
-                        <label className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-brand-md cursor-pointer hover:bg-gray-50 transition-all">
+                        <label className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-brand-md cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                             <input
                                 type="checkbox"
                                 checked={data.is_foreigner}
@@ -335,7 +335,7 @@ export default function MaidRegister() {
                             />
                             <div className="text-left">
                                 <span className="font-bold text-sm block">I am not a Nigerian Citizen</span>
-                                <span className="text-[10px] text-muted block">I don't have a NIN because I'm from another country.</span>
+                                <span className="text-[10px] text-muted dark:text-gray-400 block">I don't have a NIN because I'm from another country.</span>
                             </div>
                         </label>
                     </div>
@@ -344,23 +344,23 @@ export default function MaidRegister() {
                 return (
                     <div className="space-y-4 animate-fade-in">
                         <div>
-                            <label className="block text-sm font-medium text-muted mb-1">Secret Code (Password)</label>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Secret Code (Password)</label>
                             <input
                                 type="password"
                                 value={data.password}
                                 onChange={e => setData('password', e.target.value)}
                                 placeholder="Minimum 8 letters or numbers"
-                                className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted mb-1">Type it again</label>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Type it again</label>
                             <input
                                 type="password"
                                 value={data.password_confirmation}
                                 onChange={e => setData('password_confirmation', e.target.value)}
                                 placeholder="Must match secret code above"
-                                className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
                             />
                         </div>
                         {errors.password && <p className="text-danger text-sm">{errors.password}</p>}
@@ -374,9 +374,9 @@ export default function MaidRegister() {
     return (
         <>
             <Head title="Helper Registration" />
-            <div className="min-h-screen bg-ivory flex flex-col">
+            <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex flex-col transition-theme">
                 {/* Progress Bar */}
-                <div className="fixed top-0 left-0 right-0 h-1.5 bg-gray-100 z-50">
+                <div className="fixed top-0 left-0 right-0 h-1.5 bg-gray-100 dark:bg-white/5 z-50">
                     <div
                         className="h-full bg-teal transition-all duration-500 ease-out"
                         style={{ width: `${progress}%` }}
@@ -386,9 +386,9 @@ export default function MaidRegister() {
                 {/* Header */}
                 <header className="p-6 flex items-center justify-between">
                     <Link href="/">
-                        <img src="/maids-logo.png" alt="Maids.ng" className="h-7" />
+                        <img src="/maids-logo.png" alt="Maids.ng" className="h-7 dark:brightness-0 dark:invert transition-all" />
                     </Link>
-                    <div className="text-[10px] font-bold text-muted tracking-widest uppercase bg-white px-3 py-1 rounded-full border border-gray-100">
+                    <div className="text-[10px] font-bold text-muted dark:text-gray-400 dark:text-gray-400 tracking-widest uppercase bg-white dark:bg-[#1c1c1e] px-3 py-1 rounded-full border border-gray-100 dark:border-white/10 transition-theme">
                         Step {currentStep + 1} / {STEPS.length}
                     </div>
                 </header>
@@ -397,10 +397,10 @@ export default function MaidRegister() {
                 <main className="flex-1 flex items-center justify-center p-6 pb-32">
                     <div className="max-w-md w-full">
                         <div className="mb-10 text-center" key={currentStep}>
-                            <h1 className="font-display text-3xl font-light text-espresso leading-tight mb-2">
+                            <h1 className="font-display text-3xl font-light text-espresso dark:text-[#f0ede8] dark:text-[#f0ede8] leading-tight mb-2 transition-theme">
                                 {step.title}
                             </h1>
-                            <p className="text-muted text-sm leading-relaxed">
+                            <p className="text-muted dark:text-gray-400 dark:text-gray-400 text-sm leading-relaxed">
                                 {step.subtitle}
                             </p>
                         </div>
@@ -408,11 +408,11 @@ export default function MaidRegister() {
                         {renderStepContent()}
 
                         {/* Navigation Footer */}
-                        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-md border-t border-gray-100 flex items-center gap-4">
+                        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-md border-t border-gray-100 dark:border-white/5 flex items-center gap-4 transition-theme">
                             {currentStep > 0 && (
                                 <button
                                     onClick={prevStep}
-                                    className="h-14 px-6 rounded-brand-md font-bold text-muted hover:bg-gray-50 transition-all"
+                                    className="h-14 px-6 rounded-brand-md font-bold text-muted dark:text-gray-400 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
                                 >
                                     Back
                                 </button>

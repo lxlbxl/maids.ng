@@ -365,6 +365,78 @@ class MaidController extends ApiController
     }
 
     /**
+     * Get Available Skills List
+     *
+     * Retrieve the list of available skills for maids.
+     */
+    public function getSkills(): JsonResponse
+    {
+        $skills = [
+            'cooking' => 'Cooking & Meal Preparation',
+            'cleaning' => 'House Cleaning',
+            'laundry' => 'Laundry & Ironing',
+            'childcare' => 'Childcare & Babysitting',
+            'elderly-care' => 'Elderly Care',
+            'pet-care' => 'Pet Care',
+            'gardening' => 'Gardening',
+            'driving' => 'Driving',
+            'grocery-shopping' => 'Grocery Shopping',
+            'meal-planning' => 'Meal Planning',
+            'organizing' => 'Home Organization',
+            'deep-cleaning' => 'Deep Cleaning',
+        ];
+
+        return $this->success(
+            ['skills' => $skills],
+            'Available skills retrieved successfully'
+        );
+    }
+
+    /**
+     * Get Help Types List
+     *
+     * Retrieve the list of available help types.
+     */
+    public function getHelpTypes(): JsonResponse
+    {
+        $helpTypes = [
+            'live-in' => [
+                'label' => 'Live-in Helper',
+                'description' => 'Full-time helper living with the family',
+            ],
+            'nanny' => [
+                'label' => 'Nanny',
+                'description' => 'Childcare specialist',
+            ],
+            'cooking' => [
+                'label' => 'Cook',
+                'description' => 'Meal preparation specialist',
+            ],
+            'elderly-care' => [
+                'label' => 'Elderly Caregiver',
+                'description' => 'Care for elderly family members',
+            ],
+            'driver' => [
+                'label' => 'Driver',
+                'description' => 'Personal or family driver',
+            ],
+            'cleaning' => [
+                'label' => 'Cleaner',
+                'description' => 'House cleaning services',
+            ],
+            'laundry' => [
+                'label' => 'Laundry Service',
+                'description' => 'Laundry and ironing services',
+            ],
+        ];
+
+        return $this->success(
+            ['help_types' => $helpTypes],
+            'Help types retrieved successfully'
+        );
+    }
+
+    /**
      * List available maids (for employers).
      */
     public function listAvailable(SearchMaidsRequest $request): JsonResponse

@@ -76,25 +76,36 @@ class AmbassadorAgent
             $conversation = $this->getOrCreateConversation($identity, $message);
             $step(3, "Conversation resolved: id={$conversation->id}");
 
-            // Step 3: Store the user message
-            $step(4, 'Storing user message...');
+            // Step 3: Build the system prompt from KnowledgeService
+            $step(4, 'Building system prompt...');
+            $systemPrompt = $this->knowledge->buildContext('ambassador', $identity->getTier());
+
+            // Append memory/context-awareness instructions
+            $systemPrompt .= "\n\n---\n## CONVERSATION MEMORY\n\n"
+                . "You have access to the full conversation history above. "
+                . "Always remember what the user has told you in this conversation — their name, what they need, "
+                . "their budget, location, schedule preferences, and any other details they've shared. "
+                . "Refer back to earlier messages naturally. For example: 'As you mentioned earlier, you need a cook in Lagos...'\n"
+                . "Do NOT ask the user to repeat information they have already provided in this conversation. "
+                . "Maintain context across the entire exchange — this is a continuous dialogue, not isolated questions.";
+
+            $step(4, 'System prompt built (' . strlen($systemPrompt) . ' chars)');
+
+            // Step 4: Get conversation history BEFORE storing the current message
+            // This ensures $history contains only PRIOR turns, avoiding duplicate messages
+            $step(5, 'Fetching conversation history...');
+            $history = $conversation->getHistory(20);
+            $step(5, 'History fetched: ' . count($history) . ' messages');
+
+            // Step 5: NOW store the current user message (after history fetch)
+            $step(6, 'Storing user message...');
             AgentMessage::create([
                 'conversation_id' => $conversation->id,
                 'role' => 'user',
                 'content' => $message->content,
                 'external_message_id' => $message->externalMessageId,
             ]);
-            $step(4, 'User message stored');
-
-            // Step 4: Build the system prompt from KnowledgeService
-            $step(5, 'Building system prompt...');
-            $systemPrompt = $this->knowledge->buildContext('ambassador', $identity->getTier());
-            $step(5, 'System prompt built (' . strlen($systemPrompt) . ' chars)');
-
-            // Step 5: Get conversation history
-            $step(6, 'Fetching conversation history...');
-            $history = $conversation->getHistory(20);
-            $step(6, 'History fetched: ' . count($history) . ' messages');
+            $step(6, 'User message stored');
 
             // Step 6: Build tool definitions for the LLM
             $step(7, 'Building tool definitions...');
@@ -181,10 +192,12 @@ class AmbassadorAgent
                         ], $toolResults),
                     ),
                 ];
-                if (!str_starts_with($modelBase, 'o1')
+                if (
+                    !str_starts_with($modelBase, 'o1')
                     && !str_starts_with($modelBase, 'o3')
                     && !str_starts_with($modelBase, 'o4')
-                    && !str_starts_with($modelBase, 'gpt-5')) {
+                    && !str_starts_with($modelBase, 'gpt-5')
+                ) {
                     $finalPayload['temperature'] = 0.7;
                 }
                 $response = $this->ai->chat($finalPayload);
@@ -221,21 +234,21 @@ class AmbassadorAgent
                 'info',
                 "Replied on {$message->channel} to " . ($identity->display_name ?? $identity->external_id),
                 [
-                    'channel'         => $message->channel,
-                    'user_message'    => substr($message->content, 0, 200),
-                    'reply_preview'   => substr($assistantContent, 0, 200),
-                    'tools_called'    => $toolResults ? array_column($toolResults, 'function_name') : [],
+                    'channel' => $message->channel,
+                    'user_message' => substr($message->content, 0, 200),
+                    'reply_preview' => substr($assistantContent, 0, 200),
+                    'tools_called' => $toolResults ? array_column($toolResults, 'function_name') : [],
                     'conversation_id' => $conversation->id,
-                    'identity_id'     => $identity->id,
-                    'tier'            => $identity->getTier(),
+                    'identity_id' => $identity->id,
+                    'tier' => $identity->getTier(),
                 ],
                 [
                     'related_user_id' => $identity->user_id,
-                    'related_model'   => 'AgentConversation',
-                    'related_id'      => $conversation->id,
-                    'tokens'          => $response['usage'] ?? null,
-                    'model'           => $model,
-                    'channel'         => $message->channel,
+                    'related_model' => 'AgentConversation',
+                    'related_id' => $conversation->id,
+                    'tokens' => $response['usage'] ?? null,
+                    'model' => $model,
+                    'channel' => $message->channel,
                 ]
             );
 
@@ -344,11 +357,28 @@ class AmbassadorAgent
 
     /**
      * Find or create a conversation for this identity.
+     * Prioritizes the conversation_id from the frontend if provided.
      */
     private function getOrCreateConversation(
         AgentChannelIdentity $identity,
         InboundMessage $message,
     ): AgentConversation {
+        // Priority 1: Resume by explicit conversation_id from the frontend
+        if ($message->conversationId) {
+            $conversation = AgentConversation::where('id', $message->conversationId)
+                ->where('channel_identity_id', $identity->id)
+                ->first();
+
+            if ($conversation) {
+                // Reopen if it was closed
+                if ($conversation->status !== 'open') {
+                    $conversation->update(['status' => 'open']);
+                }
+                return $conversation;
+            }
+        }
+
+        // Priority 2: Find existing open conversation for this identity
         $conversation = AgentConversation::where('channel_identity_id', $identity->id)
             ->where('status', 'open')
             ->latest()

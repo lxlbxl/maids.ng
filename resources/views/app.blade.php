@@ -53,11 +53,21 @@
     @viteReactRefresh
     @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
     <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script src="https://checkout.flutterwave.com/v3.js" crossorigin="anonymous"></script>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
     @inertiaHead
+    <script>
+        (function() {
+            const theme = localStorage.getItem('maids-theme') || 'system';
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const resolved = theme === 'system' ? (prefersDark ? 'dark' : 'light') : theme;
+            if (resolved === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 </head>
 
-<body class="font-body antialiased bg-ivory text-espresso">
+<body class="font-body antialiased bg-ivory dark:bg-[#0f0f10] text-espresso dark:text-[#f0ede8] transition-theme">
     @inertia
 </body>
 

@@ -264,16 +264,16 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
             return (
                 <>
                     <Head title="Your Matches" />
-                    <div className="min-h-screen bg-ivory py-12 px-6">
+                    <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] py-12 px-6">
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-12">
                                 <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-teal mb-2">Your Matches</p>
-                                <h1 className="font-display text-4xl md:text-5xl font-light text-espresso mb-3">
+                                <h1 className="font-display text-4xl md:text-5xl font-light text-espresso dark:text-[#f0ede8] mb-3">
                                     We Found <em className="italic text-copper">{matches.length}</em> Helpers For You
                                 </h1>
-                                <p className="text-muted">Select a helper to proceed with booking</p>
+                                <p className="text-muted dark:text-gray-400">Select a helper to proceed with booking</p>
                                 {accountMessage && (
-                                    <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost text-teal text-sm font-medium px-4 py-2 rounded-full">
+                                    <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost dark:bg-teal/10 text-teal text-sm font-medium px-4 py-2 rounded-full">
                                         <span>✓</span> {accountMessage}
                                     </div>
                                 )}
@@ -281,30 +281,30 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                             <div className="grid gap-5">
                                 {matches.map((maid) => (
-                                    <div key={maid.id} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row md:items-center gap-6">
+                                    <div key={maid.id} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-6 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row md:items-center gap-6">
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-pale to-teal flex-shrink-0 flex items-center justify-center text-white text-xl font-bold relative">
                                             {maid.name.charAt(0)}
                                             {maid.verified && (
-                                                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-success rounded-full border-2 border-white text-[9px] flex items-center justify-center">✓</span>
+                                                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-success rounded-full border-2 border-white dark:border-[#1c1c1e] text-[9px] flex items-center justify-center">✓</span>
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-4">
                                                 <div>
-                                                    <h3 className="font-semibold text-espresso text-lg">{maid.name}</h3>
-                                                    <p className="text-muted text-sm">{maid.role} · {maid.location}</p>
+                                                    <h3 className="font-semibold text-espresso dark:text-[#f0ede8] text-lg">{maid.name}</h3>
+                                                    <p className="text-muted dark:text-gray-400 text-sm">{maid.role} · {maid.location}</p>
                                                 </div>
-                                                <div className="bg-teal-ghost text-teal font-mono text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0">
+                                                <div className="bg-teal-ghost dark:bg-teal/10 text-teal font-mono text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0">
                                                     {maid.match}% match
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4 mt-3">
                                                 <span className="text-copper text-sm">{'★'.repeat(Math.round(maid.rating))} {maid.rating}</span>
-                                                <span className="font-mono text-espresso font-medium">₦{maid.rate?.toLocaleString()}<span className="text-muted text-xs font-normal">/mo</span></span>
+                                                <span className="font-mono text-espresso dark:text-[#f0ede8] font-medium">₦{maid.rate?.toLocaleString()}<span className="text-muted dark:text-gray-400 text-xs font-normal">/mo</span></span>
                                             </div>
                                             <div className="flex flex-wrap gap-1.5 mt-3">
                                                 {(maid.skills || []).slice(0, 4).map(s => (
-                                                    <span key={s} className="bg-teal-ghost text-teal text-[11px] font-medium px-2.5 py-1 rounded-full">{s}</span>
+                                                    <span key={s} className="bg-teal-ghost dark:bg-teal/10 text-teal text-[11px] font-medium px-2.5 py-1 rounded-full">{s}</span>
                                                 ))}
                                             </div>
                                         </div>
@@ -324,21 +324,21 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
         return (
             <>
                 <Head title="Guarantee Match — Maids.ng" />
-                <div className="min-h-screen bg-ivory py-12 px-6">
+                <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] py-12 px-6">
                     <div className="max-w-3xl mx-auto">
                         {/* Header */}
                         <div className="text-center mb-10" style={{ animation: 'fade-up 0.5s ease both' }}>
-                            <a href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto mb-6" /></a>
+                            <a href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto mb-6 dark:brightness-0 dark:invert transition-all" /></a>
                             <p className="text-5xl mb-4">🔍</p>
-                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-3">
+                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso dark:text-[#f0ede8] mb-3">
                                 We Don't Have an Exact Match <em className="italic text-copper">Yet</em>
                             </h1>
-                            <p className="text-muted max-w-lg mx-auto">
-                                No worries — our <strong className="text-espresso">Guarantee Match</strong> service means
+                            <p className="text-muted dark:text-gray-400 max-w-lg mx-auto">
+                                No worries — our <strong className="text-espresso dark:text-[#f0ede8]">Guarantee Match</strong> service means
                                 we'll personally find and assign a verified helper for you, or your money back.
                             </p>
                             {accountMessage && (
-                                <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost text-teal text-sm font-medium px-4 py-2 rounded-full">
+                                <div className="mt-4 inline-flex items-center gap-2 bg-teal-ghost dark:bg-teal/10 text-teal text-sm font-medium px-4 py-2 rounded-full">
                                     <span>✓</span> {accountMessage}
                                 </div>
                             )}
@@ -352,16 +352,16 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                 { icon: '💰', title: 'No Double Payment', desc: 'Once matched, you won\'t pay the regular matching fee again. This covers everything.' },
                                 { icon: '✅', title: 'Fully Verified', desc: 'Every matched helper undergoes full background verification before being assigned to you.' },
                             ].map(card => (
-                                <div key={card.title} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1 hover:shadow-brand-2 transition-shadow">
+                                <div key={card.title} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-6 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-2 transition-shadow">
                                     <span className="text-2xl mb-3 block">{card.icon}</span>
-                                    <h3 className="font-semibold text-espresso text-sm mb-1">{card.title}</h3>
-                                    <p className="text-muted text-xs leading-relaxed">{card.desc}</p>
+                                    <h3 className="font-semibold text-espresso dark:text-[#f0ede8] text-sm mb-1">{card.title}</h3>
+                                    <p className="text-muted dark:text-gray-400 text-xs leading-relaxed">{card.desc}</p>
                                 </div>
                             ))}
                         </div>
 
                         {/* CTA Section */}
-                        <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-2 text-center mb-6" style={{ animation: 'fade-up 0.5s 0.2s ease both' }}>
+                        <div className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-8 border border-gray-200 dark:border-white/10 shadow-brand-2 text-center mb-6" style={{ animation: 'fade-up 0.5s 0.2s ease both' }}>
                             <div className="flex items-center justify-center gap-2 mb-4">
                                 <span className="text-2xl">🛡️</span>
                                 <p className="font-mono text-[10px] tracking-[0.16em] uppercase text-copper font-bold">Guarantee Match Service</p>
@@ -369,10 +369,10 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                             <div className="mb-6">
                                 <div className="flex items-baseline justify-center gap-1 mb-1">
-                                    <span className="font-mono text-4xl font-bold text-espresso">₦{guaranteeFee.toLocaleString()}</span>
-                                    <span className="text-muted text-sm">one-time</span>
+                                    <span className="font-mono text-4xl font-bold text-espresso dark:text-[#f0ede8]">₦{guaranteeFee.toLocaleString()}</span>
+                                    <span className="text-muted dark:text-gray-400 text-sm">one-time</span>
                                 </div>
-                                <p className="text-muted text-xs">Includes matching fee • No extra charges when assigned</p>
+                                <p className="text-muted dark:text-gray-400 text-xs">Includes matching fee • No extra charges when assigned</p>
                             </div>
 
                             <button
@@ -387,7 +387,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                     </span>
                                 ) : `Activate Guarantee Match — ₦${guaranteeFee.toLocaleString()}`}
                             </button>
-                            <p className="text-center text-[11px] text-muted mt-3">🔒 Secured by Paystack · Full refund if no match in 14 days</p>
+                            <p className="text-center text-[11px] text-muted dark:text-gray-400 mt-3">🔒 Secured by Paystack · Full refund if no match in 14 days</p>
                         </div>
 
                         {/* Money-back guarantee notice */}
@@ -395,8 +395,8 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                             <div className="flex items-start gap-3">
                                 <span className="text-3xl flex-shrink-0">💯</span>
                                 <div>
-                                    <h4 className="font-semibold text-espresso text-sm mb-1">100% Money-Back Guarantee</h4>
-                                    <p className="text-muted text-xs leading-relaxed">
+                                    <h4 className="font-semibold text-espresso dark:text-[#f0ede8] text-sm mb-1">100% Money-Back Guarantee</h4>
+                                    <p className="text-muted dark:text-gray-400 text-xs leading-relaxed">
                                         We're confident we'll find your perfect helper. But if we can't match you within 14 days of your payment,
                                         you'll receive a full, automatic refund — no forms, no hassle, no questions asked.
                                     </p>
@@ -406,7 +406,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                         {/* Secondary: Try Again */}
                         <div className="text-center" style={{ animation: 'fade-up 0.5s 0.4s ease both' }}>
-                            <p className="text-muted text-sm mb-3">Or adjust your preferences:</p>
+                            <p className="text-muted dark:text-gray-400 text-sm mb-3">Or adjust your preferences:</p>
                             <button onClick={() => { setMatches(null); setStep(0); }} className="text-teal hover:text-teal-dark font-medium text-sm transition-colors">
                                 ← Try Again with Different Preferences
                             </button>
@@ -425,18 +425,18 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     return (
         <>
             <Head title="Find Your Perfect Helper" />
-            <div className="min-h-screen bg-ivory flex flex-col">
+            <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex flex-col">
                 {/* Progress Bar */}
-                <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+                <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-white/10 z-50">
                     <div className="h-full bg-gradient-to-r from-teal to-copper transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
                 </div>
 
                 {/* Header */}
                 <div className="pt-8 pb-4 px-6 text-center">
                     <a href="/">
-                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto" />
+                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8 mx-auto dark:brightness-0 dark:invert transition-all" />
                     </a>
-                    <p className="font-mono text-[10px] tracking-[0.12em] text-muted mt-3">
+                    <p className="font-mono text-[10px] tracking-[0.12em] text-muted dark:text-gray-400 mt-3">
                         STEP {step + 1} OF {STEPS.length}
                     </p>
                 </div>
@@ -445,10 +445,10 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 <div className="flex-1 flex items-center justify-center px-6 pb-20">
                     <div className="max-w-2xl w-full">
                         <div className="text-center mb-10" key={step}>
-                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso mb-2" style={{ animation: 'fade-up 0.5s ease both' }}>
+                            <h1 className="font-display text-3xl md:text-4xl font-light text-espresso dark:text-[#f0ede8] mb-2" style={{ animation: 'fade-up 0.5s ease both' }}>
                                 {current.title}
                             </h1>
-                            <p className="text-muted">{current.subtitle}</p>
+                            <p className="text-muted dark:text-gray-400">{current.subtitle}</p>
                         </div>
 
                         {/* Option Cards */}
@@ -461,10 +461,10 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                     return (
                                         <button key={opt.value} onClick={() => handleOptionSelect(opt.value)}
                                             className={`p-5 rounded-brand-lg border-2 text-left transition-all duration-200 hover:scale-[1.02]
-                                                ${isSelected ? 'border-teal bg-teal-ghost shadow-brand-2' : 'border-gray-200 bg-white hover:border-teal/30 shadow-brand-1'}`}>
+                                                ${isSelected ? 'border-teal bg-teal-ghost dark:bg-teal/10 shadow-brand-2' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-[#1c1c1e] hover:border-teal/30 shadow-brand-1'}`}>
                                             <div className="text-2xl mb-2">{opt.icon}</div>
-                                            <h3 className={`font-semibold text-sm ${isSelected ? 'text-teal' : 'text-espresso'}`}>{opt.label}</h3>
-                                            <p className="text-muted text-xs mt-0.5">{opt.desc}</p>
+                                            <h3 className={`font-semibold text-sm ${isSelected ? 'text-teal' : 'text-espresso dark:text-[#f0ede8]'}`}>{opt.label}</h3>
+                                            <p className="text-muted dark:text-gray-400 text-xs mt-0.5">{opt.desc}</p>
                                         </button>
                                     );
                                 })}
@@ -478,7 +478,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                     value={answers[current.id] || ''}
                                     onChange={(e) => handleInputChange(current.id, e.target.value)}
                                     placeholder={current.placeholder || (current.id === 'location' ? 'e.g. Lekki, Lagos' : '')}
-                                    className="w-full h-14 bg-white border-2 border-gray-200 rounded-brand-md px-5 text-base text-espresso focus:border-teal focus:ring-2 focus:ring-teal/20 transition-all outline-none"
+                                    className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-base text-espresso dark:text-[#f0ede8] focus:border-teal focus:ring-2 focus:ring-teal/20 transition-all outline-none"
                                     autoFocus
                                 />
                             </div>
@@ -486,21 +486,21 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
 
                         {/* Budget Slider */}
                         {current.type === 'budget' && (
-                            <div className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-1" style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
+                            <div className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-8 border border-gray-200 dark:border-white/10 shadow-brand-1" style={{ animation: 'fade-up 0.5s 0.1s ease both' }}>
                                 <div className="flex justify-between items-baseline mb-6">
                                     <span className="font-mono text-sm text-teal">₦{answers.budget_min?.toLocaleString()}</span>
-                                    <span className="text-muted text-sm">to</span>
+                                    <span className="text-muted dark:text-gray-400 text-sm">to</span>
                                     <span className="font-mono text-sm text-teal">₦{answers.budget_max?.toLocaleString()}</span>
                                 </div>
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="text-xs text-muted mb-2 block">Minimum Budget</label>
+                                        <label className="text-xs text-muted dark:text-gray-400 mb-2 block">Minimum Budget</label>
                                         <input type="range" min="15000" max="200000" step="5000" value={answers.budget_min}
                                             onChange={e => handleInputChange('budget_min', Number(e.target.value))}
                                             className="w-full accent-teal" />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-muted mb-2 block">Maximum Budget</label>
+                                        <label className="text-xs text-muted dark:text-gray-400 mb-2 block">Maximum Budget</label>
                                         <input type="range" min="15000" max="200000" step="5000" value={answers.budget_max}
                                             onChange={e => handleInputChange('budget_max', Number(e.target.value))}
                                             className="w-full accent-teal" />
@@ -512,7 +512,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         {/* Navigation */}
                         <div className="flex items-center justify-between mt-10">
                             <button onClick={prevStep} disabled={step === 0}
-                                className={`text-sm font-medium transition-colors ${step === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-muted hover:text-teal'}`}>
+                                className={`text-sm font-medium transition-colors ${step === 0 ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed' : 'text-muted dark:text-gray-400 hover:text-teal'}`}>
                                 ← Back
                             </button>
                             <button onClick={nextStep} disabled={loading}

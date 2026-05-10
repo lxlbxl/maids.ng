@@ -29,11 +29,11 @@ export default function TokenCostPanel({ todayCost }) {
             <div className="flex-1 overflow-y-auto p-3">
                 <div className="grid grid-cols-2 gap-2 mb-3">
                     <div className="bg-gray-800 rounded p-2 text-center">
-                        <div className="text-white font-bold text-sm">${todayTotal.toFixed(3)}</div>
+                        <div className="text-white font-bold text-sm">${Number(todayTotal || 0).toFixed(3)}</div>
                         <div className="text-gray-500 text-xs">Today's Cost</div>
                     </div>
                     <div className="bg-gray-800 rounded p-2 text-center">
-                        <div className="text-white font-bold text-sm">{(todayTokens / 1000).toFixed(1)}k</div>
+                        <div className="text-white font-bold text-sm">{(Number(todayTokens || 0) / 1000).toFixed(1)}k</div>
                         <div className="text-gray-500 text-xs">Tokens Used</div>
                     </div>
                 </div>
@@ -49,7 +49,7 @@ export default function TokenCostPanel({ todayCost }) {
                                         style={{ width: `${Math.min(100, (a.total_cost / (analytics.byAgent[0]?.total_cost || 1)) * 100)}%` }}
                                     />
                                 </div>
-                                <span className="text-gray-400 text-xs w-14 text-right">${parseFloat(a.total_cost).toFixed(3)}</span>
+                                <span className="text-gray-400 text-xs w-14 text-right">${(parseFloat(a.total_cost) || 0).toFixed(3)}</span>
                             </div>
                         ))}
                     </div>

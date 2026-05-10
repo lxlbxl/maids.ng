@@ -27,6 +27,34 @@ export default function AmbassadorChatWidget({
 
     const apiUrl = '/ambassador/chat';
 
+    // Restore conversation state from sessionStorage on mount
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem('ambassador_chat');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.conversationId) setConversationId(parsed.conversationId);
+                if (parsed.messages?.length) setMessages(parsed.messages);
+            }
+        } catch (e) {
+            // Ignore parse errors
+        }
+    }, []);
+
+    // Persist conversation state to sessionStorage on changes
+    useEffect(() => {
+        if (conversationId || messages.length) {
+            try {
+                sessionStorage.setItem('ambassador_chat', JSON.stringify({
+                    conversationId,
+                    messages,
+                }));
+            } catch (e) {
+                // Ignore storage errors
+            }
+        }
+    }, [conversationId, messages]);
+
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -55,6 +83,7 @@ export default function AmbassadorChatWidget({
                     session_id: sessionId || '',
                     phone: phone || '',
                     email: email || '',
+                    conversation_id: conversationId,
                 }),
             });
 
@@ -63,10 +92,13 @@ export default function AmbassadorChatWidget({
             if (data.success) {
                 setMessages(prev => [
                     ...prev,
-                    { role: 'assistant', content: data.content },
+                    { role: 'assistant', content: data.data?.content || data.content },
                 ]);
-                setConversationId(data.conversation_id);
-                onConversationCreated?.(data.conversation_id);
+                const newConvId = data.data?.conversation_id || data.conversation_id;
+                if (newConvId) {
+                    setConversationId(newConvId);
+                    onConversationCreated?.(newConvId);
+                }
             } else {
                 setMessages(prev => [
                     ...prev,
@@ -118,7 +150,7 @@ export default function AmbassadorChatWidget({
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
                         </div>
-                        
+
                         <div className="relative z-10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white/10 rounded-brand-sm flex items-center justify-center border border-white/20">
@@ -133,7 +165,7 @@ export default function AmbassadorChatWidget({
                                 </div>
                             </div>
                         </div>
-                        
+
                         <button
                             onClick={() => setIsOpen(false)}
                             className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-brand-sm transition-all relative z-10"
@@ -158,7 +190,7 @@ export default function AmbassadorChatWidget({
                                 </p>
                             </div>
                         )}
-                        
+
                         {messages.map((msg, i) => (
                             <div
                                 key={i}
@@ -166,18 +198,18 @@ export default function AmbassadorChatWidget({
                             >
                                 <div
                                     className={`max-w-[88%] px-5 py-4 text-[15px] leading-relaxed shadow-brand-1 transition-all ${msg.role === 'user'
-                                            ? 'bg-teal text-white rounded-brand-md rounded-tr-none'
-                                            : 'bg-white text-espresso rounded-brand-md rounded-tl-none border border-linen'
+                                        ? 'bg-teal text-white rounded-brand-md rounded-tr-none'
+                                        : 'bg-white text-espresso rounded-brand-md rounded-tl-none border border-linen'
                                         }`}
                                 >
                                     {msg.content}
                                 </div>
                                 <span className="font-mono text-[8px] uppercase tracking-tighter mt-2 text-muted opacity-50">
-                                    {msg.role === 'user' ? 'Sent by You' : 'Agent Response'}
+                                    {msg.role === 'user' ? 'You' : 'Concierge AI'}
                                 </span>
                             </div>
                         ))}
-                        
+
                         {loading && (
                             <div className="flex flex-col items-start">
                                 <div className="bg-white px-5 py-4 rounded-brand-md rounded-tl-none border border-linen shadow-brand-1">
@@ -185,7 +217,7 @@ export default function AmbassadorChatWidget({
                                         <div className="w-1.5 h-1.5 bg-teal/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                                         <div className="w-1.5 h-1.5 bg-teal/60 rounded-full animate-bounce" style={{ animationDelay: '200ms' }}></div>
                                         <div className="w-1.5 h-1.5 bg-teal/80 rounded-full animate-bounce" style={{ animationDelay: '400ms' }}></div>
-                                        <span className="font-mono text-[9px] uppercase tracking-widest text-muted ml-2">Consulting Data</span>
+                                        <span className="font-mono text-[9px] uppercase tracking-widest text-muted ml-2">Typing...</span>
                                     </div>
                                 </div>
                             </div>

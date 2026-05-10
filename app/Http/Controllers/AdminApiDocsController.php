@@ -41,10 +41,12 @@ class AdminApiDocsController extends Controller
                         'params' => [
                             'name' => 'required|string',
                             'email' => 'required|string|email|unique',
+                            'phone' => 'required|string|max:20',
                             'password' => 'required|string|confirmed',
-                            'role' => 'required|in:employer,maid'
+                            'role' => 'required|in:employer,maid',
+                            'location' => 'optional|string'
                         ],
-                        'curl' => "curl -X POST {$baseUrl}/api/v1/auth/register \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"password\": \"secret123\", \"password_confirmation\": \"secret123\", \"role\": \"employer\"}'"
+                        'curl' => "curl -X POST {$baseUrl}/api/v1/auth/register \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"phone\": \"+2348000000000\", \"password\": \"secret123\", \"password_confirmation\": \"secret123\", \"role\": \"employer\"}'"
                     ],
                     [
                         'name' => 'Logout',
@@ -65,13 +67,15 @@ class AdminApiDocsController extends Controller
                         'method' => 'POST',
                         'path' => '/api/v1/matching/find',
                         'description' => 'AI-powered matching for employer preferences.',
-                        'auth' => true,
+                        'auth' => false,
                         'params' => [
-                            'help_type' => 'required|string',
+                            'help_types' => 'required|array',
+                            'schedule' => 'required|string',
+                            'urgency' => 'required|string',
                             'location' => 'required|string',
-                            'budget' => 'required|numeric'
+                            'budget_max' => 'optional|integer'
                         ],
-                        'curl' => "curl -X POST {$baseUrl}/api/v1/matching/find \\\n  -H \"Authorization: Bearer YOUR_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"help_type\": \"nanny\", \"location\": \"Lagos\", \"budget\": 50000}'"
+                        'curl' => "curl -X POST {$baseUrl}/api/v1/matching/find \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"help_types\": [\"nanny\"], \"schedule\": \"full-time\", \"urgency\": \"immediate\", \"location\": \"Lagos, NG\", \"budget_max\": 50000}'"
                     ],
                     [
                         'name' => 'List Maids',
@@ -79,7 +83,7 @@ class AdminApiDocsController extends Controller
                         'path' => '/api/v1/maids',
                         'description' => 'Browse and search available maids.',
                         'auth' => true,
-                        'curl' => "curl -G {$baseUrl}/api/v1/maids \\\n  -H \"Authorization: Bearer YOUR_TOKEN\" \\\n  -d \"availability_status=available\" \\\n  -d \"per_page=15\""
+                        'curl' => "curl -G {$baseUrl}/api/v1/maids \\\n  -H \"Authorization: Bearer YOUR_TOKEN\" \\\n  -d \"location=Lagos\" \\\n  -d \"per_page=15\""
                     ]
                 ]
             ],
@@ -90,18 +94,18 @@ class AdminApiDocsController extends Controller
                     [
                         'name' => 'Wallet Balance',
                         'method' => 'GET',
-                        'path' => '/api/v1/wallet',
+                        'path' => '/api/v1/wallets',
                         'description' => 'Retrieve current wallet and escrow balances.',
                         'auth' => true,
-                        'curl' => "curl {$baseUrl}/api/v1/wallet \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
+                        'curl' => "curl {$baseUrl}/api/v1/wallets \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
                     ],
                     [
                         'name' => 'Transaction History',
                         'method' => 'GET',
-                        'path' => '/api/v1/wallet/transactions',
+                        'path' => '/api/v1/wallets/transactions',
                         'description' => 'List all financial transactions.',
                         'auth' => true,
-                        'curl' => "curl {$baseUrl}/api/v1/wallet/transactions \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
+                        'curl' => "curl {$baseUrl}/api/v1/wallets/transactions \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
                     ]
                 ]
             ],

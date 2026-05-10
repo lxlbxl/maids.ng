@@ -41,6 +41,7 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                                     { label: 'Expected Salary', value: `₦${Number(profile?.expected_salary || 0).toLocaleString()}` },
                                     { label: 'Rating', value: `⭐ ${Number(profile?.rating || 0).toFixed(1)} (${profile?.total_reviews || 0} reviews)` },
                                     { label: 'Schedule', value: profile?.schedule_preference || '—' },
+                                    { label: 'NIN Number', value: profile?.nin || '—' },
                                 ].map(item => (
                                     <div key={item.label}>
                                         <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">{item.label}</p>

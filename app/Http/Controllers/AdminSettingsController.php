@@ -283,56 +283,45 @@ class AdminSettingsController extends Controller
     // ──────────────────────────────────────────────────────────────
 
     /**
-     * Test QoreID connection — makes a lightweight API call.
+     * Test QoreID connection — uses the actual QoreIDService.
      */
     public function testQoreid(Request $request): JsonResponse
     {
-        $token = Setting::get('qoreid_token', config('services.qoreid.token', ''));
-        $baseUrl = Setting::get('qoreid_base_url', config('services.qoreid.base_url', 'https://api.qoreid.com/v1'));
+        $clientId = Setting::get('qoreid_client_id', config('services.qoreid.client_id', ''));
+        $clientSecret = Setting::get('qoreid_client_secret', config('services.qoreid.client_secret', ''));
 
-        if (!$token) {
-            return response()->json(['success' => false, 'message' => 'QoreID token not configured.'], 400);
+        if (!$clientId || !$clientSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'QoreID Client ID and Client Secret are both required.',
+            ], 400);
         }
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(15)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ])
-                ->get("{$baseUrl}/ng/identities/nin-premium/12345678901", [
-                    'firstname' => 'Test',
-                    'lastname' => 'Test',
-                ]);
+            $qoreid = new \App\Services\QoreIDService();
+            $result = $qoreid->healthCheck();
 
-            $status = $response->status();
-
-            // 404 = valid auth but NIN not found (expected for test NIN)
-            // 422 = valid auth but validation error (expected)
-            // 402 = valid auth but no credits
-            // 200 = success
-            if (in_array($status, [200, 404, 422, 402, 403])) {
+            if ($result['healthy'] && $result['product_available']) {
                 return response()->json([
                     'success' => true,
-                    'message' => match ($status) {
-                        200 => 'QoreID connected successfully. API returned data.',
-                        404 => 'QoreID connected. Test NIN not found (expected).',
-                        422 => 'QoreID connected. Validation error (expected for test data).',
-                        402 => 'QoreID connected but account has insufficient credits. Top up required.',
-                        403 => 'QoreID connected but NIN Premium access not enabled on your account.',
-                        default => 'QoreID connected.',
-                    },
-                    'status_code' => $status,
-                    'response' => $response->json(),
+                    'message' => 'QoreID connected successfully. NIN Premium product is available.',
+                    'status_code' => $result['status_code'],
+                ]);
+            }
+
+            if ($result['healthy'] && !$result['product_available']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'QoreID is reachable but NIN Premium is not available for this account. Check your product subscription.',
+                    'status_code' => $result['status_code'],
+                    'error' => $result['error'],
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => "QoreID returned unexpected status: {$status}",
-                'status_code' => $status,
-                'response' => $response->json(),
+                'message' => $result['error'] ?? 'QoreID connection failed.',
+                'status_code' => $result['status_code'],
             ], 500);
 
         } catch (\Exception $e) {
@@ -891,6 +880,8 @@ class AdminSettingsController extends Controller
                 'message' => 'Could not fetch live models. Showing defaults.',
             ]);
         }
+    }
+
     /**
      * Generate a new API token for the current admin.
      */

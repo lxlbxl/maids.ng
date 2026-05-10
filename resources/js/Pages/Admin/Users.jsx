@@ -71,6 +71,11 @@ export default function Users({ auth, users, stats, roles }) {
                                             <div>
                                                 <p className="font-bold text-white leading-tight">{user.name || 'Unknown User'}</p>
                                                 <p className="text-[10px] font-mono text-white/20 uppercase">ID: ENT-{user.id}</p>
+                                                {user.employer_preferences && (
+                                                    <p className="text-[9px] font-mono text-success uppercase tracking-tighter mt-1">
+                                                        {user.employer_preferences.matching_status} • ₦{Number(user.employer_preferences.budget_max).toLocaleString()} Max
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </td>

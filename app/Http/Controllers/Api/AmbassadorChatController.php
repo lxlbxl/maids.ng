@@ -17,7 +17,7 @@ class AmbassadorChatController extends ApiController
     }
 
     /**
-     * POST /api/ambassador/chat
+     * POST /ambassador/chat
      * Process a chat message and return the AI response.
      */
     public function chat(Request $request): JsonResponse
@@ -27,6 +27,7 @@ class AmbassadorChatController extends ApiController
             'session_id' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
+            'conversation_id' => 'nullable|integer',
             'metadata' => 'nullable|array',
         ]);
 
@@ -37,6 +38,7 @@ class AmbassadorChatController extends ApiController
             'phone' => $validated['phone'] ?? Auth::user()?->phone,
             'email' => $validated['email'] ?? Auth::user()?->email,
             'message_id' => uniqid('msg_'),
+            'conversation_id' => $validated['conversation_id'] ?? null,
             'metadata' => $validated['metadata'] ?? [],
         ]);
 

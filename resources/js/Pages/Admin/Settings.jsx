@@ -12,6 +12,7 @@ export default function Settings({ auth, settings, aiManifest }) {
     const [fetchSuccess, setFetchSuccess] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [testResults, setTestResults] = useState({});
+    const [generatedToken, setGeneratedToken] = useState(null);
     const dropdownRef = useRef(null);
     const initialFetchDone = useRef({});
 
@@ -53,7 +54,7 @@ export default function Settings({ auth, settings, aiManifest }) {
         'flutterwave_public_key', 'flutterwave_secret_key', 'flutterwave_encryption_key', 'flutterwave_base_url',
         'default_payment_gateway',
         // Verification Settings
-        'qoreid_token', 'qoreid_base_url',
+        'qoreid_client_id', 'qoreid_client_secret', 'qoreid_base_url',
         // SMS Settings
         'termii_api_key', 'termii_sender_id', 'termii_url',
         // Email Settings
@@ -162,9 +163,21 @@ export default function Settings({ auth, settings, aiManifest }) {
     const testConnection = async (provider) => {
         setTestResults(prev => ({ ...prev, [provider]: { loading: true } }));
         try {
-            const endpoint = provider === 'openai'
-                ? route('admin.settings.test.openai')
-                : route('admin.settings.test.openrouter');
+            const endpoints = {
+                openai: route('admin.settings.test.openai'),
+                openrouter: route('admin.settings.test.openrouter'),
+                qoreid: route('admin.settings.test.qoreid'),
+            };
+            const endpoint = endpoints[provider];
+
+            if (!endpoint) {
+                setTestResults(prev => ({
+                    ...prev,
+                    [provider]: { loading: false, success: false, message: 'Unknown provider' }
+                }));
+                return;
+            }
+
             const res = await axios.post(endpoint);
             setTestResults(prev => ({ ...prev, [provider]: { loading: false, ...res.data } }));
         } catch (e) {
@@ -712,16 +725,36 @@ export default function Settings({ auth, settings, aiManifest }) {
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-display text-lg text-white/80">QoreID Configuration</h3>
-                                        <span className="text-[10px] font-mono text-copper uppercase bg-copper/10 px-2 py-0.5 rounded tracking-widest">Encrypted</span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => testConnection('qoreid')}
+                                                disabled={testResults.qoreid?.loading}
+                                                className="text-[10px] font-mono uppercase tracking-wider text-teal/70 hover:text-teal transition-colors disabled:opacity-40"
+                                            >
+                                                {testResults.qoreid?.loading ? 'Testing...' : 'Test Connection'}
+                                            </button>
+                                            <span className="text-[10px] font-mono text-copper uppercase bg-copper/10 px-2 py-0.5 rounded tracking-widest">Encrypted</span>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-1 gap-6">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">API Token</p>
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Client ID</p>
                                             <input
                                                 type="password"
-                                                value={data.settings.qoreid_token?.value || ''}
-                                                onChange={(e) => handleSettingChange('qoreid_token', e.target.value)}
-                                                placeholder="Bearer token..."
+                                                value={data.settings.qoreid_client_id?.value || ''}
+                                                onChange={(e) => handleSettingChange('qoreid_client_id', e.target.value)}
+                                                placeholder="QoreID Client ID..."
+                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Client Secret</p>
+                                            <input
+                                                type="password"
+                                                value={data.settings.qoreid_client_secret?.value || ''}
+                                                onChange={(e) => handleSettingChange('qoreid_client_secret', e.target.value)}
+                                                placeholder="QoreID Client Secret..."
                                                 className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                             />
                                         </div>
@@ -735,6 +768,11 @@ export default function Settings({ auth, settings, aiManifest }) {
                                                 className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                             />
                                         </div>
+                                        {testResults.qoreid && !testResults.qoreid.loading && (
+                                            <p className={`text-xs ${testResults.qoreid.success ? 'text-green-400' : 'text-red-400'}`}>
+                                                {testResults.qoreid.success ? '✓' : '✗'} {testResults.qoreid.message}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -841,8 +879,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                                                     const res = await axios.post(route('admin.settings.api-token'), { name });
                                                     if (res.data.success) {
                                                         const token = res.data.token;
-                                                        // Using a simple prompt to show the token since it's a one-time view
-                                                        window.prompt("YOUR NEW API TOKEN (Copy this now!):", token);
+                                                        setGeneratedToken(token);
                                                         document.getElementById('token-name').value = '';
                                                     }
                                                 } catch (err) {
@@ -854,6 +891,27 @@ export default function Settings({ auth, settings, aiManifest }) {
                                             Generate Key
                                         </button>
                                     </div>
+                                    
+                                    {generatedToken && (
+                                        <div className="mt-4 p-6 bg-teal/10 border border-teal/30 rounded-brand-lg relative">
+                                            <div className="absolute top-0 right-0 p-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(generatedToken);
+                                                        alert('Token copied to clipboard!');
+                                                    }}
+                                                    className="text-[10px] uppercase font-mono tracking-widest text-teal hover:text-white transition-colors"
+                                                >
+                                                    Copy Token
+                                                </button>
+                                            </div>
+                                            <p className="text-teal font-bold mb-2">API Token Generated Successfully</p>
+                                            <p className="text-white/60 text-sm mb-4">Please copy this token now. You will not be able to see it again.</p>
+                                            <div className="bg-[#0a0a0b] p-4 rounded border border-white/10 font-mono text-sm text-amber-400 break-all select-all">
+                                                {generatedToken}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="pt-4">
                                         <button 
@@ -875,6 +933,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                                 </div>
                             </div>
                         )}
+                        {activeTab === 'email' && (
                             <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div>
                                     <h2 className="text-2xl font-display mb-2 text-teal">Email Configuration</h2>

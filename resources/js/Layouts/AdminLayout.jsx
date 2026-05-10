@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import Toast from '@/Components/Toast';
 import BottomNavBar from '@/Components/BottomNavBar';
+import ThemeToggle from '@/Components/ThemeToggle';
 
 export default function AdminLayout({ children }) {
     const { auth, agentHealth = {}, controlRoom } = usePage().props;
@@ -47,34 +48,35 @@ export default function AdminLayout({ children }) {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0b] text-white font-body flex flex-col">
+        <div className="min-h-screen bg-espresso text-ivory font-body flex flex-col">
             {/* Mission Control Top Bar */}
-            <nav className="bg-[#121214] border-b border-white/5 px-4 md:px-6 py-3 md:py-4 relative z-20 shadow-2xl">
+            <nav className="bg-teal-deep border-b border-ivory/5 px-4 md:px-6 py-3 md:py-4 relative z-20 shadow-2xl">
                 <div className="max-w-[1600px] mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3 md:gap-6">
                         <Link href="/admin/dashboard" className="flex items-center gap-2 md:gap-3 group">
                             <div className="w-7 h-7 md:w-8 md:h-8 bg-teal rounded-brand-sm flex items-center justify-center shadow-[0_0_15px_rgba(45,164,142,0.4)]">
                                 <img src="/maids-logo-white.png" alt="M" className="h-3 md:h-4 brightness-0 invert" />
                             </div>
-                            <span className="font-display text-sm md:text-lg tracking-tight group-hover:text-teal transition-colors hidden sm:inline">Mission Control</span>
+                            <span className="font-display text-sm md:text-lg tracking-tight group-hover:text-teal-light transition-colors hidden sm:inline">Mission Control</span>
                         </Link>
 
-                        <div className="hidden lg:flex items-center gap-4 ml-8 border-l border-white/10 pl-8">
+                        <div className="hidden lg:flex items-center gap-4 ml-8 border-l border-ivory/10 pl-8">
                             {agents.map(agent => (
                                 <div key={agent.name} className="flex items-center gap-2">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${agent.status === 'Active' ? 'bg-teal animate-pulse' : 'bg-white/20'}`}></div>
-                                    <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">{agent.name}</span>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${agent.status === 'Active' ? 'bg-teal-light animate-pulse' : 'bg-ivory/20'}`}></div>
+                                    <span className="font-mono text-[9px] uppercase tracking-widest text-ivory/40">{agent.name}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3 md:gap-6">
+                        <ThemeToggle />
                         <div className="flex flex-col items-end hidden sm:flex">
-                            <span className="text-xs font-bold text-teal">{auth?.user?.name}</span>
-                            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/30">Platform Administrator</span>
+                            <span className="text-xs font-bold text-teal-light">{auth?.user?.name}</span>
+                            <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-ivory/30">Platform Administrator</span>
                         </div>
-                        <div className="w-8 h-8 md:w-9 md:h-9 bg-white/5 rounded-full border border-white/10 flex items-center justify-center text-xs md:text-sm">
+                        <div className="w-8 h-8 md:w-9 md:h-9 bg-ivory/5 rounded-full border border-ivory/10 flex items-center justify-center text-xs md:text-sm">
                             A
                         </div>
                     </div>
@@ -83,7 +85,7 @@ export default function AdminLayout({ children }) {
 
             <div className="flex-1 max-w-[1600px] w-full mx-auto flex overflow-hidden">
                 {/* Tactical Sidebar - Hidden on mobile */}
-                <aside className="hidden md:flex w-64 bg-[#121214] border-r border-white/5 flex-col py-8 px-4 gap-8">
+                <aside className="hidden md:flex w-64 bg-teal-deep border-r border-ivory/5 flex-col py-8 px-4 gap-8">
                     <div className="space-y-1">
                         <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/20 mb-4 px-3 font-bold">Main Console</p>
                         {navItems.map((item) => {

@@ -98,4 +98,9 @@ class User extends Authenticatable
     {
         return $this->reviewsReceived()->avg('rating') ?? 0;
     }
+
+    public function getRoleAttribute(): ?string
+    {
+        return $this->getRoleNames()->first();
+    }
 }

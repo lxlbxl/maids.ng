@@ -68,11 +68,30 @@ export default function UserDetail({ auth, userId, user }) {
                     {role === 'employer' && user?.employer_preferences && (
                         <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
                             <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">Employer Preferences</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><p className="font-mono text-[9px] text-white/30 mb-1">BUDGET</p><p className="text-white text-sm">₦{Number(user.employer_preferences.budget_range || 0).toLocaleString()}</p></div>
-                                <div><p className="font-mono text-[9px] text-white/30 mb-1">SCHEDULE</p><p className="text-white text-sm">{user.employer_preferences.schedule_type || '—'}</p></div>
-                                <div><p className="font-mono text-[9px] text-white/30 mb-1">LOCATION</p><p className="text-white text-sm">{user.employer_preferences.location || '—'}</p></div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">BUDGET</p><p className="text-white text-sm">₦{Number(user.employer_preferences.budget_min || 0).toLocaleString()} - ₦{Number(user.employer_preferences.budget_max || 0).toLocaleString()}</p></div>
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">SCHEDULE</p><p className="text-white text-sm">{user.employer_preferences.schedule || '—'}</p></div>
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">LOCATION</p><p className="text-white text-sm">{user.employer_preferences.city}, {user.employer_preferences.state || '—'}</p></div>
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">URGENCY</p><p className="text-white text-sm capitalize">{user.employer_preferences.urgency || '—'}</p></div>
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">MATCHING STATUS</p><p className="text-teal text-sm font-bold uppercase tracking-widest">{user.employer_preferences.matching_status || 'pending'}</p></div>
+                                <div><p className="font-mono text-[9px] text-white/30 mb-1">CONTACT</p><p className="text-white text-xs">{user.employer_preferences.contact_name || '—'}<br/>{user.employer_preferences.contact_phone}</p></div>
                             </div>
+                            {user.employer_preferences.help_types && (
+                                <div className="mt-6 pt-4 border-t border-white/5">
+                                    <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Requested Help Types</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(typeof user.employer_preferences.help_types === 'string' ? JSON.parse(user.employer_preferences.help_types) : user.employer_preferences.help_types).map(type => (
+                                            <span key={type} className="bg-white/5 text-white/70 px-2 py-1 rounded text-[10px] uppercase tracking-wider">{type}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {user.employer_preferences.notes && (
+                                <div className="mt-4 pt-4 border-t border-white/5">
+                                    <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Additional Notes</p>
+                                    <p className="text-white/60 text-sm leading-relaxed">{user.employer_preferences.notes}</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

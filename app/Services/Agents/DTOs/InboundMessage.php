@@ -13,6 +13,7 @@ class InboundMessage
         public readonly ?string $subject = null,
         public readonly ?string $threadId = null,
         public readonly ?string $externalMessageId = null,
+        public readonly ?int $conversationId = null,
         public readonly array $metadata = [],
     ) {
     }
@@ -26,6 +27,7 @@ class InboundMessage
             phone: $payload['phone'] ?? null,
             email: $payload['email'] ?? null,
             externalMessageId: $payload['message_id'] ?? null,
+            conversationId: isset($payload['conversation_id']) ? (int) $payload['conversation_id'] : null,
             metadata: $payload['metadata'] ?? [],
         );
     }

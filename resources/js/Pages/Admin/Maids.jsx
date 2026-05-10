@@ -64,7 +64,7 @@ export default function Maids({ auth, maids, stats, filters }) {
                                             <div>
                                                 <p className="font-bold text-white leading-tight">{maid.name}</p>
                                                 <p className="text-[10px] font-mono text-teal uppercase tracking-widest">
-                                                    {maid.maid_profile?.maid_type || 'Helper'}
+                                                    {maid.maid_profile?.maid_type || 'Helper'} {maid.maid_profile?.nin ? `• NIN: ${maid.maid_profile.nin}` : ''}
                                                 </p>
                                             </div>
                                         </div>
