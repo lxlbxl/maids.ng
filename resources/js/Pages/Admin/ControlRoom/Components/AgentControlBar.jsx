@@ -9,10 +9,10 @@ const AGENT_LABELS = {
 };
 
 const MODE_COLORS = {
-    active:     "bg-green-500",
-    supervised: "bg-yellow-400",
-    paused:     "bg-gray-400",
-    readonly:   "bg-blue-400",
+    active:     "bg-teal-light",
+    supervised: "bg-warning",
+    paused:     "bg-muted",
+    readonly:   "bg-info",
 };
 
 const MODE_ICONS = {
@@ -76,9 +76,9 @@ export default function AgentControlBar({ agents, agentList, onAgentUpdate }) {
     };
 
     return (
-        <div className="bg-gray-900 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider mr-2">
-                Agents
+        <div className="bg-teal-deep rounded-brand-lg p-4 flex flex-wrap gap-3 items-center border border-white/5 shadow-brand-2">
+            <span className="text-white/20 text-[10px] font-mono uppercase tracking-[0.25em] mr-2 font-bold">
+                Operational Status
             </span>
 
             {agentList.map(agent => {
@@ -91,53 +91,53 @@ export default function AgentControlBar({ agents, agentList, onAgentUpdate }) {
                     <div key={agent} className="relative group">
                         <button
                             onClick={() => openModal(agent, null)}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white text-xs font-medium cursor-pointer transition-all hover:scale-105 ${colorClass}`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-brand-sm text-white text-[11px] font-mono uppercase tracking-widest cursor-pointer transition-all hover:scale-105 hover:shadow-lg ${colorClass} border border-white/10`}
                         >
-                            <span>{MODE_ICONS[mode] ?? "\u25C6"}</span>
+                            <span className="opacity-70">{MODE_ICONS[mode] ?? "\u25C6"}</span>
                             <span>{AGENT_LABELS[agent]}</span>
                         </button>
 
-                        <div className="hidden group-hover:block absolute top-full left-0 z-50 pt-2">
-                            <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 w-56 py-1">
+                        <div className="hidden group-hover:block absolute top-full left-0 z-50 pt-3">
+                            <div className="bg-teal-deep rounded-brand-md shadow-brand-3 border border-white/10 w-60 py-2 backdrop-blur-md">
                             {mode !== "active" && !isKilled && (
                                 <button onClick={(e) => { e.stopPropagation(); openModal(agent, "resume"); }}
-                                    className="w-full text-left px-3 py-2 text-sm text-green-400 hover:bg-gray-700">
-                                    Resume
+                                    className="w-full text-left px-4 py-2.5 text-xs font-medium text-teal-light hover:bg-white/5 transition-colors">
+                                    Resume Operational Flow
                                 </button>
                             )}
                             {(mode === "active" || mode === "supervised") && (
                                 <button onClick={(e) => { e.stopPropagation(); openModal(agent, "pause"); }}
-                                    className="w-full text-left px-3 py-2 text-sm text-yellow-400 hover:bg-gray-700">
-                                    Pause
+                                    className="w-full text-left px-4 py-2.5 text-xs font-medium text-warning hover:bg-white/5 transition-colors">
+                                    Interrupt Flow (Pause)
                                 </button>
                             )}
                             <button onClick={(e) => { e.stopPropagation(); openModal(agent, "supervise"); }}
-                                className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-gray-700">
-                                Supervise
+                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-info hover:bg-white/5 transition-colors">
+                                Active Supervision Mode
                             </button>
-                            <hr className="border-gray-700 my-1" />
+                            <hr className="border-white/5 my-1.5" />
                             <button onClick={(e) => { e.stopPropagation(); testAgent(agent); }}
                                 disabled={testResults[agent]?.loading}
-                                className="w-full text-left px-3 py-2 text-sm text-teal-400 hover:bg-gray-700 disabled:opacity-40">
-                                {testResults[agent]?.loading ? 'Testing...' : 'Test Agent'}
+                                className="w-full text-left px-4 py-2.5 text-xs font-medium text-teal-light/70 hover:bg-white/5 disabled:opacity-40 transition-colors">
+                                {testResults[agent]?.loading ? 'Initializing Diagnostic...' : 'Run Diagnostics'}
                             </button>
                             {testResults[agent] && !testResults[agent].loading && (
-                                <div className={`px-3 py-2 text-xs ${testResults[agent].success ? 'text-green-400' : 'text-red-400'} bg-gray-900/50`}>
+                                <div className={`px-4 py-2 text-[10px] font-mono ${testResults[agent].success ? 'text-teal-light' : 'text-danger'} bg-black/20 mx-2 rounded mb-2`}>
                                     {testResults[agent].success
-                                        ? `✓ OK (${testResults[agent].duration_ms}ms)`
-                                        : `✗ ${testResults[agent].error?.substring(0, 80)}`}
+                                        ? `STATUS_OK (${testResults[agent].duration_ms}ms)`
+                                        : `ERROR: ${testResults[agent].error?.substring(0, 80)}`}
                                 </div>
                             )}
-                            <hr className="border-gray-700 my-1" />
+                            <hr className="border-white/5 my-1.5" />
                             {!isKilled ? (
                                 <button onClick={(e) => { e.stopPropagation(); openModal(agent, "kill-switch"); }}
-                                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-700">
-                                    Kill Switch
+                                    className="w-full text-left px-4 py-2.5 text-xs font-medium text-danger hover:bg-white/5 transition-colors">
+                                    Emergency Kill Switch
                                 </button>
                             ) : (
                                 <button onClick={(e) => { e.stopPropagation(); openModal(agent, "release-kill-switch"); }}
-                                    className="w-full text-left px-3 py-2 text-sm text-green-400 hover:bg-gray-700">
-                                    Release Kill Switch
+                                    className="w-full text-left px-4 py-2.5 text-xs font-medium text-teal-light hover:bg-white/5 transition-colors">
+                                    Restore Systems
                                 </button>
                             )}
                             </div>
@@ -147,31 +147,31 @@ export default function AgentControlBar({ agents, agentList, onAgentUpdate }) {
             })}
 
             {showModal && (
-                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={() => setShowModal(false)}>
-                    <div className="bg-gray-800 rounded-xl p-6 w-96 shadow-2xl border border-gray-700" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-white font-semibold mb-1 capitalize">
-                            {modalAction?.replace("-", " ")} {AGENT_LABELS[selectedAgent]}
+                <div className="fixed inset-0 bg-teal-deep/80 backdrop-blur-md z-50 flex items-center justify-center" onClick={() => setShowModal(false)}>
+                    <div className="bg-teal-deep rounded-brand-lg p-8 w-[450px] shadow-brand-3 border border-white/10" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-white text-xl font-display font-bold mb-2 capitalize flex items-center gap-3">
+                            <span className="text-teal-light">/</span> {modalAction?.replace("-", " ")} {AGENT_LABELS[selectedAgent]}
                         </h3>
-                        <p className="text-gray-400 text-sm mb-4">
-                            This action takes effect immediately and is logged in the event feed.
+                        <p className="text-white/40 text-sm mb-6 leading-relaxed">
+                            Authorized personnel only. This command will be logged and dispatched to the agent matrix immediately.
                         </p>
                         <textarea
-                            className="w-full bg-gray-700 text-white rounded-lg p-3 text-sm mb-4 resize-none"
-                            rows={3}
-                            placeholder="Reason (required)..."
+                            className="w-full bg-white/5 border border-white/10 text-white rounded-brand-md p-4 text-sm mb-6 resize-none focus:border-teal-light outline-none transition-colors"
+                            rows={4}
+                            placeholder="State authorization reason..."
                             value={reason}
                             onChange={e => setReason(e.target.value)}
                         />
-                        <div className="flex gap-3 justify-end">
-                            <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white">
-                                Cancel
+                        <div className="flex gap-4 justify-end items-center">
+                            <button onClick={() => setShowModal(false)} className="px-4 py-2 text-xs font-mono uppercase tracking-widest text-white/40 hover:text-white transition-colors">
+                                Abort
                             </button>
                             <button
                                 onClick={handleAction}
                                 disabled={loading || !reason.trim()}
-                                className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg disabled:opacity-40 hover:bg-emerald-500"
+                                className="px-8 py-3 text-xs font-mono uppercase tracking-widest bg-teal-light text-teal-deep font-bold rounded-brand-md disabled:opacity-20 hover:bg-white transition-all shadow-lg active:scale-95"
                             >
-                                {loading ? "Applying..." : "Confirm"}
+                                {loading ? "Executing..." : "Dispatch"}
                             </button>
                         </div>
                     </div>

@@ -5,22 +5,17 @@ use App\Models\User;
 use App\Http\Controllers\Api\AdminController;
 use Illuminate\Http\Request;
 
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+$kernel->handle(Request::capture());
+
 echo "Starting QA Test...\n";
 
-// Find an admin user using Spatie Permission
-$admin = User::role('admin')->first();
+// Find an admin user
+$admin = User::where('role', 'admin')->first();
 if (!$admin) {
-    // Try role column as fallback
-    $admin = User::where('role', 'admin')->first();
-}
-if (!$admin) {
-    // Just find the first user and assign admin role
-    $admin = User::first();
-    if ($admin) {
-        $admin->assignRole('admin');
-    } else {
-        die("No users found in database.\n");
-    }
+    die("No admin user found.\n");
 }
 Auth::login($admin);
 echo "Logged in as Admin: {$admin->email}\n";

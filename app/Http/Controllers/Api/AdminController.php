@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class AdminController extends ApiController
@@ -41,7 +42,7 @@ class AdminController extends ApiController
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
+        if (!$user->isAdmin()) {
             return $this->forbidden('Unauthorized. Admin access required.');
         }
 
@@ -95,19 +96,68 @@ class AdminController extends ApiController
     }
 
     /**
+     * System Health Check.
+     */
+    public function systemHealth(): JsonResponse
+    {
+        $checks = [
+            'database' => $this->checkDatabase(),
+            'cache' => $this->checkCache(),
+            'storage' => $this->checkStorage(),
+        ];
+
+        $allHealthy = collect($checks)->every(fn($check) => $check['status'] === 'healthy');
+
+        return $this->success([
+            'status' => $allHealthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
+            'timestamp' => now()->toIso8601String(),
+        ], $allHealthy ? 'All systems operational' : 'Some systems are experiencing issues');
+    }
+
+    /**
+     * Verify a maid (admin manual approval).
+     */
+    public function verifyMaid(int $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        if (!$user->isMaid()) {
+            return $this->error('User is not a maid', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $profile = $user->maidProfile;
+
+        if (!$profile) {
+            return $this->notFound('Maid profile');
+        }
+
+        $profile->update([
+            'nin_verified' => true,
+            'background_verified' => true,
+        ]);
+
+        return $this->success([
+            'user_id' => $user->id,
+            'nin_verified' => $profile->nin_verified,
+            'background_verified' => $profile->background_verified,
+        ], 'Maid verified successfully');
+    }
+
+    /**
      * Get pending withdrawal requests.
      */
     public function pendingWithdrawals(): JsonResponse
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
+        if (!$user->isAdmin()) {
             return $this->forbidden('Unauthorized. Admin access required.');
         }
 
-        $withdrawals = WalletTransaction::where('type', 'withdrawal')
+        $withdrawals = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
-            ->with(['wallet.user'])
+            ->with(['employer', 'maid'])
             ->orderBy('created_at', 'asc')
             ->paginate(20);
 
@@ -122,7 +172,7 @@ class AdminController extends ApiController
         $user = Auth::user();
         $validated = $request->validated();
 
-        $withdrawal = WalletTransaction::where('type', 'withdrawal')
+        $withdrawal = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
             ->findOrFail($id);
 
@@ -149,14 +199,11 @@ class AdminController extends ApiController
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
-        $withdrawal = WalletTransaction::where('type', 'withdrawal')
+        $withdrawal = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
             ->findOrFail($id);
 
@@ -165,11 +212,10 @@ class AdminController extends ApiController
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->validationError($validator->errors()->toArray());
         }
+
+        $reason = $validator->validated()['reason'];
 
         // Refund the amount to wallet
         $this->walletService->credit(
@@ -179,7 +225,7 @@ class AdminController extends ApiController
             null,
             [
                 'withdrawal_id' => $withdrawal->id,
-                'rejection_reason' => $validated['reason'],
+                'rejection_reason' => $reason,
             ]
         );
 
@@ -189,7 +235,7 @@ class AdminController extends ApiController
             'rejected_at' => now(),
             'rejected_by' => $user->id,
             'metadata' => array_merge($withdrawal->metadata ?? [], [
-                'rejection_reason' => $validated['reason'],
+                'rejection_reason' => $reason,
             ]),
         ]);
 
@@ -203,11 +249,8 @@ class AdminController extends ApiController
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $query = User::query();
@@ -245,7 +288,7 @@ class AdminController extends ApiController
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
+        if (!$user->isAdmin()) {
             return $this->forbidden('Unauthorized. Admin access required.');
         }
 
@@ -288,7 +331,7 @@ class AdminController extends ApiController
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
+        if (!$user->isAdmin()) {
             return $this->forbidden('Unauthorized. Admin access required.');
         }
 
@@ -790,7 +833,7 @@ class AdminController extends ApiController
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return $this->validationError($validator->errors()->toArray());
         }
 
         $query = SalaryPayment::with(['employer:id,name', 'maid:id,name', 'assignment:id', 'processor:id,name']);
@@ -820,5 +863,38 @@ class AdminController extends ApiController
             'summary' => $summary,
             'payments' => $payments,
         ], 'Salary payment history retrieved successfully');
+    }
+
+    private function checkDatabase(): array
+    {
+        try {
+            \DB::connection()->getPdo();
+            return ['status' => 'healthy', 'message' => 'Database connection OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Database connection failed'];
+        }
+    }
+
+    private function checkCache(): array
+    {
+        try {
+            \Cache::put('health_check', true, 10);
+            \Cache::forget('health_check');
+            return ['status' => 'healthy', 'message' => 'Cache OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Cache unavailable'];
+        }
+    }
+
+    private function checkStorage(): array
+    {
+        try {
+            $path = storage_path('app/health_check');
+            \File::put($path, 'ok');
+            \File::delete($path);
+            return ['status' => 'healthy', 'message' => 'Storage OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Storage write failed'];
+        }
     }
 }

@@ -9,7 +9,6 @@ use App\Http\Controllers\Api\Maid\MaidController as LegacyMaidController;
 use App\Http\Controllers\Api\Employer\EmployerController as LegacyEmployerController;
 use App\Http\Controllers\Api\Booking\BookingController;
 use App\Http\Controllers\Api\Payment\PaymentController;
-use App\Http\Controllers\Api\Admin\AdminController as LegacyAdminController;
 
 // New AI-Native System Controllers
 use App\Http\Controllers\Api\AssignmentController;
@@ -229,8 +228,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [PaymentController::class, 'show']);
         });
 
-        // Payment Webhook (Public but protected by signature)
-        Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
+        // Payment Webhook (Public but protected by signature - moved outside auth group)
+        Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->withoutMiddleware(['auth:sanctum']);
 
         /*
         |--------------------------------------------------------------------------
@@ -379,39 +378,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/reports/export', [ReportController::class, 'export']);
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Legacy Admin Routes (Backward Compatibility)
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('admin-legacy')->middleware(['role:admin'])->group(function () {
-            // Dashboard
-            Route::get('/dashboard', [LegacyAdminController::class, 'getDashboardStats']);
-            Route::get('/system-health', [LegacyAdminController::class, 'getSystemHealth']);
-
-            // Users
-            Route::get('/users', [LegacyAdminController::class, 'listUsers']);
-            Route::get('/users/{id}', [LegacyAdminController::class, 'getUser']);
-            Route::put('/users/{id}/status', [LegacyAdminController::class, 'updateUserStatus']);
-
-            // Maids
-            Route::get('/maids', [LegacyAdminController::class, 'listMaids']);
-            Route::put('/maids/{id}/verify', [LegacyAdminController::class, 'verifyMaid']);
-
-            // Bookings
-            Route::get('/bookings', [LegacyAdminController::class, 'listBookings']);
-
-            // Payments
-            Route::get('/payments', [LegacyAdminController::class, 'listPayments']);
-            Route::get('/revenue-report', [LegacyAdminController::class, 'getRevenueReport']);
-
-            // Reviews
-            Route::get('/reviews', [LegacyAdminController::class, 'listReviews']);
-
-            // AI Settings - Fetch models from provider API
-            Route::get('/ai/models/{provider}', [LegacyAdminController::class, 'fetchAiModels']);
-        });
     });
 });
 
@@ -425,9 +391,6 @@ Route::prefix('v1')->group(function () {
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
-// Public matching API - no authentication required
-Route::post('/matching/find', [\App\Http\Controllers\MatchingController::class, 'findMatches']);
 
 /*
 |--------------------------------------------------------------------------

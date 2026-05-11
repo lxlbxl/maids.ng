@@ -65,5 +65,18 @@ class MaidVerificationController extends Controller
     }
 
     public function submitDocument(Request $request) { return back()->with('success', 'Document submitted.'); }
-    public function status() { return response()->json(['status' => 'pending']); }
+    public function status() 
+    { 
+        $user = auth()->user();
+        $verification = \App\Models\NinVerification::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'status' => $verification->status ?? 'none',
+            'nin_verified' => $user->maidProfile->nin_verified ?? false,
+            'confidence_score' => $verification->confidence_score ?? 0,
+            'reviewed_at' => $verification->reviewed_at ?? null,
+        ]); 
+    }
 }

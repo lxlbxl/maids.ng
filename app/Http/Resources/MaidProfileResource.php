@@ -66,8 +66,8 @@ class MaidProfileResource extends JsonResource
             ],
 
             // Documents
-            'nin_number' => $this->when($request->user()?->hasRole('admin'), $this->nin_number),
-            'documents' => $this->when($request->user()?->hasRole('admin'), $this->documents),
+            'nin' => $this->nin,
+            'nin_report' => $this->nin_report,
 
             // AI Matching Score (if available)
             'match_score' => $this->when(isset($this->match_score), $this->match_score),

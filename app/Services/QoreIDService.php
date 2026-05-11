@@ -52,8 +52,7 @@ class QoreIDService
         string $lastName,
         array $optional = []
     ): array {
-        $token = $this->getAccessToken();
-        // Validate NIN format: must be exactly 11 digits
+        // Validate NIN format FIRST (before token fetch to avoid wasting API calls)
         if (!preg_match('/^\d{11}$/', $nin)) {
             Log::warning('QoreID NIN validation failed', ['nin' => $nin]);
             return [
@@ -64,8 +63,14 @@ class QoreIDService
             ];
         }
 
+        $token = $this->getAccessToken();
+
         if (empty($token)) {
-            Log::error('QoreID token generation failed.');
+            Log::error('QoreID token generation failed.', [
+                'has_client_id' => !empty($this->clientId),
+                'has_client_secret' => !empty($this->clientSecret),
+                'base_url' => $this->baseUrl,
+            ]);
             return [
                 'success' => false,
                 'data' => null,
@@ -198,36 +203,56 @@ class QoreIDService
     protected function getAccessToken(): ?string
     {
         if (empty($this->clientId) || empty($this->clientSecret)) {
-            Log::error('QoreID Client ID or Secret is missing.');
+            Log::error('QoreID Client ID or Secret is missing.', [
+                'has_client_id' => !empty($this->clientId),
+                'client_id_length' => strlen($this->clientId ?? ''),
+                'has_client_secret' => !empty($this->clientSecret),
+            ]);
             return null;
         }
 
-        return Cache::remember('qoreid_access_token', now()->addMinutes(115), function () {
-            try {
-                $response = $this->client->post('https://auth.qoreid.com/auth/realms/qoreid/protocol/openid-connect/token', [
-                    'form_params' => [
-                        'grant_type' => 'client_credentials',
-                        'client_id' => $this->clientId,
-                        'client_secret' => $this->clientSecret,
-                    ],
-                    'headers' => [
-                        'Accept' => 'application/json',
-                    ],
-                ]);
+        // Check cache first
+        $cached = Cache::get('qoreid_access_token');
+        if (!empty($cached)) {
+            return $cached;
+        }
 
-                $data = json_decode($response->getBody()->getContents(), true);
+        // Fetch new token — DO NOT cache null results (prevents 2-hour lockouts)
+        try {
+            $response = $this->client->post('https://auth.qoreid.com/auth/realms/qoreid/protocol/openid-connect/token', [
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                ],
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
 
-                if (!empty($data['access_token'])) {
-                    return $data['access_token'];
-                }
+            $data = json_decode($response->getBody()->getContents(), true);
 
-                Log::error('QoreID Token Response invalid', ['response' => $data]);
-                return null;
-            } catch (\Exception $e) {
-                Log::error('Failed to fetch QoreID Access Token: ' . $e->getMessage());
-                return null;
+            if (!empty($data['access_token'])) {
+                // Only cache successful tokens
+                $expiresIn = (int) ($data['expires_in'] ?? 7200); // Default 2 hours
+                $cacheDuration = max(60, $expiresIn - 300); // Cache for (expiry - 5 minutes buffer)
+                Cache::put('qoreid_access_token', $data['access_token'], now()->addSeconds($cacheDuration));
+                Log::info('QoreID Access Token obtained successfully', ['expires_in' => $expiresIn]);
+                return $data['access_token'];
             }
-        });
+
+            Log::error('QoreID Token Response missing access_token', [
+                'response_keys' => array_keys($data ?? []),
+                'token_type' => $data['token_type'] ?? 'missing',
+            ]);
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch QoreID Access Token', [
+                'error' => $e->getMessage(),
+                'client_id' => substr($this->clientId ?? '', 0, 8) . '...',
+            ]);
+            return null;
+        }
     }
 
     /**
@@ -295,19 +320,25 @@ class QoreIDService
             } catch (\GuzzleHttp\Exception\GuzzleException $e) {
                 $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
 
+                // QoreID returns 500 "Unknown Error from provider" for non-existent NINs
+                // This actually means: auth works, product is available, API is reachable
                 $productAvailable = match ($statusCode) {
                     401 => false,
                     402 => true,  // Auth works, just no credits
                     403 => false, // No access to product
                     404 => false, // Product not available for this account
                     429 => true,  // Rate limited, but product exists
+                    500 => true,  // Provider error for dummy NIN = product is available
                     default => null,
                 };
 
+                // Consider the service healthy if we got a meaningful response
+                $isHealthy = in_array($statusCode, [402, 429, 500]);
+
                 return [
-                    'healthy' => $statusCode === 404 ? false : ($statusCode === 429),
+                    'healthy' => $isHealthy,
                     'product_available' => $productAvailable,
-                    'error' => "QoreID NIN Premium endpoint returned HTTP {$statusCode}.",
+                    'error' => $isHealthy ? null : "QoreID NIN Premium endpoint returned HTTP {$statusCode}.",
                     'status_code' => $statusCode,
                 ];
             } catch (\Exception $e) {

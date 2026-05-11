@@ -36,6 +36,12 @@ Schedule::command('ai:process-salary-reminders')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/ai-salary-reminders.log'));
 
+// Background sweep for pending NIN verifications every 30 minutes
+Schedule::command('ai:verify-pending-nins')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ai-nin-verifications.log'));
+
 // Daily cleanup of old logs (keep last 30 days)
 Schedule::command('log:clear-old')
     ->dailyAt('02:00')

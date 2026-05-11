@@ -19,7 +19,7 @@ class ProcessStandaloneVerification implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $backoff = [10, 60, 300];
+    public array $backoff = [10, 60, 300];
 
     public int $verificationId;
 

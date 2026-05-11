@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Maid\{UpdateAvailabilityRequest, UpdateProfileRequest, ListAssignmentsRequest, SearchMaidsRequest};
+use App\Http\Resources\MaidProfileResource;
 use App\Models\MaidAssignment;
 use App\Models\MaidProfile;
 use App\Models\MaidWallet;
@@ -441,53 +442,54 @@ class MaidController extends ApiController
      */
     public function listAvailable(SearchMaidsRequest $request): JsonResponse
     {
-        $validated = $request->validated();
- 
-        $query = MaidProfile::where('availability_status', 'available')
-            ->with(['user:id,name,avatar,location']);
- 
-        // Apply filters
-        if (!empty($validated['location'])) {
-            $query->whereHas('user', function ($q) use ($validated) {
-                $q->where('location', 'like', '%' . $validated['location'] . '%');
-            });
+        $perPage = (int) $request->input('per_page', 15);
+
+        $query = MaidProfile::query();
+
+        if ($request->filled('location')) {
+            $query->whereHas('user', fn($q) => $q->where('location', 'like', '%' . $request->input('location') . '%'));
         }
- 
-        if (!empty($validated['state'])) {
-            $query->where('state', $validated['state']);
+
+        if ($request->filled('state')) {
+            $query->where('state', $request->input('state'));
         }
- 
-        if (!empty($validated['lga'])) {
-            $query->where('lga', $validated['lga']);
+
+        if ($request->filled('lga')) {
+            $query->where('lga', $request->input('lga'));
         }
- 
-        if (!empty($validated['help_types'])) {
-            foreach ($validated['help_types'] as $type) {
+
+        if ($request->filled('help_types')) {
+            $types = is_array($request->input('help_types')) ? $request->input('help_types') : [$request->input('help_types')];
+            foreach ($types as $type) {
                 $query->whereJsonContains('help_types', $type);
             }
         }
- 
-        if (!empty($validated['min_experience'])) {
-            $query->where('experience_years', '>=', $validated['min_experience']);
+
+        if ($request->filled('min_experience')) {
+            $query->where('experience_years', '>=', (int) $request->input('min_experience'));
         }
- 
-        if (!empty($validated['max_salary'])) {
-            $query->where('expected_salary', '<=', $validated['max_salary']);
+
+        if ($request->filled('max_salary')) {
+            $query->where('expected_salary', '<=', (int) $request->input('max_salary'));
         }
- 
-        if (!empty($validated['schedule_preference'])) {
-            $query->where('schedule_preference', $validated['schedule_preference']);
+
+        if ($request->filled('schedule_preference')) {
+            $query->where('schedule_preference', $request->input('schedule_preference'));
         }
- 
+
         if ($request->boolean('verified_only')) {
-            $query->where('nin_verified', true)
-                ->where('background_verified', true);
+            $query->where(['nin_verified' => true, 'background_verified' => true]);
         }
- 
-        $maids = $query->orderBy('rating', 'desc')
+
+        $maids = $query->with(['user:id,name,avatar,location'])
+            ->orderBy('rating', 'desc')
             ->orderBy('total_reviews', 'desc')
-            ->paginate($validated['per_page'] ?? 15);
- 
-        return $this->paginated($maids, 'Available maids retrieved successfully');
+            ->paginate($perPage);
+
+        return $this->paginated(
+            MaidProfileResource::collection($maids),
+            $maids,
+            'Available maids retrieved successfully'
+        );
     }
 }

@@ -49,6 +49,7 @@ class GatekeeperAgent extends AgentService
             );
 
             if (!$apiResult['success']) {
+                $this->updateNinTrackingRecord($maid->user_id, 'failed', 0);
                 $this->escalate(
                     $action,
                     "rejected",
@@ -115,6 +116,8 @@ class GatekeeperAgent extends AgentService
                 $maid->nin_report = json_encode($report);
                 $maid->save();
 
+                $this->updateNinTrackingRecord($maid->user_id, 'verified', $confidence, $report['verification_reference']);
+
                 $this->logDecision(
                     action: $action,
                     decision: "approved",
@@ -132,6 +135,8 @@ class GatekeeperAgent extends AgentService
                 ];
             } else {
                 // Needs manual review
+                $this->updateNinTrackingRecord($maid->user_id, 'review_required', $confidence, $report['verification_reference']);
+
                 $this->escalate(
                     $action,
                     "queued_for_review",
@@ -165,11 +170,32 @@ class GatekeeperAgent extends AgentService
                 0
             );
 
+            $this->updateNinTrackingRecord($maid->user_id, 'failed', 0);
             return [
                 'success' => false,
                 'status' => 'error',
                 'reason' => 'Verification service unavailable. Please try again later.',
             ];
+        }
+    }
+
+    /**
+     * Helper to update the NinVerification tracking record.
+     */
+    protected function updateNinTrackingRecord(int $userId, string $status, int $confidence = 0, ?string $reference = null): void
+    {
+        try {
+            \App\Models\NinVerification::where('user_id', $userId)
+                ->where('status', 'pending')
+                ->latest()
+                ->update([
+                    'status' => $status,
+                    'confidence_score' => $confidence,
+                    'external_reference' => $reference,
+                    'reviewed_at' => ($status !== 'pending') ? now() : null,
+                ]);
+        } catch (\Exception $e) {
+            Log::warning("Failed to update NinVerification record for user {$userId}: " . $e->getMessage());
         }
     }
 
