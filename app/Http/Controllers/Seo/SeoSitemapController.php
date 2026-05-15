@@ -19,6 +19,7 @@ class SeoSitemapController extends Controller
             route('sitemap.services'),
             route('sitemap.guides'),
             route('sitemap.faqs'),
+            url('/sitemap-static.xml'),
         ];
 
         foreach ($sitemaps as $url) {
