@@ -69,6 +69,8 @@ class RegisterController extends Controller
             'experience_years' => 'nullable|integer',
             'expected_salary' => 'nullable|numeric',
             'location' => 'required|string',
+            'gender' => 'required|string|in:male,female',
+            'willing_states' => 'required|array|min:1',
             'nin' => 'nullable|string|size:11',
             'is_foreigner' => 'nullable|boolean',
             'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -111,6 +113,8 @@ class RegisterController extends Controller
             'location' => $validated['location'],
             'help_types' => $validated['skills'] ?? [],
             'nin_verified' => false,
+            'gender' => $validated['gender'],
+            'willing_states' => $validated['willing_states'],
         ]);
 
         \Log::info('Maid profile created', ['user_id' => $user->id]);

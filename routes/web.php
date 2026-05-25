@@ -36,11 +36,16 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public static pages
-Route::get('/about', function () { return Inertia::render('About'); })->name('about');
-Route::get('/contact', function () { return Inertia::render('Contact'); })->name('contact');
-Route::get('/blog', function () { return Inertia::render('Blog'); })->name('blog');
-Route::get('/terms', function () { return Inertia::render('Terms'); })->name('terms');
-Route::get('/privacy', function () { return Inertia::render('Privacy'); })->name('privacy');
+Route::get('/about', function () {
+    return Inertia::render('About'); })->name('about');
+Route::get('/contact', function () {
+    return Inertia::render('Contact'); })->name('contact');
+Route::get('/blog', function () {
+    return Inertia::render('Blog'); })->name('blog');
+Route::get('/terms', function () {
+    return Inertia::render('Terms'); })->name('terms');
+Route::get('/privacy', function () {
+    return Inertia::render('Privacy'); })->name('privacy');
 
 // Public Routes
 Route::get('/', function () {
@@ -76,6 +81,17 @@ Route::get('/maids', [MaidSearchController::class, 'index'])->name('maids.search
 Route::get('/maids/search', [MaidSearchController::class, 'search'])->name('maids.search.api');
 Route::get('/maids/featured', [MaidSearchController::class, 'featured'])->name('maids.featured');
 Route::get('/maids/locations', [MaidSearchController::class, 'locations'])->name('maids.locations');
+Route::get('/api/unmatched-employer-locations', function () {
+    $states = \Illuminate\Support\Facades\Cache::remember('unmatched_employer_locations', 300, function () {
+        return \App\Models\EmployerPreference::whereIn('matching_status', ['pending', 'guarantee_search'])
+            ->whereNotNull('state')
+            ->where('state', '!=', '')
+            ->distinct()
+            ->pluck('state')
+            ->toArray();
+    });
+    return response()->json($states);
+});
 Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show');
 
 // Deployment & Maintenance (Token-only auth — works on shared hosting)
@@ -225,8 +241,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::post('/notifications/preferences', [NotificationController::class, 'updatePreferences'])->name('notifications.preferences');
 
     // Admin Routes
@@ -267,582 +283,31 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/api-token', [AdminSettingsController::class, 'generateApiToken'])->name('settings.api-token');
         Route::post('/settings/revoke-tokens', [AdminSettingsController::class, 'revokeApiTokens'])->name('settings.revoke-tokens');
         Route::get('/api-docs', [AdminApiDocsController::class, 'index'])->name('api_docs');
+        Route::get('/webhooks', [App\Http\Controllers\Admin\AdminWebhookController::class, 'index'])->name('webhooks');
 
         // Agent Command Center
-        Route::get('/agents', function () {
-            $stats = ['active_agents' => 0, 'open_conversations' => 0, 'new_leads' => 0, 'messages_today' => 0];
-            $conversations = [];
-            $leads = [];
-            $agentSettings = [];
+        Route::get('/agents', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'index'])->name('agents');
+        Route::post('/agents/toggle', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'toggleAgent'])->name('agents.toggle');
+        Route::post('/agents/channels/toggle', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'toggleChannel'])->name('agents.channels.toggle');
+        Route::post('/agents/conversations/{id}/close', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'closeConversation'])->name('agents.conversations.close');
 
-            try {
-                // Load agent-related settings
-                $settingKeys = \Illuminate\Support\Facades\DB::table('settings')
-                    ->where('key', 'like', 'agent_%')
-                    ->orWhere('key', 'like', 'channel_%')
-                    ->get();
-                foreach ($settingKeys as $s) {
-                    $agentSettings[$s->key] = $s->value;
-                }
-
-                // Conversations
-                if (\Illuminate\Support\Facades\Schema::hasTable('agent_conversations')) {
-                    $conversations = \Illuminate\Support\Facades\DB::table('agent_conversations')
-                        ->join('agent_channel_identities', 'agent_conversations.channel_identity_id', '=', 'agent_channel_identities.id')
-                        ->select('agent_conversations.*', 'agent_channel_identities.display_name', 'agent_channel_identities.phone', 'agent_channel_identities.email', 'agent_channel_identities.channel as ch')
-                        ->where('agent_conversations.status', 'open')
-                        ->orderByDesc('agent_conversations.last_message_at')
-                        ->limit(50)->get()
-                        ->map(fn($c) => [
-                            'id' => $c->id,
-                            'channel' => $c->ch,
-                            'status' => $c->status,
-                            'last_message_at' => $c->last_message_at,
-                            'identity' => ['display_name' => $c->display_name, 'phone' => $c->phone, 'channel' => $c->ch],
-                        ])->all();
-                    $stats['open_conversations'] = count($conversations);
-                }
-
-                // Leads
-                if (\Illuminate\Support\Facades\Schema::hasTable('agent_leads')) {
-                    $leads = \Illuminate\Support\Facades\DB::table('agent_leads')
-                        ->join('agent_channel_identities', 'agent_leads.channel_identity_id', '=', 'agent_channel_identities.id')
-                        ->select('agent_leads.*', 'agent_channel_identities.display_name', 'agent_channel_identities.phone', 'agent_channel_identities.channel as ch')
-                        ->orderByDesc('agent_leads.created_at')
-                        ->limit(100)->get()
-                        ->map(fn($l) => [
-                            'id' => $l->id,
-                            'status' => $l->status,
-                            'phone' => $l->phone,
-                            'email' => $l->email,
-                            'created_at' => $l->created_at,
-                            'converted_at' => $l->converted_at ?? null,
-                            'identity' => ['display_name' => $l->display_name, 'phone' => $l->phone, 'channel' => $l->ch],
-                        ])->all();
-                    $stats['new_leads'] = \Illuminate\Support\Facades\DB::table('agent_leads')->where('status', 'new')->count();
-                }
-
-                // Messages today
-                if (\Illuminate\Support\Facades\Schema::hasTable('agent_messages')) {
-                    $stats['messages_today'] = \Illuminate\Support\Facades\DB::table('agent_messages')
-                        ->where('created_at', '>=', now()->startOfDay())->count();
-                }
-                $stats['active_agents'] = 7;
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Agent page load error: ' . $e->getMessage());
-            }
-
-            return Inertia::render('Admin/Agents', compact('stats', 'conversations', 'leads', 'agentSettings'));
-        })->name('agents');
-
-        // Toggle agent on/off
-        Route::post('/agents/toggle', function (\Illuminate\Http\Request $request) {
-            $agent = $request->input('agent');
-            $enabled = $request->boolean('enabled');
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => "agent_{$agent}_enabled"],
-                ['value' => $enabled ? 'true' : 'false', 'group' => 'agents', 'updated_at' => now(), 'created_at' => now()]
-            );
-            return back()->with('success', "Agent updated.");
-        })->name('agents.toggle');
-
-        // Toggle channel on/off
-        Route::post('/agents/channels/toggle', function (\Illuminate\Http\Request $request) {
-            $channel = $request->input('channel');
-            $enabled = $request->boolean('enabled');
-            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
-                ['key' => "channel_{$channel}_enabled"],
-                ['value' => $enabled ? 'true' : 'false', 'group' => 'agents', 'updated_at' => now(), 'created_at' => now()]
-            );
-            return back()->with('success', "Channel updated.");
-        })->name('agents.channels.toggle');
-
-        // Close conversation
-        Route::post('/agents/conversations/{id}/close', function ($id) {
-            try {
-                \Illuminate\Support\Facades\DB::table('agent_conversations')->where('id', $id)->update(['status' => 'closed', 'updated_at' => now()]);
-                return back()->with('success', 'Conversation closed.');
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => $e->getMessage()]);
-            }
-        })->name('agents.conversations.close');
-
-        // AI Matching & Salary Ops — data passed via Inertia props (not API calls)
-        Route::get('/matching', function () {
-            $jobs = [];
-            $stats = [
-                'total_jobs' => 0,
-                'pending' => 0,
-                'processing' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'requires_review' => 0,
-            ];
-
-            try {
-                if (\Illuminate\Support\Facades\Schema::hasTable('ai_matching_queue')) {
-                    $query = \Illuminate\Support\Facades\DB::table('ai_matching_queue')
-                        ->orderByDesc('created_at')
-                        ->limit(50);
-
-                    $rawJobs = $query->get();
-
-                    $jobs = $rawJobs->map(function ($job) {
-                        $employer = null;
-                        if ($job->employer_id) {
-                            $employer = \Illuminate\Support\Facades\DB::table('users')
-                                ->where('id', $job->employer_id)
-                                ->select('id', 'name', 'email')
-                                ->first();
-                        }
-                        return [
-                            'job_id' => $job->job_id,
-                            'employer' => $employer ? ['name' => $employer->name] : ['name' => 'Unknown'],
-                            'status' => $job->status ?? 'pending',
-                            'priority' => $job->priority ?? 5,
-                            'created_at' => $job->created_at,
-                            'completed_at' => $job->completed_at ?? null,
-                            'ai_confidence_score' => $job->ai_confidence_score ? (float) $job->ai_confidence_score / 100 : null,
-                            'requires_review' => (bool) ($job->requires_review ?? false),
-                        ];
-                    })->all();
-
-                    $stats = [
-                        'total_jobs' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->count(),
-                        'pending' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->where('status', 'pending')->count(),
-                        'processing' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->where('status', 'processing')->count(),
-                        'completed' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->where('status', 'completed')->count(),
-                        'failed' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->where('status', 'failed')->count(),
-                        'requires_review' => \Illuminate\Support\Facades\DB::table('ai_matching_queue')->where('requires_review', true)->count(),
-                    ];
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Matching queue data fetch failed: ' . $e->getMessage());
-            }
-
-            return Inertia::render('Admin/MatchingQueue', [
-                'jobs' => $jobs,
-                'stats' => $stats,
-            ]);
-        })->name('matching');
-
-        // Matching Queue Actions
-        Route::post('/matching/force-process', function () {
-            try {
-                $updated = \Illuminate\Support\Facades\DB::table('ai_matching_queue')
-                    ->where('status', 'pending')
-                    ->update(['status' => 'processing', 'updated_at' => now()]);
-
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'force_process_queue',
-                        'description' => "Admin force-processed {$updated} pending matching jobs",
-                        'metadata' => json_encode(['admin_id' => auth()->id(), 'jobs_affected' => $updated]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                }
-
-                return back()->with('success', "Force-processing initiated for {$updated} pending jobs.");
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('matching.force-process');
-
-        Route::post('/matching/{jobId}/approve', function ($jobId) {
-            try {
-                \Illuminate\Support\Facades\DB::table('ai_matching_queue')
-                    ->where('job_id', $jobId)
-                    ->update(['requires_review' => false, 'status' => 'completed', 'completed_at' => now(), 'updated_at' => now()]);
-                return back()->with('success', "Match {$jobId} approved.");
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('matching.approve');
-
-        Route::post('/matching/{jobId}/reject', function ($jobId) {
-            try {
-                \Illuminate\Support\Facades\DB::table('ai_matching_queue')
-                    ->where('job_id', $jobId)
-                    ->update(['requires_review' => false, 'status' => 'failed', 'updated_at' => now()]);
-                return back()->with('success', "Match {$jobId} rejected.");
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('matching.reject');
-
-        Route::post('/matching/{jobId}/retry', function ($jobId) {
-            try {
-                \Illuminate\Support\Facades\DB::table('ai_matching_queue')
-                    ->where('job_id', $jobId)
-                    ->update(['status' => 'pending', 'requires_review' => false, 'updated_at' => now()]);
-                return back()->with('success', "Match {$jobId} re-queued.");
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('matching.retry');
-
-        // Review Moderation Actions
-        Route::post('/reviews/{id}/flag', function ($id) {
-            try {
-                \Illuminate\Support\Facades\DB::table('reviews')->where('id', $id)->update([
-                    'flagged' => true,
-                    'updated_at' => now(),
-                ]);
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'review_flagged',
-                        'description' => "Review #{$id} flagged for moderation",
-                        'metadata' => json_encode(['review_id' => $id, 'admin_id' => auth()->id()]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                }
-                return back()->with('success', 'Review flagged.');
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('reviews.flag');
-
-        Route::delete('/reviews/{id}', function ($id) {
-            try {
-                \Illuminate\Support\Facades\DB::table('reviews')->where('id', $id)->delete();
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'review_deleted',
-                        'description' => "Review #{$id} deleted by admin",
-                        'metadata' => json_encode(['review_id' => $id, 'admin_id' => auth()->id()]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                }
-                return back()->with('success', 'Review deleted.');
-            } catch (\Throwable $e) {
-                return back()->withErrors(['message' => 'Failed: ' . $e->getMessage()]);
-            }
-        })->name('reviews.delete');
+        // AI Matching Queue
+        Route::get('/matching', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'index'])->name('matching');
+        Route::post('/matching/force-process', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'forceProcess'])->name('matching.force-process');
+        Route::post('/matching/{jobId}/approve', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'approve'])->name('matching.approve');
+        Route::post('/matching/{jobId}/reject', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'reject'])->name('matching.reject');
+        Route::post('/matching/{jobId}/retry', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'retry'])->name('matching.retry');
 
         // Dispute Refund Action
-        Route::post('/disputes/{id}/refund', function ($id) {
-            try {
-                $dispute = \Illuminate\Support\Facades\DB::table('disputes')->where('id', $id)->first();
-                if (!$dispute) {
-                    return back()->withErrors(['message' => 'Dispute not found.']);
-                }
+        Route::post('/disputes/{id}/refund', [\App\Http\Controllers\AdminDisputeController::class, 'refund'])->name('disputes.refund');
 
-                // Find the related matching fee payment and attempt refund
-                $booking = $dispute->booking_id ? \Illuminate\Support\Facades\DB::table('bookings')->where('id', $dispute->booking_id)->first() : null;
-                $employerId = $booking->employer_id ?? $dispute->user_id ?? null;
+        // Salary Management
+        Route::get('/salary', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'index'])->name('salary');
+        Route::post('/salary/{id}/nudge', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'nudge'])->name('salary.nudge');
+        Route::post('/salary/{id}/process', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'processPayment'])->name('salary.process');
+        Route::post('/salary/{id}/mark-paid', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'markPaid'])->name('salary.mark-paid');
+        Route::get('/salary/export', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'export'])->name('salary.export');
 
-                if ($employerId) {
-                    // Credit employer wallet as refund
-                    try {
-                        $walletService = app(\App\Services\WalletService::class);
-                        $walletService->creditEmployerWallet(
-                            $employerId,
-                            $booking->agreed_salary ?? 5000,
-                            "Refund for dispute #DISP-{$id}",
-                            $dispute->booking_id,
-                            'dispute_refund'
-                        );
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning('Wallet refund failed for dispute: ' . $e->getMessage());
-                    }
-                }
-
-                // Update dispute status
-                \Illuminate\Support\Facades\DB::table('disputes')->where('id', $id)->update([
-                    'status' => 'refunded',
-                    'updated_at' => now(),
-                ]);
-
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'dispute_refund',
-                        'description' => "Refund initiated for dispute #{$id}",
-                        'metadata' => json_encode(['dispute_id' => $id, 'employer_id' => $employerId, 'admin_id' => auth()->id()]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                }
-
-                return back()->with('success', 'Refund initiated successfully.');
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Dispute refund failed: ' . $e->getMessage());
-                return back()->withErrors(['message' => 'Refund failed: ' . $e->getMessage()]);
-            }
-        })->name('disputes.refund');
-
-        Route::get('/salary', function () {
-            $schedules = [];
-            $stats = [
-                'total_schedules' => 0,
-                'total_paid' => 0,
-                'total_pending' => 0,
-                'total_overdue' => 0,
-                'total_amount_scheduled' => 0,
-                'total_amount_paid' => 0,
-                'overdue_amount' => 0,
-            ];
-
-            try {
-                if (\Illuminate\Support\Facades\Schema::hasTable('salary_schedules')) {
-                    $rawSchedules = \Illuminate\Support\Facades\DB::table('salary_schedules')
-                        ->orderByDesc('created_at')
-                        ->limit(50)
-                        ->get();
-
-                    $schedules = $rawSchedules->map(function ($s) {
-                        $employer = $s->employer_id ? \Illuminate\Support\Facades\DB::table('users')->where('id', $s->employer_id)->select('name')->first() : null;
-                        $maid = $s->maid_id ? \Illuminate\Support\Facades\DB::table('users')->where('id', $s->maid_id)->select('name')->first() : null;
-
-                        $daysOverdue = 0;
-                        if ($s->payment_status === 'overdue' && $s->next_salary_due_date) {
-                            $daysOverdue = max(0, (int) now()->diffInDays($s->next_salary_due_date));
-                        }
-
-                        return [
-                            'id' => $s->id,
-                            'assignment' => [
-                                'employer' => ['name' => $employer->name ?? 'Unknown'],
-                                'maid' => ['name' => $maid->name ?? 'Unknown'],
-                            ],
-                            'amount' => (float) $s->monthly_salary,
-                            'due_date' => $s->next_salary_due_date ?? $s->first_salary_date ?? now()->format('Y-m-d'),
-                            'status' => $s->payment_status ?? 'pending',
-                            'days_overdue' => $daysOverdue,
-                        ];
-                    })->all();
-
-                    $stats = [
-                        'total_schedules' => \Illuminate\Support\Facades\DB::table('salary_schedules')->count(),
-                        'total_paid' => \Illuminate\Support\Facades\DB::table('salary_schedules')->where('payment_status', 'paid')->count(),
-                        'total_pending' => \Illuminate\Support\Facades\DB::table('salary_schedules')->where('payment_status', 'pending')->count(),
-                        'total_overdue' => \Illuminate\Support\Facades\DB::table('salary_schedules')->where('payment_status', 'overdue')->count(),
-                        'total_amount_scheduled' => (float) \Illuminate\Support\Facades\DB::table('salary_schedules')->sum('monthly_salary'),
-                        'total_amount_paid' => (float) \Illuminate\Support\Facades\DB::table('salary_payments')->where('status', 'completed')->sum('amount'),
-                        'overdue_amount' => (float) \Illuminate\Support\Facades\DB::table('salary_schedules')->where('payment_status', 'overdue')->sum('monthly_salary'),
-                    ];
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Salary data fetch failed: ' . $e->getMessage());
-            }
-
-            return Inertia::render('Admin/SalaryManagement', [
-                'schedules' => $schedules,
-                'stats' => $stats,
-            ]);
-        })->name('salary');
-
-        // Salary Management Actions (send nudge, process payment, mark paid, export)
-        Route::post('/salary/{id}/nudge', function ($id) {
-            try {
-                $schedule = \Illuminate\Support\Facades\DB::table('salary_schedules')->where('id', $id)->first();
-                if (!$schedule) {
-                    return back()->withErrors(['message' => 'Salary schedule not found.']);
-                }
-
-                $employer = \Illuminate\Support\Facades\DB::table('users')->where('id', $schedule->employer_id)->first();
-                if (!$employer) {
-                    return back()->withErrors(['message' => 'Employer not found.']);
-                }
-
-                $maid = \Illuminate\Support\Facades\DB::table('users')->where('id', $schedule->maid_id)->first();
-                $maidName = $maid->name ?? 'your maid';
-                $amountFormatted = number_format($schedule->monthly_salary, 2);
-
-                // Create in-app notification for the employer
-                \Illuminate\Support\Facades\DB::table('notifications')->insert([
-                    'user_id' => $employer->id,
-                    'type' => 'salary_reminder',
-                    'title' => 'Salary Payment Overdue',
-                    'message' => "Your salary payment of ₦{$amountFormatted} for {$maidName} is overdue. Please process payment as soon as possible to maintain your account standing.",
-                    'data' => json_encode([
-                        'schedule_id' => $schedule->id,
-                        'amount' => $schedule->monthly_salary,
-                        'maid_name' => $maidName,
-                        'nudged_by' => 'admin',
-                        'nudged_at' => now()->toIso8601String(),
-                    ]),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                // Attempt SMS notification via service (graceful failure)
-                try {
-                    $notificationService = app(\App\Services\NotificationService::class);
-                    $notificationService->sendSms(
-                        (object) $employer,
-                        "Hi {$employer->name}, this is a reminder that your salary payment of ₦{$amountFormatted} for {$maidName} is overdue. Please process payment at your earliest convenience. - Maids.ng",
-                        ['type' => 'salary_nudge', 'schedule_id' => $schedule->id],
-                        'salary_reminder'
-                    );
-                } catch (\Throwable $smsErr) {
-                    \Illuminate\Support\Facades\Log::info('SMS nudge skipped: ' . $smsErr->getMessage());
-                }
-
-                // Update the schedule reminder tracking
-                \Illuminate\Support\Facades\DB::table('salary_schedules')
-                    ->where('id', $id)
-                    ->update([
-                        'last_reminder_sent_at' => now(),
-                        'reminder_count' => \Illuminate\Support\Facades\DB::raw('reminder_count + 1'),
-                        'updated_at' => now(),
-                    ]);
-
-                // Log admin activity
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'salary_nudge_sent',
-                        'description' => "Salary nudge sent to {$employer->name} for schedule #{$id}",
-                        'metadata' => json_encode(['schedule_id' => $id, 'employer_id' => $employer->id, 'admin_id' => auth()->id()]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                    // Agent activity logging is optional
-                }
-
-                return back()->with('success', "Payment nudge sent to {$employer->name} successfully.");
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Salary nudge failed: ' . $e->getMessage());
-                return back()->withErrors(['message' => 'Failed to send nudge: ' . $e->getMessage()]);
-            }
-        })->name('salary.nudge');
-
-        Route::post('/salary/{id}/process', function ($id) {
-            try {
-                $schedule = \Illuminate\Support\Facades\DB::table('salary_schedules')->where('id', $id)->first();
-                if (!$schedule) {
-                    return back()->withErrors(['message' => 'Salary schedule not found.']);
-                }
-
-                if ($schedule->payment_status === 'paid') {
-                    return back()->withErrors(['message' => 'This salary has already been paid.']);
-                }
-
-                $salaryService = app(\App\Services\SalaryManagementService::class);
-                $result = $salaryService->processSalaryPayment(
-                    $schedule->assignment_id,
-                    (float) $schedule->monthly_salary,
-                    'Admin-processed salary payment for schedule #' . $id
-                );
-
-                if ($result) {
-                    // Update schedule status
-                    \Illuminate\Support\Facades\DB::table('salary_schedules')
-                        ->where('id', $id)
-                        ->update([
-                            'payment_status' => 'paid',
-                            'updated_at' => now(),
-                        ]);
-
-                    return redirect()->route('admin.salary')->with('success', 'Salary payment processed successfully.');
-                }
-
-                return back()->withErrors(['message' => 'Failed to process payment. Employer may have insufficient wallet balance.']);
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Salary process failed: ' . $e->getMessage());
-                return back()->withErrors(['message' => 'Payment processing failed: ' . $e->getMessage()]);
-            }
-        })->name('salary.process');
-
-        Route::post('/salary/{id}/mark-paid', function ($id) {
-            try {
-                $schedule = \Illuminate\Support\Facades\DB::table('salary_schedules')->where('id', $id)->first();
-                if (!$schedule) {
-                    return back()->withErrors(['message' => 'Salary schedule not found.']);
-                }
-
-                // Update status to paid (manual admin override — no wallet debit)
-                \Illuminate\Support\Facades\DB::table('salary_schedules')
-                    ->where('id', $id)
-                    ->update([
-                        'payment_status' => 'paid',
-                        'updated_at' => now(),
-                    ]);
-
-                // Record as manual payment
-                try {
-                    \Illuminate\Support\Facades\DB::table('salary_payments')->insert([
-                        'assignment_id' => $schedule->assignment_id,
-                        'employer_id' => $schedule->employer_id,
-                        'maid_id' => $schedule->maid_id,
-                        'amount' => $schedule->monthly_salary,
-                        'description' => 'Manually marked as paid by admin (ID: ' . auth()->id() . ')',
-                        'paid_at' => now(),
-                        'status' => 'completed',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Could not record manual salary payment: ' . $e->getMessage());
-                }
-
-                // Log admin activity
-                try {
-                    \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
-                        'agent_type' => 'admin_manual',
-                        'action' => 'salary_marked_paid',
-                        'description' => "Salary schedule #{$id} manually marked as paid",
-                        'metadata' => json_encode(['schedule_id' => $id, 'admin_id' => auth()->id()]),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                    // Optional
-                }
-
-                return redirect()->route('admin.salary')->with('success', 'Salary marked as paid.');
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Mark paid failed: ' . $e->getMessage());
-                return back()->withErrors(['message' => 'Failed to mark as paid: ' . $e->getMessage()]);
-            }
-        })->name('salary.mark-paid');
-
-        Route::get('/salary/export', function () {
-            try {
-                $schedules = \Illuminate\Support\Facades\DB::table('salary_schedules')
-                    ->orderByDesc('created_at')
-                    ->get();
-
-                $csv = "ID,Employer ID,Maid ID,Monthly Salary,Payment Status,Due Date,Reminder Count,Created At\n";
-                foreach ($schedules as $s) {
-                    $csv .= implode(',', [
-                        $s->id,
-                        $s->employer_id ?? '',
-                        $s->maid_id ?? '',
-                        $s->monthly_salary ?? 0,
-                        $s->payment_status ?? 'unknown',
-                        $s->next_salary_due_date ?? '',
-                        $s->reminder_count ?? 0,
-                        $s->created_at ?? '',
-                    ]) . "\n";
-                }
-
-                return response($csv, 200, [
-                    'Content-Type' => 'text/csv',
-                    'Content-Disposition' => 'attachment; filename="salary_report_' . now()->format('Y-m-d') . '.csv"',
-                ]);
-            } catch (\Throwable $e) {
-                return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
-            }
-        })->name('salary.export');
-
-        // Existing sub-routes
-        Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show');
-        Route::post('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
-        Route::post('/users/{id}/role', [AdminUserController::class, 'assignRole'])->name('users.role');
-        Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('/verifications', [AdminVerificationController::class, 'index'])->name('verifications');
         Route::post('/verifications/{id}/approve', [AdminVerificationController::class, 'approve'])->name('verifications.approve');
@@ -992,7 +457,9 @@ Route::middleware('auth')->group(function () {
 
         // Onboarding & Matching
         Route::get('/onboarding', function () {
-            return Inertia::render('Employer/OnboardingQuiz');
+            return Inertia::render('Employer/OnboardingQuiz', [
+                'guaranteeFee' => (int) \App\Models\Setting::get('matching_fee_amount', 5000),
+            ]);
         })->name('onboarding');
         Route::post('/matching/find', [MatchingController::class, 'findMatches'])->name('matching.find');
         Route::post('/matching/select', [MatchingController::class, 'selectMaid'])->name('matching.select');

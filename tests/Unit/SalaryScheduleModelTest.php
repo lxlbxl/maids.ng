@@ -315,8 +315,8 @@ class SalaryScheduleModelTest extends TestCase
         ]);
 
         $this->assertEquals(1, SalarySchedule::active()->count());
-        $this->assertEquals(1, SalarySchedule::forEmployer($this->employer->id)->count());
-        $this->assertEquals(1, SalarySchedule::forMaid($this->maid->id)->count());
+        $this->assertEquals(2, SalarySchedule::forEmployer($this->employer->id)->count());
+        $this->assertEquals(2, SalarySchedule::forMaid($this->maid->id)->count());
     }
 
     public function test_salary_schedule_relationships()

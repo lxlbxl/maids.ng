@@ -1,7 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import EmployerLayout from '@/Layouts/EmployerLayout';
 
-export default function EmployerDashboard({ auth, preferences = [], bookings = [], payments = [], stats = {} }) {
+export default function EmployerDashboard({ auth, preferences = [], bookings = [], payments = [], stats = {}, appSettings }) {
+    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
     return (
         <EmployerLayout user={auth?.user}>
             <Head title="Employer Dashboard" />
@@ -60,7 +61,7 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
                                 </div>
                                 {p.matching_status === 'matched' && (
                                     <Link href={`/employer/matching/payment/${p.id}`} className="bg-copper text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-copper/80 transition-all text-center flex-shrink-0">
-                                        Pay ₦5,000 & Unlock
+                                        Pay {feeLabel} & Unlock
                                     </Link>
                                 )}
                             </div>

@@ -865,6 +865,141 @@ class AdminController extends ApiController
         ], 'Salary payment history retrieved successfully');
     }
 
+    /**
+     * Get all assignments.
+     */
+    public function assignments(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $query = MaidAssignment::with(['employer', 'maid']);
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        $assignments = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return $this->paginated($assignments, 'Assignments retrieved successfully');
+    }
+
+    /**
+     * Get assignment detail.
+     */
+    public function assignmentDetail(int $id): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $assignment = MaidAssignment::with(['employer', 'maid', 'salarySchedules', 'payments'])
+            ->findOrFail($id);
+
+        return $this->success($assignment, 'Assignment details retrieved successfully');
+    }
+
+    /**
+     * Cancel an assignment.
+     */
+    public function cancelAssignment(int $id, Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $request->validate(['reason' => 'required|string']);
+
+        $assignment = MaidAssignment::findOrFail($id);
+        $assignment->update([
+            'status' => 'cancelled',
+            'context_json' => array_merge($assignment->context_json ?? [], [
+                'cancellation_reason' => $request->reason,
+                'cancelled_by' => Auth::id(),
+                'cancelled_at' => now(),
+            ])
+        ]);
+
+        return $this->success($assignment, 'Assignment cancelled successfully');
+    }
+
+    /**
+     * Get withdrawal requests.
+     */
+    public function withdrawals(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $query = WalletTransaction::where('transaction_type', 'withdrawal_request')
+            ->with('user');
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $withdrawals = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return $this->paginated($withdrawals, 'Withdrawals retrieved successfully');
+    }
+
+    /**
+     * Get AI config.
+     */
+    public function aiConfig(): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $settings = \App\Models\Setting::where('group', 'ai_matching')->get()->pluck('value', 'key');
+        return $this->success($settings, 'AI Configuration retrieved');
+    }
+
+    /**
+     * Update AI config.
+     */
+    public function updateAiConfig(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $validated = $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        foreach ($validated['settings'] as $key => $value) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key, 'group' => 'ai_matching'],
+                ['value' => $value, 'type' => is_bool($value) ? 'boolean' : 'string']
+            );
+        }
+
+        return $this->success(null, 'AI Configuration updated successfully');
+    }
+
+    /**
+     * Test AI connection.
+     */
+    public function testAiConnection(): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        try {
+            $aiService = app(\App\Services\Ai\AiService::class);
+            $aiService->chat('Hello, testing connection.', ['max_tokens' => 10]);
+            return $this->success(['status' => 'ok'], 'AI Connection successful');
+        } catch (\Exception $e) {
+            return $this->error('AI Connection failed: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private function checkDatabase(): array
     {
         try {

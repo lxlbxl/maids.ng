@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 
-export default function About() {
+export default function About({ appSettings }) {
+    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
     return (
         <>
             <Head title="About Us — Maids.ng" />
@@ -46,7 +47,7 @@ export default function About() {
                                 { title: 'NIN Verification', desc: 'Every helper is verified against the National Identity Database through QoreID integration.' },
                                 { title: 'AI Matching', desc: 'Our algorithm scores compatibility across 12+ factors — not just location.' },
                                 { title: '10-Day Guarantee', desc: 'If the match doesn\'t work, get a replacement or full refund within 10 days.' },
-                                { title: 'Transparent Pricing', desc: 'One-time ₦5,000 matching fee. No hidden charges, no monthly subscriptions.' },
+                                { title: 'Transparent Pricing', desc: `One-time ${feeLabel} matching fee. No hidden charges, no monthly subscriptions.` },
                             ].map((item) => (
                                 <div key={item.title} className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1">
                                     <h3 className="font-semibold text-teal mb-2">{item.title}</h3>

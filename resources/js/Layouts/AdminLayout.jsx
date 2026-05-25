@@ -30,6 +30,7 @@ export default function AdminLayout({ children }) {
         { name: 'Knowledge Base', href: '/admin/agent/knowledge', icon: '📚' },
         { name: 'Salary Ops', href: '/admin/salary', icon: '💸' },
         { name: 'Financial Control', href: '/admin/payments', icon: '💰' },
+        { name: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
         { name: 'API Documentation', href: '/admin/api-docs', icon: '🔌' },
         { name: 'System Settings', href: '/admin/settings', icon: '⚙️' },
     ];

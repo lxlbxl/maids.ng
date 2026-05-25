@@ -72,4 +72,36 @@ class WithdrawalApproved
             'message' => 'Withdrawal request has been approved and processed',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'withdrawal.approved';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'wallet_id' => $this->wallet->id,
+            'maid_id' => $this->wallet->maid_id,
+            'amount' => $this->amount,
+            'reference' => $this->reference,
+            'transaction_reference' => $this->transactionReference,
+            'processed_by' => $this->processedBy,
+            'available_balance' => $this->wallet->available_balance,
+            'message' => 'Withdrawal request has been approved and processed',
+            'wallet' => [
+                'id' => $this->wallet->id,
+                'maid_id' => $this->wallet->maid_id,
+                'balance' => $this->wallet->balance,
+                'available_balance' => $this->wallet->available_balance,
+                'pending_withdrawal' => $this->wallet->pending_withdrawal,
+            ],
+        ];
+    }
 }

@@ -22,10 +22,11 @@ class RequestMatchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'job_type' => 'required|string|in:full_time,part_time,live_in,live_out',
-            'location' => 'required|string|max:255',
-            'salary_min' => 'required|numeric|min:10000',
-            'salary_max' => 'required|numeric|gte:salary_min',
+            'preference_id' => 'nullable|exists:employer_preferences,id',
+            'job_type' => 'required_without:preference_id|string|in:full_time,part_time,live_in,live_out',
+            'location' => 'required_without:preference_id|string|max:255',
+            'salary_min' => 'required_without:preference_id|numeric|min:10000',
+            'salary_max' => 'required_without:preference_id|numeric|gte:salary_min',
             'salary_day' => 'nullable|integer|min:1|max:31',
             'skills' => 'nullable|array',
             'skills.*' => 'string',

@@ -30,20 +30,11 @@ class CreateSalarySchedule implements ShouldQueue
         $assignment = $event->assignment;
 
         // Create initial salary schedule for the assignment
-        $this->salaryService->createSchedule([
-            'assignment_id' => $assignment->id,
-            'employer_id' => $assignment->employer_id,
-            'maid_id' => $assignment->maid_id,
-            'monthly_salary' => $assignment->monthly_salary,
-            'salary_day' => $assignment->salary_day ?? 1,
-            'employment_start_date' => $assignment->start_date,
-            'next_salary_due_date' => $this->calculateNextSalaryDue(
-                $assignment->start_date,
-                $assignment->salary_day ?? 1
-            ),
-            'payment_status' => 'pending',
-            'is_active' => true,
-        ]);
+        $this->salaryService->createSalarySchedule(
+            $assignment->id,
+            (float) ($assignment->salary_amount ?? 0.0),
+            $assignment->start_date ?? now()
+        );
 
         // Log the action
         \Log::info('Salary schedule created for assignment', [
@@ -51,21 +42,5 @@ class CreateSalarySchedule implements ShouldQueue
             'employer_id' => $assignment->employer_id,
             'maid_id' => $assignment->maid_id,
         ]);
-    }
-
-    /**
-     * Calculate the next salary due date based on start date and salary day.
-     */
-    protected function calculateNextSalaryDue(\Carbon\Carbon $startDate, int $salaryDay): \Carbon\Carbon
-    {
-        $now = now();
-        $nextDue = $startDate->copy()->day($salaryDay);
-
-        // If the salary day has passed this month, move to next month
-        if ($nextDue->isPast() || $nextDue->isToday()) {
-            $nextDue->addMonth();
-        }
-
-        return $nextDue;
     }
 }

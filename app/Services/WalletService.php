@@ -26,7 +26,6 @@ class WalletService
                 'total_refunded' => 0,
                 'currency' => $currency,
                 'timezone' => config('app.timezone', 'Africa/Lagos'),
-                'is_active' => true,
             ]
         );
     }
@@ -44,7 +43,6 @@ class WalletService
                 'total_withdrawn' => 0,
                 'pending_withdrawal' => 0,
                 'currency' => $currency,
-                'is_active' => true,
             ]
         );
     }
@@ -451,6 +449,18 @@ class WalletService
     {
         $wallet = $this->getOrCreateMaidWallet($maidId);
         return $wallet->hasSufficientBalance($amount);
+    }
+
+    /**
+     * Check employer wallet balance and sufficiency for an amount.
+     */
+    public function checkBalance(int $employerId, float $amount): array
+    {
+        $wallet = $this->getOrCreateEmployerWallet($employerId);
+        return [
+            'has_sufficient' => $wallet->hasSufficientBalance($amount),
+            'balance' => $wallet->getAvailableBalance(),
+        ];
     }
 
     /**

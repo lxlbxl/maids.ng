@@ -26,7 +26,14 @@ class MaidSearchController extends Controller
 
         if ($request->filled('location')) {
             $location = $request->input('location');
-            $query->whereHas('maidProfile', fn($mp) => $mp->where('location', 'like', "%{$location}%"));
+            $query->whereHas('maidProfile', function ($mp) use ($location) {
+                $mp->where(function ($q) use ($location) {
+                    $q->where('location', 'like', "%{$location}%")
+                      ->orWhere('state', 'like', "%{$location}%")
+                      ->orWhereJsonContains('willing_states', $location)
+                      ->orWhereJsonContains('willing_states', 'anywhere');
+                });
+            });
         }
 
         $maids = $query->paginate(12)->withQueryString();
@@ -67,7 +74,14 @@ class MaidSearchController extends Controller
 
         if ($request->filled('location')) {
             $location = $request->input('location');
-            $query->whereHas('maidProfile', fn($mp) => $mp->where('location', 'like', "%{$location}%"));
+            $query->whereHas('maidProfile', function ($mp) use ($location) {
+                $mp->where(function ($q) use ($location) {
+                    $q->where('location', 'like', "%{$location}%")
+                      ->orWhere('state', 'like', "%{$location}%")
+                      ->orWhereJsonContains('willing_states', $location)
+                      ->orWhereJsonContains('willing_states', 'anywhere');
+                });
+            });
         }
 
         return response()->json($query->paginate(12));

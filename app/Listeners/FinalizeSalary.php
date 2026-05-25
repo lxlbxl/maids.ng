@@ -33,7 +33,6 @@ class FinalizeSalary implements ShouldQueue
 
         foreach ($schedules as $schedule) {
             $schedule->update([
-                'payment_status' => 'completed',
                 'is_active' => false,
             ]);
 
@@ -45,22 +44,22 @@ class FinalizeSalary implements ShouldQueue
 
         // Release any remaining escrow
         $walletService = app(\App\Services\WalletService::class);
-        $remainingEscrow = $walletService->getEscrowBalance($assignment->employer_id);
+        $balanceInfo = $walletService->getEmployerBalance($assignment->employer_id);
+        $remainingEscrow = $balanceInfo['escrow_balance'] ?? 0;
 
         if ($remainingEscrow > 0) {
-            $result = $walletService->releaseEscrow(
+            $walletService->releaseFromEscrow(
                 $assignment->employer_id,
                 $remainingEscrow,
-                'assignment_completed',
-                $assignment->id
+                'Assignment completed - escrow released',
+                $assignment->id,
+                'assignment_completed'
             );
 
-            if ($result['success']) {
-                \Log::info('Remaining escrow released on assignment completion', [
-                    'assignment_id' => $assignment->id,
-                    'amount' => $remainingEscrow,
-                ]);
-            }
+            \Log::info('Remaining escrow released on assignment completion', [
+                'assignment_id' => $assignment->id,
+                'amount' => $remainingEscrow,
+            ]);
         }
     }
 }

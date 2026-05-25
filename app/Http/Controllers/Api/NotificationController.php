@@ -92,8 +92,7 @@ class NotificationController extends ApiController
         $count = NotificationLog::where('user_id', $user->id)
             ->whereNull('read_at')
             ->count();
-
-        return $this->success(['unread_count' => $count], 'Unread count retrieved successfully');
+        return $this->success(['count' => $count], 'Unread count retrieved successfully');
     }
 
     /**
@@ -164,5 +163,21 @@ class NotificationController extends ApiController
         RetryNotificationJob::dispatch($notification);
 
         return $this->success(null, 'Notification retry queued.');
+    }
+
+    /**
+     * Delete a notification.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $user = Auth::user();
+
+        $notification = NotificationLog::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $notification->delete();
+
+        return $this->success(null, 'Notification deleted successfully.');
     }
 }

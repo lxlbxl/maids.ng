@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\MatchingJobCompleted;
 use App\Http\Requests\Api\Matching\{RequestMatchRequest, ReviewMatchRequest};
 use App\Models\AiMatchingQueue;
+use App\Models\EmployerPreference;
 use App\Services\MatchingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,18 +45,37 @@ class MatchingController extends ApiController
             ]);
         }
 
+        $preference = null;
+        if (!empty($validated['preference_id'])) {
+            $preference = EmployerPreference::findOrFail($validated['preference_id']);
+            if ($preference->employer_id !== $user->id) {
+                return $this->forbidden('Unauthorized access to this preference.');
+            }
+
+            $jobType = is_array($preference->help_types) ? ($preference->help_types[0] ?? 'full_time') : 'full_time';
+            $location = $preference->location ?? '';
+            $salaryMin = $preference->budget_min ?? 10000;
+            $salaryMax = $preference->budget_max ?? 20000;
+        } else {
+            $jobType = $validated['job_type'];
+            $location = $validated['location'];
+            $salaryMin = $validated['salary_min'];
+            $salaryMax = $validated['salary_max'];
+        }
+
         // Create matching job
         $job = AiMatchingQueue::create([
             'job_type' => 'auto_match',
             'employer_id' => $user->id,
+            'preference_id' => $preference?->id,
             'priority' => $validated['priority'] ?? 5,
             'payload' => [
                 'requirements' => [
-                    'job_type' => $validated['job_type'],
-                    'location' => $validated['location'],
+                    'job_type' => $jobType,
+                    'location' => $location,
                     'salary_range' => [
-                        'min' => $validated['salary_min'],
-                        'max' => $validated['salary_max'],
+                        'min' => $salaryMin,
+                        'max' => $salaryMax,
                     ],
                     'salary_day' => $validated['salary_day'] ?? 1,
                     'skills' => $validated['skills'] ?? [],
@@ -130,6 +150,7 @@ class MatchingController extends ApiController
 
         return $this->success([
             'job_id' => $job->job_id,
+            'status' => $job->status,
             'matches' => $job->match_candidates ?? [],
             'ai_confidence_score' => $job->ai_confidence_score,
             'ai_reasoning' => $job->ai_reasoning,

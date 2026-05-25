@@ -6,7 +6,7 @@ use App\Events\AssignmentAccepted;
 use App\Events\AssignmentRejected;
 use App\Events\AssignmentCompleted;
 use App\Http\Requests\Api\Assignment\{AcceptAssignmentRequest, RejectAssignmentRequest, CompleteAssignmentRequest};
-use App\Models\Assignment;
+use App\Models\MaidAssignment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,7 +20,7 @@ class AssignmentController extends ApiController
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        $query = Assignment::query();
+        $query = MaidAssignment::query();
 
         if ($user->role === 'employer') {
             $query->where('employer_id', $user->id);
@@ -33,7 +33,7 @@ class AssignmentController extends ApiController
             $query->where('status', $request->status);
         }
 
-        $assignments = $query->with(['employer', 'maid', 'salarySchedules'])
+        $assignments = $query->with(['employer', 'maid', 'salarySchedule'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
@@ -46,7 +46,7 @@ class AssignmentController extends ApiController
     public function show(int $id): JsonResponse
     {
         $user = Auth::user();
-        $assignment = Assignment::with(['employer', 'maid', 'salarySchedules', 'payments'])
+        $assignment = MaidAssignment::with(['employer', 'maid', 'salarySchedule', 'salaryPayments'])
             ->findOrFail($id);
 
         // Check authorization
@@ -69,7 +69,7 @@ class AssignmentController extends ApiController
         $user = Auth::user();
         $validated = $request->validated();
 
-        $assignment = Assignment::findOrFail($id);
+        $assignment = MaidAssignment::findOrFail($id);
 
         if ($assignment->employer_id !== $user->id) {
             return $this->forbidden('Unauthorized access to this assignment.');
@@ -82,8 +82,8 @@ class AssignmentController extends ApiController
         // Update assignment
         $assignment->update([
             'status' => 'accepted',
-            'start_date' => $validated['start_date'] ?? now()->addDays(7),
-            'accepted_at' => now(),
+            'started_at' => $validated['start_date'] ?? now()->addDays(7),
+            'employer_accepted_at' => now(),
             'context_json' => array_merge($assignment->context_json ?? [], [
                 'acceptance_notes' => $validated['notes'] ?? null,
                 'accepted_by' => $user->id,
@@ -104,7 +104,7 @@ class AssignmentController extends ApiController
         $user = Auth::user();
         $validated = $request->validated();
 
-        $assignment = Assignment::findOrFail($id);
+        $assignment = MaidAssignment::findOrFail($id);
 
         if ($assignment->employer_id !== $user->id) {
             return $this->forbidden('Unauthorized access to this assignment.');
@@ -117,7 +117,7 @@ class AssignmentController extends ApiController
         // Update assignment
         $assignment->update([
             'status' => 'rejected',
-            'rejected_at' => now(),
+            'employer_rejected_at' => now(),
             'context_json' => array_merge($assignment->context_json ?? [], [
                 'rejection_reason' => $validated['reason'],
                 'request_replacement' => $validated['request_replacement'] ?? true,
@@ -139,13 +139,13 @@ class AssignmentController extends ApiController
         $user = Auth::user();
         $validated = $request->validated();
 
-        $assignment = Assignment::findOrFail($id);
+        $assignment = MaidAssignment::findOrFail($id);
 
         if ($assignment->employer_id !== $user->id) {
             return $this->forbidden('Unauthorized access to this assignment.');
         }
 
-        if ($assignment->status !== 'active') {
+        if (!in_array($assignment->status, ['active', 'accepted'])) {
             return $this->error('Assignment cannot be completed. Current status: ' . $assignment->status, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -179,14 +179,14 @@ class AssignmentController extends ApiController
         }
 
         $stats = [
-            'total' => Assignment::count(),
-            'pending_acceptance' => Assignment::where('status', 'pending_acceptance')->count(),
-            'accepted' => Assignment::where('status', 'accepted')->count(),
-            'active' => Assignment::where('status', 'active')->count(),
-            'completed' => Assignment::where('status', 'completed')->count(),
-            'rejected' => Assignment::where('status', 'rejected')->count(),
-            'cancelled' => Assignment::where('status', 'cancelled')->count(),
-            'this_month' => Assignment::whereMonth('created_at', now()->month)->count(),
+            'total' => MaidAssignment::count(),
+            'pending_acceptance' => MaidAssignment::where('status', 'pending_acceptance')->count(),
+            'accepted' => MaidAssignment::where('status', 'accepted')->count(),
+            'active' => MaidAssignment::where('status', 'active')->count(),
+            'completed' => MaidAssignment::where('status', 'completed')->count(),
+            'rejected' => MaidAssignment::where('status', 'rejected')->count(),
+            'cancelled' => MaidAssignment::where('status', 'cancelled')->count(),
+            'this_month' => MaidAssignment::whereMonth('created_at', now()->month)->count(),
         ];
 
         return $this->success($stats, 'Assignment statistics retrieved successfully');

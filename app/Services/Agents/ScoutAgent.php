@@ -36,7 +36,13 @@ class ScoutAgent extends AgentService
         $candidates = MaidProfile::where('availability_status', 'available')
             ->whereHas('user', fn($q) => $q->where('status', 'active'))
             ->with('user')
-            ->when($preference->state, fn($q) => $q->where('state', $preference->state))
+            ->when($preference->state, function ($q) use ($preference) {
+                $q->where(function ($sub) use ($preference) {
+                    $sub->where('state', $preference->state)
+                        ->orWhereJsonContains('willing_states', $preference->state)
+                        ->orWhereJsonContains('willing_states', 'anywhere');
+                });
+            })
             ->get();
 
         $results = [];
@@ -133,11 +139,14 @@ class ScoutAgent extends AgentService
         $prefLoc = strtolower(trim($preferences->location ?? ''));
         $prefCity = strtolower(trim($preferences->city ?? ''));
         $prefState = strtolower(trim($preferences->state ?? ''));
+        $willingStates = array_map('strtolower', (array) ($maid->willing_states ?? []));
 
         if (!empty($prefLoc) && !empty($maidLoc) && (str_contains($maidLoc, $prefLoc) || str_contains($prefLoc, $maidLoc))) {
             $locationScore = 25;
         } elseif (!empty($prefCity) && !empty($maidLoc) && str_contains($maidLoc, $prefCity)) {
             $locationScore = 25;
+        } elseif (!empty($prefState) && (in_array(strtolower($prefState), $willingStates) || in_array('anywhere', $willingStates))) {
+            $locationScore = 22;
         } elseif (!empty($prefState) && !empty($maidLoc) && str_contains($maidLoc, $prefState)) {
             $locationScore = 20;
         } else {

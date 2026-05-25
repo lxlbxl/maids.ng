@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 
-export default function Terms() {
+export default function Terms({ appSettings }) {
+    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
     return (
         <>
             <Head title="Terms of Service — Maids.ng" />
@@ -36,7 +37,7 @@ export default function Terms() {
                         <p>You must be at least 18 years old to create an account. You are responsible for maintaining the confidentiality of your account credentials. You must provide accurate and complete information during registration.</p>
 
                         <h2 className="font-display text-xl font-semibold text-teal">4. Matching Fee & Guarantee</h2>
-                        <p>The Platform charges a one-time matching fee of ₦5,000 (subject to change) to access a matched helper's contact details. This fee is covered by our 10-day money-back guarantee: if the match is unsuccessful within 10 days, you may request a replacement match or full refund.</p>
+                        <p>The Platform charges a one-time matching fee of {feeLabel} (subject to change) to access a matched helper's contact details. This fee is covered by our 10-day money-back guarantee: if the match is unsuccessful within 10 days, you may request a replacement match or full refund.</p>
 
                         <h2 className="font-display text-xl font-semibold text-teal">5. Employer Responsibilities</h2>
                         <p>Employers agree to: (a) treat matched workers with dignity and respect; (b) comply with all applicable Nigerian labour laws; (c) provide safe working conditions; (d) pay agreed-upon salaries on time; and (e) not use the Platform for any illegal or exploitative purposes.</p>

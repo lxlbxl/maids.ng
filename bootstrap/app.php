@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'throttle.custom' => \App\Http\Middleware\RateLimitMiddleware::class,
             'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+            'mcp.auth' => \App\Http\Middleware\EnsureMcpTokenIsValid::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

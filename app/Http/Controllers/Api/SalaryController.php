@@ -158,31 +158,26 @@ class SalaryController extends ApiController
             return $this->forbidden('Only maids can view salary history.');
         }
 
-        $history = SalarySchedule::whereHas('assignment', function ($q) use ($user) {
-            $q->where('maid_id', $user->id);
-        })
-            ->where('payment_status', 'paid')
-            ->with('assignment.employer')
-            ->orderBy('next_salary_due_date', 'desc')
+        $payments = \App\Models\SalaryPayment::where('maid_id', $user->id)
+            ->with(['salarySchedule', 'employer:id,name,email'])
+            ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $totalEarned = SalarySchedule::whereHas('assignment', function ($q) use ($user) {
-            $q->where('maid_id', $user->id);
-        })
-            ->where('payment_status', 'paid')
-            ->sum('monthly_salary');
+        $totalEarned = \App\Models\SalaryPayment::where('maid_id', $user->id)
+            ->where('status', 'paid_to_maid')
+            ->sum('net_amount');
 
         return $this->success([
-            'history' => $history->items(),
+            'payments' => $payments->items(),
             'total_earned' => $totalEarned,
             'total_earned_formatted' => '₦' . number_format($totalEarned, 2),
             'pagination' => [
-                'current_page' => $history->currentPage(),
-                'last_page' => $history->lastPage(),
-                'per_page' => $history->perPage(),
-                'total' => $history->total(),
+                'current_page' => $payments->currentPage(),
+                'last_page' => $payments->lastPage(),
+                'per_page' => $payments->perPage(),
+                'total' => $payments->total(),
             ],
-        ], 'Salary history retrieved successfully');
+        ], 'Salary payment history retrieved successfully');
     }
 
     /**

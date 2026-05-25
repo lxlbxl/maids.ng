@@ -61,7 +61,7 @@ Schedule::job(new \App\Jobs\RefreshSeoContent)
 Schedule::call(function () {
     \App\Models\AgentOverride::query()->update([
         'current_daily_spend_usd' => 0,
-        'spend_reset_at'          => now(),
+        'spend_reset_at' => now(),
     ]);
     \Illuminate\Support\Facades\Cache::flush();
 })->dailyAt('00:00')->name('reset-agent-daily-spend');
@@ -76,3 +76,13 @@ Schedule::command('qoreid:health')
     ->everyThirtyMinutes()
     ->withoutOverlapping()
     ->name('check-qoreid-health');
+
+// ============================================
+// WEBHOOK SCHEDULES
+// ============================================
+
+// Process pending webhook deliveries every minute
+Schedule::command('webhooks:process')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/webhooks.log'));

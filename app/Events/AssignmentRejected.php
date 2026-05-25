@@ -64,4 +64,36 @@ class AssignmentRejected
             'message' => 'Assignment has been rejected',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'assignment.rejected';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'assignment_id' => $this->assignment->id,
+            'employer_id' => $this->employerId,
+            'maid_id' => $this->maidId,
+            'status' => 'rejected',
+            'rejection_reason' => $this->rejectionReason,
+            'refund_amount' => $this->refundAmount,
+            'message' => 'Assignment has been rejected',
+            'assignment' => [
+                'id' => $this->assignment->id,
+                'employer_id' => $this->assignment->employer_id,
+                'maid_id' => $this->assignment->maid_id,
+                'status' => $this->assignment->status,
+                'created_at' => $this->assignment->created_at?->toIso8601String(),
+                'rejected_at' => $this->assignment->rejected_at?->toIso8601String(),
+            ],
+        ];
+    }
 }

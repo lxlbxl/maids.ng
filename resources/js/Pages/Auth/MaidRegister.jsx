@@ -1,6 +1,27 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
+const NIGERIAN_STATES = [
+    'Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Kano', 'Kaduna', 
+    'Enugu', 'Delta', 'Ogun', 'Anambra', 'Abia', 'Adamawa', 
+    'Akwa Ibom', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 
+    'Cross River', 'Ebonyi', 'Edo', 'Ekiti', 'Gombe', 'Imo', 
+    'Jigawa', 'Kebbi', 'Kogi', 'Kwara', 'Nasarawa', 'Niger', 
+    'Ondo', 'Osun', 'Plateau', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
+];
+
+const detectStateFromLocation = (locationStr) => {
+    if (!locationStr) return null;
+    const lower = locationStr.toLowerCase();
+    for (const state of NIGERIAN_STATES) {
+        const cleanState = state.split(' ')[0].toLowerCase();
+        if (lower.includes(cleanState)) {
+            return state;
+        }
+    }
+    return null;
+};
+
 const STEPS = [
     {
         id: 'name',
@@ -9,6 +30,17 @@ const STEPS = [
         type: 'input',
         field: 'name',
         placeholder: 'e.g. Mary Okoro',
+    },
+    {
+        id: 'gender',
+        title: 'Are you a woman or a man?',
+        subtitle: 'This helps us know you and match you with matching jobs.',
+        type: 'select',
+        field: 'gender',
+        options: [
+            { value: 'female', label: 'Woman / Female 👩', icon: '👩', desc: 'I am a woman' },
+            { value: 'male', label: 'Man / Male 👨', icon: '👨', desc: 'I am a man' },
+        ]
     },
     {
         id: 'photo',
@@ -85,6 +117,13 @@ const STEPS = [
         placeholder: 'e.g. Lekki, Lagos',
     },
     {
+        id: 'willing_states',
+        title: 'Where are you ready to travel or work?',
+        subtitle: 'Choose all the states in Nigeria where you are willing to take a job. You can select more than one.',
+        type: 'willing_states',
+        field: 'willing_states',
+    },
+    {
         id: 'nin',
         title: 'Trust & Safety',
         subtitle: 'We need your NIN to verify your identity. If you are not Nigerian, tick the box below.',
@@ -103,6 +142,19 @@ const STEPS = [
 export default function MaidRegister() {
     const [currentStep, setCurrentStep] = useState(0);
     const [preview, setPreview] = useState(null);
+    const [unmatchedLocations, setUnmatchedLocations] = useState([]);
+
+    useEffect(() => {
+        fetch('/api/unmatched-employer-locations')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setUnmatchedLocations(data);
+                }
+            })
+            .catch(err => console.error("Error fetching locations", err));
+    }, []);
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -112,6 +164,8 @@ export default function MaidRegister() {
         experience_years: '',
         expected_salary: '',
         location: '',
+        gender: '',
+        willing_states: [],
         nin: '',
         is_foreigner: false,
         password: '',
@@ -126,6 +180,7 @@ export default function MaidRegister() {
     const isStepValid = () => {
         switch (step.id) {
             case 'name': return data.name.trim().length > 0;
+            case 'gender': return data.gender !== '';
             case 'photo': return data.avatar !== null;
             case 'contact': return data.phone.trim().length > 5;
             case 'skills': return data.skills.length > 0;
@@ -133,6 +188,7 @@ export default function MaidRegister() {
             case 'experience': return data.experience_years !== '';
             case 'salary': return data.expected_salary.toString().trim().length > 0;
             case 'location': return data.location.trim().length > 2;
+            case 'willing_states': return data.willing_states && data.willing_states.length > 0;
             case 'nin': return data.is_foreigner || (data.nin.length === 11);
             case 'password': return data.password.length >= 8 && data.password === data.password_confirmation;
             default: return true;
@@ -364,6 +420,87 @@ export default function MaidRegister() {
                             />
                         </div>
                         {errors.password && <p className="text-danger text-sm">{errors.password}</p>}
+                    </div>
+                );
+            case 'willing_states':
+                const userState = detectStateFromLocation(data.location) || (typeof window !== 'undefined' ? localStorage.getItem('user_location') : null);
+                
+                const handleStateToggle = (stateVal) => {
+                    const current = data.willing_states || [];
+                    if (stateVal === 'anywhere') {
+                        if (current.includes('anywhere')) {
+                            setData('willing_states', []);
+                        } else {
+                            setData('willing_states', ['anywhere']);
+                        }
+                    } else {
+                        let updated = current.filter(v => v !== 'anywhere');
+                        if (updated.includes(stateVal)) {
+                            updated = updated.filter(v => v !== stateVal);
+                        } else {
+                            updated = [...updated, stateVal];
+                        }
+                        setData('willing_states', updated);
+                    }
+                };
+
+                // Compile suggested list dynamically
+                const suggestionList = [];
+                
+                // 1. User state first
+                if (userState && !suggestionList.includes(userState)) {
+                    suggestionList.push({ value: userState, label: `${userState} (Where you stay)`, isSpecial: true });
+                }
+
+                // 2. Unmatched employer locations
+                unmatchedLocations.forEach(loc => {
+                    if (loc !== userState && !suggestionList.some(s => s.value === loc)) {
+                        suggestionList.push({ value: loc, label: `${loc} (Employers waiting!)`, isSpecial: true });
+                    }
+                });
+
+                // 3. Add default popular states if not already in list
+                const popularStates = ['Lagos', 'Abuja (FCT)', 'Rivers', 'Oyo', 'Enugu', 'Kano', 'Kaduna', 'Delta', 'Ogun'];
+                popularStates.forEach(loc => {
+                    if (!suggestionList.some(s => s.value === loc)) {
+                        suggestionList.push({ value: loc, label: loc });
+                    }
+                });
+
+                return (
+                    <div className="space-y-6 animate-fade-in text-left">
+                        {/* Anywhere Option */}
+                        <button
+                            type="button"
+                            onClick={() => handleStateToggle('anywhere')}
+                            className={`w-full p-5 rounded-brand-lg border-2 text-left transition-all ${data.willing_states.includes('anywhere') ? 'border-teal bg-teal-ghost dark:bg-teal/10 shadow-brand-1' : 'border-gray-100 dark:border-white/5 bg-white dark:bg-[#1c1c1e]'}`}
+                        >
+                            <span className="text-3xl block mb-2">🌍</span>
+                            <span className="font-bold text-base block text-espresso dark:text-[#f0ede8]">Ready to work anywhere in Nigeria 🇳🇬</span>
+                            <span className="text-xs text-muted dark:text-gray-400 block">I am ready to travel to any state where there is a good job.</span>
+                        </button>
+
+                        <div className="text-xs font-bold text-muted dark:text-gray-400 uppercase tracking-wider">
+                            Or choose specific states:
+                        </div>
+
+                        {/* List of suggestions */}
+                        <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-1">
+                            {suggestionList.map(item => {
+                                const isSelected = data.willing_states.includes(item.value);
+                                return (
+                                    <button
+                                        type="button"
+                                        key={item.value}
+                                        onClick={() => handleStateToggle(item.value)}
+                                        className={`px-4 py-3 rounded-full border-2 text-sm font-medium transition-all ${isSelected ? 'border-teal bg-teal-ghost dark:bg-teal/10 text-teal-dark dark:text-teal font-bold' : 'border-gray-100 dark:border-white/5 bg-white dark:bg-[#1c1c1e] text-espresso dark:text-[#f0ede8]'}`}
+                                    >
+                                        {item.label} {isSelected && '✓'}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {errors.willing_states && <p className="text-danger text-sm">{errors.willing_states}</p>}
                     </div>
                 );
             default:

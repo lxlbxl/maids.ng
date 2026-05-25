@@ -34,11 +34,13 @@ class MaidProfileResource extends JsonResource
             'role' => $this->getMaidRole(),
             'skills' => $this->skills ?? [],
             'languages' => $this->languages ?? [],
+            'gender' => $this->gender,
 
             // Work Preferences
             'work_type' => $this->work_type,
             'schedule_preference' => $this->schedule_preference,
             'availability_status' => $this->availability_status,
+            'willing_states' => $this->willing_states ?? [],
 
             // Location
             'location' => $this->location,

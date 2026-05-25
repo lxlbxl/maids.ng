@@ -9,6 +9,7 @@ class MaidProfile extends Model
     protected $fillable = [
         'user_id',
         'nin',
+        'gender',
         'bio',
         'skills',
         'experience_years',
@@ -16,6 +17,7 @@ class MaidProfile extends Model
         'schedule_preference',
         'expected_salary',
         'location',
+        'willing_states',
         'state',
         'lga',
         'nin_verified',
@@ -38,6 +40,7 @@ class MaidProfile extends Model
             'skills' => 'array',
             'languages' => 'array',
             'help_types' => 'array',
+            'willing_states' => 'array',
             'nin_verified' => 'boolean',
             'background_verified' => 'boolean',
             'is_foreigner' => 'boolean',
