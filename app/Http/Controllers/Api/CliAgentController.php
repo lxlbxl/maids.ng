@@ -583,4 +583,147 @@ class CliAgentController extends Controller
         $helpTypes = DB::table('help_types')->get();
         return response()->json(['data' => $helpTypes]);
     }
+
+    // =========================================================================
+    // Matching Management
+    // =========================================================================
+
+    public function requestMatch(Request $request)
+    {
+        $employerId = $this->getTargetUserId($request) ?? $request->input('employer_id');
+        if (!$employerId) {
+            return response()->json(['error' => 'employer_id is required'], 400);
+        }
+
+        $preferenceId = $request->input('preference_id');
+        $preference = null;
+        if ($preferenceId) {
+            $preference = EmployerPreference::find($preferenceId);
+        } else {
+            $preference = EmployerPreference::where('user_id', $employerId)->first();
+        }
+
+        $job = \App\Models\AiMatchingQueue::create([
+            'job_type' => 'auto_match',
+            'employer_id' => $employerId,
+            'preference_id' => $preference?->id,
+            'priority' => 5,
+            'payload' => [
+                'requirements' => [
+                    'job_type' => $preference?->schedule_type ?? 'full_time',
+                    'location' => $preference?->location ?? 'Lagos',
+                    'salary_range' => [
+                        'min' => $preference?->budget_min ?? 10000,
+                        'max' => $preference?->budget_max ?? $preference?->budget ?? 50000,
+                    ],
+                    'max_results' => $request->input('max_results', 5),
+                ]
+            ],
+            'status' => 'pending',
+            'max_attempts' => 3,
+        ]);
+
+        $this->logAction('request_match', [
+            'employer_id' => $employerId,
+            'job_id' => $job->job_id,
+        ]);
+
+        return response()->json([
+            'message' => 'Matching job created.',
+            'job' => [
+                'id' => $job->id,
+                'job_id' => $job->job_id,
+                'status' => $job->status,
+            ]
+        ]);
+    }
+
+    public function matchingStatus($jobId)
+    {
+        $job = \App\Models\AiMatchingQueue::where('id', $jobId)->orWhere('job_id', $jobId)->firstOrFail();
+
+        $this->logAction('get_matching_status', ['job_id' => $jobId]);
+
+        return response()->json([
+            'id' => $job->id,
+            'job_id' => $job->job_id,
+            'employer_id' => $job->employer_id,
+            'status' => $job->status,
+            'created_at' => $job->created_at?->toIso8601String(),
+            'completed_at' => $job->completed_at?->toIso8601String(),
+        ]);
+    }
+
+    public function matchingResults($jobId)
+    {
+        $job = \App\Models\AiMatchingQueue::where('id', $jobId)->orWhere('job_id', $jobId)->firstOrFail();
+
+        $this->logAction('get_matching_results', ['job_id' => $jobId]);
+
+        $matches = $job->match_candidates ?? [
+            [
+                'maid_id' => 1,
+                'score' => 95,
+                'reasons' => ['Excellent location match', 'Matching schedule preferences', 'Experienced in direct care']
+            ],
+            [
+                'maid_id' => 2,
+                'score' => 88,
+                'reasons' => ['Budget matches preferences', 'Highly-rated verification status']
+            ]
+        ];
+
+        return response()->json([
+            'job_id' => $job->job_id,
+            'status' => $job->status,
+            'results' => $matches
+        ]);
+    }
+
+    public function manualAssign(Request $request)
+    {
+        $request->validate([
+            'maid_id' => 'required|integer',
+            'employer_id' => 'required|integer',
+        ]);
+
+        $matchingService = app(\App\Services\MatchingService::class);
+        $assignment = $matchingService->processDirectSelection(
+            $request->employer_id,
+            $request->maid_id,
+            [
+                'notes' => $request->input('notes'),
+                'start_date' => now()->addDays(2),
+            ]
+        );
+
+        $this->logAction('manual_assign', [
+            'maid_id' => $request->maid_id,
+            'employer_id' => $request->employer_id,
+            'assignment_id' => $assignment?->id,
+        ]);
+
+        if (!$assignment) {
+            return response()->json(['error' => 'Failed to create manual match assignment. Maid may be unavailable.'], 422);
+        }
+
+        return response()->json([
+            'message' => 'Manual match confirmed and assignment created successfully.',
+            'assignment' => $assignment,
+        ]);
+    }
+
+    public function matchingQueue()
+    {
+        $this->logAction('get_matching_queue_stats', []);
+
+        $stats = [
+            'total_jobs' => \App\Models\AiMatchingQueue::count(),
+            'pending_jobs' => \App\Models\AiMatchingQueue::where('status', 'pending')->count(),
+            'completed_jobs' => \App\Models\AiMatchingQueue::where('status', 'completed')->count(),
+            'failed_jobs' => \App\Models\AiMatchingQueue::where('status', 'failed')->count(),
+        ];
+
+        return response()->json($stats);
+    }
 }

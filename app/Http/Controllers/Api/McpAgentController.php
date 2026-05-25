@@ -82,7 +82,34 @@ class McpAgentController extends Controller
     public function triggerAiMatching(Request $request)
     {
         $request->validate(['employer_id' => 'required|integer']);
-        return response()->json(['message' => 'AI matching triggered for employer ' . $request->employer_id]);
+        
+        $employerId = $request->employer_id;
+        $preference = EmployerPreference::where('user_id', $employerId)->firstOrFail();
+        
+        $matchingService = app(\App\Services\MatchingService::class);
+        $bestMatch = $matchingService->findBestMatch($preference);
+        
+        if ($bestMatch) {
+            $job = \App\Models\AiMatchingQueue::create([
+                'job_type' => 'auto_match',
+                'employer_id' => $employerId,
+                'preference_id' => $preference->id,
+                'status' => 'completed',
+                'completed_at' => now(),
+                'result' => $bestMatch,
+                'match_candidates' => [$bestMatch],
+            ]);
+            
+            return response()->json([
+                'message' => 'AI matching triggered and completed successfully.',
+                'job_id' => $job->job_id,
+                'best_match' => $bestMatch,
+            ]);
+        }
+        
+        return response()->json([
+            'message' => 'AI matching triggered, but no suitable matches were found at this time.',
+        ], 404);
     }
 
     // Support Tools

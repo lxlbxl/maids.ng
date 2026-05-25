@@ -531,4 +531,11 @@ Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
     // Reference Data
     Route::get('/reference/skills', [CliAgentController::class, 'getSkills']);
     Route::get('/reference/help-types', [CliAgentController::class, 'getHelpTypes']);
+
+    // Matching Management
+    Route::post('/matching/request', [CliAgentController::class, 'requestMatch']);
+    Route::get('/matching/status/{jobId}', [CliAgentController::class, 'matchingStatus']);
+    Route::get('/matching/results/{jobId}', [CliAgentController::class, 'matchingResults']);
+    Route::post('/matching/manual-assign', [CliAgentController::class, 'manualAssign']);
+    Route::get('/matching/queue', [CliAgentController::class, 'matchingQueue']);
 });

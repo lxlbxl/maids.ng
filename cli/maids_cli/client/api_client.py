@@ -351,3 +351,27 @@ class ApiClient:
         return self._request("PUT", f"cli/users/{user_id}/status", json_data={
             "status": status,
         })
+
+    # =========================================================================
+    # Matching Endpoints
+    # =========================================================================
+    
+    def request_match(self, **kwargs: Any) -> Dict[str, Any]:
+        """Request AI matching for an employer."""
+        return self._request("POST", "cli/matching/request", json_data=kwargs)
+        
+    def get_matching_status(self, job_id: int) -> Dict[str, Any]:
+        """Get the status of a matching job."""
+        return self._request("GET", f"cli/matching/status/{job_id}")
+        
+    def get_matching_results(self, job_id: int) -> Dict[str, Any]:
+        """Get the results of a completed matching job."""
+        return self._request("GET", f"cli/matching/results/{job_id}")
+        
+    def review_manual_match(self, **kwargs: Any) -> Dict[str, Any]:
+        """Review and confirm a manual match assignment."""
+        return self._request("POST", "cli/matching/manual-assign", json_data=kwargs)
+        
+    def get_matching_queue_stats(self) -> Dict[str, Any]:
+        """Get matching queue statistics."""
+        return self._request("GET", "cli/matching/queue")
