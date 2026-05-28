@@ -251,6 +251,7 @@ Route::middleware('auth')->group(function () {
 
         // People Management
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
+        Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show');
         Route::post('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
         Route::post('/users/{id}/role', [AdminUserController::class, 'assignRole'])->name('users.role');
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');

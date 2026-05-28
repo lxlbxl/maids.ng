@@ -51,6 +51,12 @@ class MaidSearchController extends Controller
                 'verified' => $p->nin_verified && $p->background_verified,
                 'avatar' => $maid->avatar,
                 'bio' => $p->bio,
+                'gender' => $p->gender,
+                'experience_years' => $p->experience_years,
+                'availability_status' => $p->availability_status,
+                'schedule_preference' => $p->schedule_preference,
+                'willing_states' => $p->willing_states ?? [],
+                'languages' => $p->languages ?? [],
             ];
         });
 
@@ -101,6 +107,7 @@ class MaidSearchController extends Controller
                 'rating' => round($p?->rating ?? 0, 1),
                 'total_reviews' => $p?->total_reviews ?? 0,
                 'rate' => $p?->expected_salary ?? 0,
+                'expected_salary' => $p?->expected_salary ?? 0,
                 'skills' => $p?->skills ?? [],
                 'bio' => $p?->bio,
                 'experience_years' => $p?->experience_years ?? 0,
@@ -108,6 +115,12 @@ class MaidSearchController extends Controller
                 'nin_verified' => $p?->nin_verified ?? false,
                 'background_verified' => $p?->background_verified ?? false,
                 'avatar' => $maid->avatar,
+                'gender' => $p?->gender,
+                'willing_states' => $p?->willing_states ?? [],
+                'languages' => $p?->languages ?? [],
+                'schedule_preference' => $p?->schedule_preference,
+                'availability_status' => $p?->availability_status ?? 'available',
+                'help_types' => $p?->help_types ?? [],
                 'reviews' => $maid->reviewsReceived->map(fn($r) => [
                     'rating' => $r->rating,
                     'comment' => $r->comment,

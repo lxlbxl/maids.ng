@@ -198,9 +198,9 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
         } catch (err) {
             // Fallback: show demo matches
             setMatches([
-                { id: 1, name: 'Blessing Okafor', role: 'Live-in Helper', location: 'Ajah, Lagos', rating: 4.8, rate: 45000, skills: ['cleaning', 'cooking'], match: 92, verified: true },
-                { id: 2, name: 'Grace Adeyemi', role: 'Nanny', location: 'Ikeja, Lagos', rating: 4.9, rate: 55000, skills: ['childcare', 'cooking'], match: 87, verified: true },
-                { id: 3, name: 'Joy Nwosu', role: 'Housekeeper', location: 'Lekki, Lagos', rating: 4.95, rate: 65000, skills: ['deep-cleaning', 'cooking'], match: 81, verified: true },
+                { id: 1, name: 'Blessing Okafor', role: 'Live-in Helper', location: 'Ajah, Lagos', rating: 4.8, rate: 45000, skills: ['cleaning', 'cooking'], match: 92, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 4 },
+                { id: 2, name: 'Grace Adeyemi', role: 'Nanny', location: 'Ikeja, Lagos', rating: 4.9, rate: 55000, skills: ['childcare', 'cooking'], match: 87, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 5 },
+                { id: 3, name: 'Joy Nwosu', role: 'Housekeeper', location: 'Lekki, Lagos', rating: 4.95, rate: 65000, skills: ['deep-cleaning', 'cooking'], match: 81, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 6 },
             ]);
 
             // Still track completion even with fallback
@@ -279,38 +279,108 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                 )}
                             </div>
 
-                            <div className="grid gap-5">
+                            <div className="grid gap-6">
                                 {matches.map((maid) => (
-                                    <div key={maid.id} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-6 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row md:items-center gap-6">
-                                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-pale to-teal flex-shrink-0 flex items-center justify-center text-white text-xl font-bold relative">
-                                            {maid.name.charAt(0)}
-                                            {maid.verified && (
-                                                <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-success rounded-full border-2 border-white dark:border-[#1c1c1e] text-[9px] flex items-center justify-center">✓</span>
+                                    <div key={maid.id} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-6 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-3 hover:-translate-y-1 transition-all duration-300 flex flex-col md:flex-row items-stretch gap-6">
+                                        
+                                        {/* Maid Photo — Large & Prominent Portrait */}
+                                        <div className="w-full md:w-[130px] h-[160px] md:h-auto flex-shrink-0 relative overflow-hidden rounded-brand-lg bg-gradient-to-br from-teal/10 to-teal/5">
+                                            {maid.avatar ? (
+                                                <img 
+                                                    src={maid.avatar} 
+                                                    alt={maid.name} 
+                                                    className="w-full h-full object-cover min-h-full"
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-teal text-white text-3xl font-bold font-display">
+                                                    {maid.name?.charAt(0)}
+                                                </div>
+                                            )}
+                                            {/* Availability Badge */}
+                                            {maid.availability_status === 'available' && (
+                                                <div className="absolute top-2 left-2 bg-success text-white text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1">
+                                                    <span className="w-1 h-1 bg-white rounded-full animate-pulse"></span>
+                                                    Available
+                                                </div>
                                             )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div>
-                                                    <h3 className="font-semibold text-espresso dark:text-[#f0ede8] text-lg">{maid.name}</h3>
-                                                    <p className="text-muted dark:text-gray-400 text-sm">{maid.role} · {maid.location}</p>
+
+                                        {/* Info Column */}
+                                        <div className="flex-1 flex flex-col justify-between min-w-0">
+                                            <div>
+                                                {/* Header Row */}
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                            <span className="text-teal text-[10px] font-mono uppercase tracking-widest font-bold">
+                                                                {maid.role || 'Domestic Helper'}
+                                                            </span>
+                                                            {maid.verified && (
+                                                                <span className="bg-success/10 text-success text-[8px] font-mono px-1.5 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                                                                    ✓ Verified
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <h3 className="font-semibold text-espresso dark:text-[#f0ede8] text-xl tracking-tight">{maid.name}</h3>
+                                                        <p className="text-muted dark:text-gray-400 text-xs mt-1 flex items-center gap-1">
+                                                            <svg className="w-3.5 h-3.5 text-muted/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            <span>{maid.location}</span>
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-teal-ghost dark:bg-teal/10 text-teal font-mono text-xs font-bold px-3 py-1.5 rounded-full self-start">
+                                                        {maid.match}% Match
+                                                    </div>
                                                 </div>
-                                                <div className="bg-teal-ghost dark:bg-teal/10 text-teal font-mono text-sm font-bold px-3 py-1.5 rounded-full flex-shrink-0">
-                                                    {maid.match}% match
+
+                                                {/* Metadata Row: Rating, Gender, Experience, Rate */}
+                                                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 text-xs text-muted dark:text-gray-400 border-t border-gray-100 dark:border-white/5 pt-3">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-amber-400">⭐</span>
+                                                        <span className="font-bold text-espresso dark:text-[#f0ede8]">{maid.rating}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span>Gender: </span>
+                                                        <span className="text-espresso dark:text-[#f0ede8] font-semibold capitalize">{maid.gender || 'Not Specified'}</span>
+                                                    </div>
+                                                    {maid.experience_years > 0 && (
+                                                        <div>
+                                                            <span>Experience: </span>
+                                                            <span className="text-espresso dark:text-[#f0ede8] font-semibold">{maid.experience_years} Yrs</span>
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <span>Rate: </span>
+                                                        <span className="text-teal font-bold">₦{Number(maid.rate).toLocaleString()}/mo</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 mt-3">
-                                                <span className="text-copper text-sm">{'★'.repeat(Math.round(maid.rating))} {maid.rating}</span>
-                                                <span className="font-mono text-espresso dark:text-[#f0ede8] font-medium">₦{maid.rate?.toLocaleString()}<span className="text-muted dark:text-gray-400 text-xs font-normal">/mo</span></span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5 mt-3">
-                                                {(maid.skills || []).slice(0, 4).map(s => (
-                                                    <span key={s} className="bg-teal-ghost dark:bg-teal/10 text-teal text-[11px] font-medium px-2.5 py-1 rounded-full">{s}</span>
-                                                ))}
-                                            </div>
+
+                                            {/* Skills Tags */}
+                                            {maid.skills?.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-4">
+                                                    {maid.skills.slice(0, 3).map(skill => (
+                                                        <span key={skill} className="bg-gray-50 dark:bg-white/5 text-muted dark:text-gray-400 px-2 py-0.5 rounded text-[10px] capitalize border border-gray-100 dark:border-white/5">{skill}</span>
+                                                    ))}
+                                                    {maid.skills.length > 3 && (
+                                                        <span className="text-[10px] text-muted/70 px-1 py-0.5">+{maid.skills.length - 3} more</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                        <button onClick={() => selectMaid(maid.id)} className="bg-teal text-white px-6 py-3 rounded-brand-md font-medium text-sm hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1 flex-shrink-0">
-                                            Select & Continue →
-                                        </button>
+
+                                        {/* Action CTA Button */}
+                                        <div className="flex items-center justify-center md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 dark:border-white/5 pt-4 md:pt-0">
+                                            <button 
+                                                onClick={() => selectMaid(maid.id)} 
+                                                className="w-full md:w-auto bg-teal text-white px-6 py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all hover:scale-[1.02] shadow-brand-1 whitespace-nowrap"
+                                            >
+                                                Select & Continue →
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

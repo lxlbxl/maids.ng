@@ -10,6 +10,10 @@ export default function Search({ maids, filters }) {
         router.get('/maids', { search, location, schedule }, { preserveState: true });
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleFilter();
+    };
+
     return (
         <>
             <Head title="Find Trusted Helpers | Maids.ng" />
@@ -40,6 +44,7 @@ export default function Search({ maids, filters }) {
                                 type="text" 
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
+                                onKeyDown={handleKeyDown}
                                 placeholder="Search by name, skill, or role..." 
                                 className="flex-1 bg-white/10 border-none rounded-brand-md px-5 py-3.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-teal/40"
                             />
@@ -47,6 +52,7 @@ export default function Search({ maids, filters }) {
                                 type="text" 
                                 value={location}
                                 onChange={e => setLocation(e.target.value)}
+                                onKeyDown={handleKeyDown}
                                 placeholder="Location..." 
                                 className="md:w-48 bg-white/10 border-none rounded-brand-md px-5 py-3.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-teal/40"
                             />
@@ -84,45 +90,86 @@ export default function Search({ maids, filters }) {
                             {maids.data.map(maid => (
                                 <Link key={maid.id} href={`/maids/${maid.id}`} className="group">
                                     <div className="bg-white rounded-brand-xl border border-gray-100 shadow-brand-1 hover:shadow-brand-3 transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
-                                        {/* Card Header */}
-                                        <div className="h-3 bg-gradient-to-r from-teal to-teal/60"></div>
-                                        <div className="p-6">
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-14 h-14 bg-teal/10 rounded-full flex items-center justify-center text-xl text-teal font-bold flex-shrink-0 border-2 border-teal/20">
-                                                    {maid.name?.charAt(0)}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="font-bold text-espresso text-lg truncate group-hover:text-teal transition-colors">{maid.name}</h3>
-                                                    <p className="text-teal text-xs font-mono uppercase tracking-widest mt-0.5">{maid.role || 'Domestic Helper'}</p>
-                                                    <p className="text-muted text-sm mt-1">📍 {maid.location || 'Lagos'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Stats Row */}
-                                            <div className="flex items-center gap-4 mt-5 pt-4 border-t border-gray-50">
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-amber-400">⭐</span>
-                                                    <span className="text-sm font-bold text-espresso">{maid.rating || '—'}</span>
-                                                </div>
-                                                {maid.rate && (
-                                                    <span className="text-sm text-muted">₦{Number(maid.rate).toLocaleString()}/mo</span>
+                                        {/* Photo + Info Layout */}
+                                        <div className="flex">
+                                            {/* Maid Photo — Large & Prominent */}
+                                            <div className="w-[140px] md:w-[160px] flex-shrink-0 relative overflow-hidden bg-gradient-to-br from-teal/10 to-teal/5">
+                                                {maid.avatar ? (
+                                                    <img 
+                                                        src={maid.avatar} 
+                                                        alt={maid.name} 
+                                                        className="w-full h-full object-cover min-h-[200px]"
+                                                        loading="lazy"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full min-h-[200px] flex items-center justify-center">
+                                                        <span className="text-5xl font-bold text-teal/30">{maid.name?.charAt(0)}</span>
+                                                    </div>
                                                 )}
-                                                {maid.verified && (
-                                                    <span className="ml-auto bg-success/10 text-success text-[9px] font-mono px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">✓ Verified</span>
+                                                {/* Availability badge overlay */}
+                                                {maid.availability_status === 'available' && (
+                                                    <div className="absolute top-2 left-2 bg-success/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                                                        Available
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            {/* Skills */}
-                                            {maid.skills?.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5 mt-3">
-                                                    {maid.skills.slice(0, 4).map(skill => (
-                                                        <span key={skill} className="bg-gray-50 text-muted px-2 py-0.5 rounded text-[10px] capitalize">{skill}</span>
-                                                    ))}
-                                                    {maid.skills.length > 4 && (
-                                                        <span className="text-[10px] text-muted">+{maid.skills.length - 4} more</span>
+                                            {/* Info Panel */}
+                                            <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                                                {/* Top: Name + Role */}
+                                                <div>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <h3 className="font-bold text-espresso text-base truncate group-hover:text-teal transition-colors">{maid.name}</h3>
+                                                            <p className="text-teal text-[10px] font-mono uppercase tracking-widest mt-0.5 font-bold">{maid.role || 'Domestic Helper'}</p>
+                                                        </div>
+                                                        {maid.verified && (
+                                                            <span className="bg-success/10 text-success text-[8px] font-mono px-1.5 py-0.5 rounded-full uppercase tracking-widest font-bold flex-shrink-0 whitespace-nowrap">✓ Verified</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-muted text-xs mt-1.5 flex items-center gap-1">
+                                                        <svg className="w-3 h-3 text-muted/70" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/></svg>
+                                                        <span className="truncate">{maid.location || 'Lagos'}</span>
+                                                    </p>
+                                                </div>
+
+                                                {/* Middle: Stats */}
+                                                <div className="flex items-center gap-3 mt-3 text-xs">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-amber-400">⭐</span>
+                                                        <span className="font-bold text-espresso">{maid.rating || '—'}</span>
+                                                    </div>
+                                                    {maid.rate && (
+                                                        <span className="text-muted font-medium">₦{Number(maid.rate).toLocaleString()}<span className="text-[10px]">/mo</span></span>
+                                                    )}
+                                                    {maid.experience_years > 0 && (
+                                                        <span className="text-muted">{maid.experience_years}yr{maid.experience_years !== 1 ? 's' : ''} exp</span>
                                                     )}
                                                 </div>
-                                            )}
+
+                                                {/* Skills Tags */}
+                                                {maid.skills?.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-3">
+                                                        {maid.skills.slice(0, 3).map(skill => (
+                                                            <span key={skill} className="bg-gray-50 text-muted px-2 py-0.5 rounded text-[10px] capitalize border border-gray-100">{skill}</span>
+                                                        ))}
+                                                        {maid.skills.length > 3 && (
+                                                            <span className="text-[10px] text-muted/70 px-1 py-0.5">+{maid.skills.length - 3} more</span>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Bottom: View Profile + Save */}
+                                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+                                                    <span className="flex-1 bg-teal text-white text-center py-2 rounded-brand-md text-xs font-bold group-hover:bg-teal/90 transition-all">
+                                                        View Profile
+                                                    </span>
+                                                    <span className="w-8 h-8 flex items-center justify-center rounded-brand-md border border-gray-200 text-muted/50 hover:text-rose-400 hover:border-rose-200 transition-colors text-sm">
+                                                        ♡
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </Link>

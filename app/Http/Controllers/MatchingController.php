@@ -238,6 +238,11 @@ class MatchingController extends Controller
                 'confidence' => $scoring['confidence'],
                 'bio' => $profile->bio,
                 'avatar' => $maid->avatar,
+                'gender' => $profile->gender,
+                'availability_status' => $profile->availability_status,
+                'schedule_preference' => $profile->schedule_preference,
+                'willing_states' => $profile->willing_states ?? [],
+                'languages' => $profile->languages ?? [],
             ];
         })
             ->filter(fn($m) => $m !== null && ($m['match'] ?? 0) >= 40)

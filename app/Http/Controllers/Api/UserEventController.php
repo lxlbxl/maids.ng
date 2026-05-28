@@ -30,7 +30,7 @@ class UserEventController extends ApiController
 
         UserEvent::create([
             'user_id' => $validated['user_id'] ?? $request->user()?->id,
-            'session_id' => $request->session()?->getId() ?? uniqid('sess_'),
+            'session_id' => ($request->hasSession() ? $request->session()->getId() : null) ?? uniqid('sess_'),
             'event_type' => $validated['event_type'],
             'page_url' => $validated['page_url'] ?? $request->header('Referer'),
             'event_data' => $validated['event_data'] ?? $request->all(),
