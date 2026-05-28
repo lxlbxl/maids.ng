@@ -378,4 +378,105 @@ class MatchingController extends Controller
             'defaultGateway' => $defaultGateway,
         ]);
     }
+
+    /**
+     * Handle the streamlined direct hiring flow for a specific maid.
+     */
+    public function directHire(Request $request)
+    {
+        $validated = $request->validate([
+            'maid_id' => 'required|exists:users,id',
+            'location' => 'required|string',
+            'schedule' => 'nullable|string',
+            'help_types' => 'nullable|array',
+            'contact_name' => 'nullable|string',
+            'contact_phone' => 'nullable|string',
+            'contact_email' => 'nullable|string|email',
+            'user_id' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $employerId = $validated['user_id'] ?? Auth::id();
+
+        if (!$employerId) {
+            $email = $validated['contact_email'] ?? 'guest_' . uniqid() . '@maids.ng';
+            $name = $validated['contact_name'] ?? 'Guest Employer';
+            $phone = $validated['contact_phone'] ?? null;
+            $tempPassword = Str::random(10);
+
+            // Check if user exists by email OR phone
+            $user = User::where('email', $email)
+                ->when($phone, function($q) use ($phone) {
+                    return $q->orWhere('phone', $phone);
+                })
+                ->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'password' => Hash::make($tempPassword),
+                    'status' => 'active'
+                ]);
+                $user->assignRole('employer');
+            } else {
+                $updates = [];
+                if (!$user->name || $user->name === 'Guest Employer') $updates['name'] = $name;
+                if ($phone && !$user->phone) $updates['phone'] = $phone;
+                if ($email && !$user->email) $updates['email'] = $email;
+                if (!empty($updates)) $user->update($updates);
+            }
+
+            // Send welcome email if this was a new creation
+            if ($user->wasRecentlyCreated) {
+                try {
+                    Mail::to($user->email)->send(new WelcomeEmployerMail($user, $tempPassword));
+                } catch (\Throwable $e) {
+                    Log::warning('Welcome email failed: ' . $e->getMessage());
+                }
+            }
+
+            Auth::loginUsingId($user->id);
+            $employerId = $user->id;
+        }
+
+        // Retrieve maid
+        $maid = User::findOrFail($validated['maid_id']);
+        $p = $maid->maidProfile;
+
+        // Save preferences directly matched to the maid
+        $preference = EmployerPreference::create([
+            'employer_id' => $employerId,
+            'help_types' => $validated['help_types'] ?? ($p ? $p->help_types : ['housekeeping']),
+            'schedule' => $validated['schedule'] ?? ($p ? $p->schedule_preference : 'full-time'),
+            'urgency' => 'immediately',
+            'location' => $validated['location'],
+            'city' => explode(',', $validated['location'])[0] ?? trim($validated['location']),
+            'state' => trim(explode(',', $validated['location'])[1] ?? ''),
+            'budget_min' => $p ? max(15000, $p->expected_salary - 10000) : 15000,
+            'budget_max' => $p ? ($p->expected_salary + 10000) : 80000,
+            'contact_name' => $validated['contact_name'] ?? Auth::user()?->name,
+            'contact_phone' => $validated['contact_phone'] ?? Auth::user()?->phone,
+            'contact_email' => $validated['contact_email'] ?? Auth::user()?->email,
+            'selected_maid_id' => $maid->id,
+            'matching_status' => 'matched',
+            'quiz_status' => 'completed',
+            'quiz_completed_at' => now(),
+        ]);
+
+        // Track quiz completion event with direct hire details
+        UserEvent::recordQuizComplete($employerId, [
+            'preference_id' => $preference->id,
+            'help_types' => $preference->help_types,
+            'location' => $preference->location,
+            'budget_max' => $preference->budget_max,
+            'direct_hire_maid_id' => $maid->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'preference_id' => $preference->id,
+            'redirect' => route('employer.matching.payment', $preference->id),
+        ]);
+    }
 }

@@ -1,10 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
+import DirectHireModal from '@/Components/DirectHireModal';
 
 export default function Search({ maids, filters }) {
     const [search, setSearch] = useState(filters?.search || '');
     const [location, setLocation] = useState(filters?.location || '');
     const [schedule, setSchedule] = useState(filters?.schedule || '');
+    const [hiringMaid, setHiringMaid] = useState(null);
 
     const handleFilter = () => {
         router.get('/maids', { search, location, schedule }, { preserveState: true });
@@ -160,11 +162,22 @@ export default function Search({ maids, filters }) {
                                                     </div>
                                                 )}
 
-                                                {/* Bottom: View Profile + Save */}
+                                                {/* Bottom: View Profile + Quick Hire */}
                                                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
                                                     <span className="flex-1 bg-teal text-white text-center py-2 rounded-brand-md text-xs font-bold group-hover:bg-teal/90 transition-all">
                                                         View Profile
                                                     </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setHiringMaid(maid);
+                                                        }}
+                                                        className="flex-shrink-0 bg-espresso text-white text-xs font-bold px-3 py-2 rounded-brand-md hover:bg-espresso/80 transition-all whitespace-nowrap"
+                                                        title={`Hire ${maid.name?.split(' ')[0]}`}
+                                                    >
+                                                        ⚡ Hire
+                                                    </button>
                                                     <span className="w-8 h-8 flex items-center justify-center rounded-brand-md border border-gray-200 text-muted/50 hover:text-rose-400 hover:border-rose-200 transition-colors text-sm">
                                                         ♡
                                                     </span>
@@ -184,6 +197,13 @@ export default function Search({ maids, filters }) {
                     )}
                 </div>
             </div>
+
+            {hiringMaid && (
+                <DirectHireModal
+                    maid={hiringMaid}
+                    onClose={() => setHiringMaid(null)}
+                />
+            )}
         </>
     );
 }

@@ -1,6 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import DirectHireModal from '@/Components/DirectHireModal';
 
 export default function Show({ maid }) {
+    const [hireModalOpen, setHireModalOpen] = useState(false);
     // Calculate rating breakdown from reviews
     const reviews = maid.reviews || [];
     const totalReviews = reviews.length;
@@ -30,7 +33,7 @@ export default function Show({ maid }) {
                         </Link>
                         <div className="flex items-center gap-4">
                             <Link href="/maids" className="text-sm text-muted hover:text-espresso transition-colors">← Back to Search</Link>
-                            <Link href="/register" className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Book Now</Link>
+                            <button onClick={() => setHireModalOpen(true)} className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Hire {maid.name?.split(' ')[0]}</button>
                         </div>
                     </div>
                 </nav>
@@ -344,9 +347,12 @@ export default function Show({ maid }) {
                                     </div>
                                 </div>
 
-                                <Link href="/register" className="block w-full bg-teal text-white text-center py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-lg shadow-teal/20">
+                                <button
+                                    onClick={() => setHireModalOpen(true)}
+                                    className="block w-full bg-teal text-white text-center py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-lg shadow-teal/20"
+                                >
                                     Hire {maid.name?.split(' ')[0]} Now
-                                </Link>
+                                </button>
                                 
                                 <div className="flex flex-col gap-2 mt-4 text-xs text-muted">
                                     <button className="flex items-center justify-center gap-1.5 w-full py-2 border border-gray-200 rounded-brand-md hover:bg-gray-50 transition-colors">
@@ -403,6 +409,20 @@ export default function Show({ maid }) {
                     </div>
                 </div>
             </div>
+            {hireModalOpen && (
+                <DirectHireModal
+                    maid={{
+                        id: maid.id,
+                        name: maid.name,
+                        avatar: maid.avatar,
+                        role: maid.role,
+                        location: maid.location,
+                        availability_status: maid.availability_status,
+                        verified: maid.verified,
+                    }}
+                    onClose={() => setHireModalOpen(false)}
+                />
+            )}
         </>
     );
 }

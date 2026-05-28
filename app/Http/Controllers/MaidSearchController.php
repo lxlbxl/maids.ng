@@ -157,4 +157,22 @@ class MaidSearchController extends Controller
 
         return response()->json($locations);
     }
+
+    public function showJson($id)
+    {
+        $maid = User::role('maid')->with('maidProfile')->findOrFail($id);
+        $p = $maid->maidProfile;
+        return response()->json([
+            'id' => $maid->id,
+            'name' => $maid->name,
+            'role' => $p?->getMaidRole() ?? 'Helper',
+            'location' => $p?->location ?? $maid->location,
+            'rate' => $p?->expected_salary ?? 0,
+            'avatar' => $maid->avatar,
+            'availability_status' => $p?->availability_status ?? 'available',
+            'gender' => $p?->gender,
+            'experience_years' => $p?->experience_years ?? 0,
+            'skills' => $p?->skills ?? [],
+        ]);
+    }
 }

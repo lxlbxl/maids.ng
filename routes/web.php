@@ -63,6 +63,7 @@ Route::get('/onboarding', function () {
 Route::post('/onboarding/create-account', [MatchingController::class, 'createAccount'])->name('onboarding.create-account');
 Route::post('/onboarding/find-matches', [MatchingController::class, 'findMatches'])->name('onboarding.find-matches');
 Route::post('/onboarding/guarantee-match', [MatchingController::class, 'activateGuaranteeMatch'])->name('onboarding.guarantee-match');
+Route::post('/onboarding/direct-hire', [MatchingController::class, 'directHire'])->name('onboarding.direct-hire');
 
 // Standalone Verification Service (Public - no account required)
 Route::get('/verify-service', function () {
@@ -93,6 +94,7 @@ Route::get('/api/unmatched-employer-locations', function () {
     return response()->json($states);
 });
 Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show');
+Route::get('/api/maids/{id}', [MaidSearchController::class, 'showJson'])->name('maids.show.json');
 
 // Deployment & Maintenance (Token-only auth — works on shared hosting)
 // IMPORTANT: Set DEPLOY_SECRET in your .env file, or it uses a default.
