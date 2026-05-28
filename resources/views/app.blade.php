@@ -65,10 +65,63 @@
             }
         })();
     </script>
+
+    @php
+        // Detect area: member = employer|maid|admin dashboards, otherwise public frontend
+        $isMemberArea = request()->is('employer*') || request()->is('maid*') || request()->is('admin*');
+        $scriptSuffix = $isMemberArea ? 'member' : 'frontend';
+    @endphp
+
+    {{-- ── Google (GTM / GA4) — Head ── --}}
+    @if(\App\Models\Setting::get("script_google_head_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_google_head_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Meta (Facebook Pixel) — Head ── --}}
+    @if(\App\Models\Setting::get("script_meta_head_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_meta_head_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Custom Third-Party Scripts — Head ── --}}
+    @if(\App\Models\Setting::get("script_custom_head_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_custom_head_{$scriptSuffix}") !!}
+    @endif
 </head>
 
 <body class="font-body antialiased bg-ivory dark:bg-[#0f0f10] text-espresso dark:text-[#f0ede8] transition-theme">
+
+    {{-- ── Google — Body (GTM noscript fallback) ── --}}
+    @if(\App\Models\Setting::get("script_google_body_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_google_body_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Meta — Body (noscript pixel fallback) ── --}}
+    @if(\App\Models\Setting::get("script_meta_body_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_meta_body_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Custom — Body ── --}}
+    @if(\App\Models\Setting::get("script_custom_body_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_custom_body_{$scriptSuffix}") !!}
+    @endif
+
     @inertia
+
+    {{-- ── Google — Footer ── --}}
+    @if(\App\Models\Setting::get("script_google_footer_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_google_footer_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Meta — Footer ── --}}
+    @if(\App\Models\Setting::get("script_meta_footer_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_meta_footer_{$scriptSuffix}") !!}
+    @endif
+
+    {{-- ── Custom Third-Party Scripts — Footer (e.g. live chat widgets) ── --}}
+    @if(\App\Models\Setting::get("script_custom_footer_{$scriptSuffix}"))
+        {!! \App\Models\Setting::get("script_custom_footer_{$scriptSuffix}") !!}
+    @endif
+
 </body>
 
 </html>

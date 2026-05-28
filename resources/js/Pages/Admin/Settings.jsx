@@ -59,11 +59,19 @@ export default function Settings({ auth, settings, aiManifest }) {
         'termii_api_key', 'termii_sender_id', 'termii_url',
         // Email Settings
         'mail_mailer', 'mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_encryption',
-        'mail_from_address', 'mail_from_name'
+        'mail_from_address', 'mail_from_name',
+        // Script & Pixel Injection — Frontend
+        'script_google_head_frontend', 'script_google_body_frontend', 'script_google_footer_frontend',
+        'script_meta_head_frontend', 'script_meta_body_frontend', 'script_meta_footer_frontend',
+        'script_custom_head_frontend', 'script_custom_body_frontend', 'script_custom_footer_frontend',
+        // Script & Pixel Injection — Member Area
+        'script_google_head_member', 'script_google_body_member', 'script_google_footer_member',
+        'script_meta_head_member', 'script_meta_body_member', 'script_meta_footer_member',
+        'script_custom_head_member', 'script_custom_body_member', 'script_custom_footer_member',
     ];
     coreKeys.forEach(key => {
         if (!initialData[key]) {
-            initialData[key] = { value: '', group: 'general', is_encrypted: false };
+            initialData[key] = { value: '', group: 'scripts', is_encrypted: false };
         }
     });
 
@@ -226,6 +234,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                         { id: 'verification', name: 'Verification', icon: '✓' },
                         { id: 'sms', name: 'SMS Gateway', icon: '💬' },
                         { id: 'email', name: 'Email Settings', icon: '✉️' },
+                        { id: 'scripts', name: 'Scripts & Pixels', icon: '🌐' },
                         { id: 'api', name: 'API & Security', icon: '🔑' },
                         { id: 'deployment', name: 'Deployment & Cron', icon: '🚀' },
                     ].map(tab => (
@@ -1107,6 +1116,150 @@ export default function Settings({ auth, settings, aiManifest }) {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'scripts' && (
+                            <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
+                                {/* Header */}
+                                <div className="space-y-2">
+                                    <h2 className="text-2xl font-display mb-2 text-teal">Scripts & Pixels</h2>
+                                    <p className="text-white/40 text-xs leading-relaxed">
+                                        Paste tracking snippets for Google Tag Manager, GA4, Meta Pixel, or any custom third-party scripts.
+                                        Changes apply instantly after saving — no code deployment needed.
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {[
+                                            { label: 'Head', desc: 'Loads first — ideal for GTM, GA4, Meta Pixel initialisation' },
+                                            { label: 'Body (Opening)', desc: 'Immediately after <body> — required for GTM & Meta noscript fallbacks' },
+                                            { label: 'Footer', desc: 'Before </body> — ideal for live chat widgets, deferred scripts' },
+                                        ].map(b => (
+                                            <span key={b.label} title={b.desc} className="text-[10px] font-mono uppercase tracking-widest px-2 py-1 bg-white/5 border border-white/10 rounded text-white/40 cursor-help">
+                                                {b.label}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* ── Public Frontend ── */}
+                                {[{ suffix: 'frontend', label: '🌍 Public Frontend', desc: 'Injected on all public pages (homepage, maid search, onboarding, etc.)' },
+                                  { suffix: 'member', label: '👤 Member Area', desc: 'Injected on employer & maid dashboard pages only.' }
+                                ].map(area => (
+                                    <div key={area.suffix} className="space-y-8">
+                                        <div className="flex items-center gap-4">
+                                            <h3 className="font-display text-xl text-white">{area.label}</h3>
+                                            <span className="text-[10px] font-mono text-white/30 bg-white/5 border border-white/10 px-2 py-1 rounded tracking-widest uppercase flex-shrink-0">{area.suffix}</span>
+                                        </div>
+                                        <p className="text-white/30 text-xs -mt-4">{area.desc}</p>
+
+                                        {/* Google */}
+                                        <div className="space-y-6 pt-4 border-t border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-green-400 flex items-center justify-center text-[10px] font-bold text-white">G</div>
+                                                <h4 className="font-display text-base text-white/90">Google — GTM / GA4</h4>
+                                                <span className="text-[10px] font-mono text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded tracking-widest uppercase">Google Tag Manager · Analytics 4</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {[
+                                                    { pos: 'head', label: 'Head Script', placeholder: `<!-- Google Tag Manager -->\n<script>(function(w,d,s,l,i){...})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>\n<!-- End Google Tag Manager -->\n\n<!-- OR for GA4 directly: -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('js', new Date());\n  gtag('config', 'G-XXXXXXXXXX');\n</script>` },
+                                                    { pos: 'body', label: 'Body (Opening) — GTM noscript', placeholder: `<!-- Google Tag Manager (noscript) -->\n<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n<!-- End Google Tag Manager (noscript) -->` },
+                                                    { pos: 'footer', label: 'Footer Script', placeholder: '<!-- Footer Google scripts (usually not needed for GTM/GA4) -->' },
+                                                ].map(({ pos, label, placeholder }) => {
+                                                    const key = `script_google_${pos}_${area.suffix}`;
+                                                    return (
+                                                        <div key={key} className="space-y-2">
+                                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">{label}</p>
+                                                            <textarea
+                                                                value={data.settings[key]?.value || ''}
+                                                                onChange={e => handleSettingChange(key, e.target.value)}
+                                                                placeholder={placeholder}
+                                                                rows={pos === 'head' ? 8 : 4}
+                                                                spellCheck={false}
+                                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-green-300/90 focus:border-blue-500/40 outline-none font-mono text-xs resize-y leading-relaxed placeholder-white/10"
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Meta */}
+                                        <div className="space-y-6 pt-6 border-t border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-[10px] font-bold text-white">f</div>
+                                                <h4 className="font-display text-base text-white/90">Meta — Facebook Pixel</h4>
+                                                <span className="text-[10px] font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded tracking-widest uppercase">Pixel · Conversions API</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {[
+                                                    { pos: 'head', label: 'Head Script', placeholder: `<!-- Meta Pixel Code -->\n<script>\n!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){...};\nf._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';...}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');\nfbq('init', 'YOUR_PIXEL_ID');\nfbq('track', 'PageView');\n</script>\n<!-- End Meta Pixel Code -->` },
+                                                    { pos: 'body', label: 'Body (Opening) — noscript fallback', placeholder: `<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/></noscript>` },
+                                                    { pos: 'footer', label: 'Footer Script', placeholder: '<!-- Footer Meta scripts (e.g. event helpers) -->' },
+                                                ].map(({ pos, label, placeholder }) => {
+                                                    const key = `script_meta_${pos}_${area.suffix}`;
+                                                    return (
+                                                        <div key={key} className="space-y-2">
+                                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">{label}</p>
+                                                            <textarea
+                                                                value={data.settings[key]?.value || ''}
+                                                                onChange={e => handleSettingChange(key, e.target.value)}
+                                                                placeholder={placeholder}
+                                                                rows={pos === 'head' ? 8 : 4}
+                                                                spellCheck={false}
+                                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-blue-300/90 focus:border-blue-500/40 outline-none font-mono text-xs resize-y leading-relaxed placeholder-white/10"
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Custom */}
+                                        <div className="space-y-6 pt-6 border-t border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-[10px] font-bold text-white">★</div>
+                                                <h4 className="font-display text-base text-white/90">Custom Third-Party</h4>
+                                                <span className="text-[10px] font-mono text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded tracking-widest uppercase">Hotjar · Intercom · Crisp · etc.</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {[
+                                                    { pos: 'head', label: 'Head Script (CSS, fonts, custom tags)', placeholder: '<!-- e.g. custom CSS, Hotjar initialisation, Clarity, etc. -->' },
+                                                    { pos: 'body', label: 'Body (Opening)', placeholder: '<!-- e.g. noscript fallbacks for custom tools -->' },
+                                                    { pos: 'footer', label: 'Footer Script (Live chat widgets, deferred loaders)', placeholder: `<!-- e.g. Intercom, Crisp, Tawk.to, custom analytics -->\n<script>\n  window.intercomSettings = { app_id: "YOUR_APP_ID" };\n</script>\n<script>(function(){var w=window;var ic=w.Intercom;...})()</script>` },
+                                                ].map(({ pos, label, placeholder }) => {
+                                                    const key = `script_custom_${pos}_${area.suffix}`;
+                                                    return (
+                                                        <div key={key} className="space-y-2">
+                                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">{label}</p>
+                                                            <textarea
+                                                                value={data.settings[key]?.value || ''}
+                                                                onChange={e => handleSettingChange(key, e.target.value)}
+                                                                placeholder={placeholder}
+                                                                rows={pos === 'footer' ? 8 : 4}
+                                                                spellCheck={false}
+                                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-purple-300/90 focus:border-purple-500/40 outline-none font-mono text-xs resize-y leading-relaxed placeholder-white/10"
+                                                            />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Info callout */}
+                                <div className="bg-teal/5 border border-teal/20 rounded-brand-xl p-6 space-y-3">
+                                    <div className="flex items-center gap-2 text-teal">
+                                        <span className="text-lg">💡</span>
+                                        <h4 className="font-mono text-[10px] uppercase tracking-widest font-bold">How Injection Works</h4>
+                                    </div>
+                                    <ul className="text-white/40 text-xs space-y-1.5 leading-relaxed list-none">
+                                        <li>• <span className="text-white/60">Head:</span> Rendered inside <code className="text-teal/80">&lt;head&gt;</code> — best for analytics initialisation.</li>
+                                        <li>• <span className="text-white/60">Body (Opening):</span> Immediately after <code className="text-teal/80">&lt;body&gt;</code> opens — required for GTM &amp; Meta Pixel <code className="text-teal/80">&lt;noscript&gt;</code> fallbacks.</li>
+                                        <li>• <span className="text-white/60">Footer:</span> Before <code className="text-teal/80">&lt;/body&gt;</code> closes — ideal for deferred widgets like live chat.</li>
+                                        <li>• <span className="text-white/60">Frontend vs. Member:</span> Public routes (/, /maids, /onboarding…) use <strong>Frontend</strong> scripts. Employer/Maid dashboards use <strong>Member</strong> scripts.</li>
+                                    </ul>
                                 </div>
                             </div>
                         )}

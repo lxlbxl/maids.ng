@@ -159,6 +159,26 @@ class AdminSettingsController extends Controller
             'email_imap_folder' => 'agents',
             'email_poll_interval_seconds' => 'agents',
             'email_default_reply' => 'agents',
+            // Script & Pixel Injection — Public Frontend
+            'script_google_head_frontend'  => 'scripts',
+            'script_google_body_frontend'  => 'scripts',
+            'script_google_footer_frontend' => 'scripts',
+            'script_meta_head_frontend'    => 'scripts',
+            'script_meta_body_frontend'    => 'scripts',
+            'script_meta_footer_frontend'  => 'scripts',
+            'script_custom_head_frontend'  => 'scripts',
+            'script_custom_body_frontend'  => 'scripts',
+            'script_custom_footer_frontend' => 'scripts',
+            // Script & Pixel Injection — Member Area (Employer / Maid)
+            'script_google_head_member'    => 'scripts',
+            'script_google_body_member'    => 'scripts',
+            'script_google_footer_member'  => 'scripts',
+            'script_meta_head_member'      => 'scripts',
+            'script_meta_body_member'      => 'scripts',
+            'script_meta_footer_member'    => 'scripts',
+            'script_custom_head_member'    => 'scripts',
+            'script_custom_body_member'    => 'scripts',
+            'script_custom_footer_member'  => 'scripts',
         ];
 
         return $groupMap[$key] ?? 'general';
