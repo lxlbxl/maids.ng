@@ -1,29 +1,44 @@
 import { useState, useEffect, useRef } from 'react';
+import { usePage } from '@inertiajs/react';
 
 /**
  * DirectHireModal — Streamlined hiring flow for a specific maid.
  *
  * Shown when an employer clicks "Hire [Name]" from either the Browse or Profile page.
- * Collects only mandatory data (name, phone, email, location), creates an account
- * if needed, and redirects directly to the matching fee payment page.
+ *
+ * Behaviour differs by auth state:
+ *  - Guest: 3-step flow (Your Info → Location → Confirm)
+ *  - Logged-in employer: 1-step flow (just confirm location, then proceed)
  *
  * Props:
  *   maid      — { id, name, avatar, role, location, rate, availability_status, verified }
  *   onClose   — function to close the modal
  */
 export default function DirectHireModal({ maid, onClose }) {
-    const [step, setStep] = useState(0); // 0 = contact info, 1 = location, 2 = confirming
+    const { auth } = usePage().props;
+    const user = auth?.user;
+    const isLoggedIn = !!user && (user.roles?.includes('employer') || user.roles?.includes('admin'));
+
+    // For guests: 0 = contact info, 1 = location, 2 = confirm
+    // For logged-in: 0 = location, 1 = confirm
+    const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
-        contact_name: '',
-        contact_phone: '',
-        contact_email: '',
+        contact_name: user?.name || '',
+        contact_phone: user?.phone || '',
+        contact_email: user?.email || '',
         location: '',
     });
 
     const overlayRef = useRef(null);
     const firstName = maid?.name?.split(' ')[0] || 'this helper';
+    const isUnavailable = maid?.availability_status && maid.availability_status !== 'available';
+
+    // Steps for guest vs logged-in
+    const steps = isLoggedIn
+        ? ['Location', 'Confirm']
+        : ['Your Info', 'Location', 'Confirm'];
 
     const csrfToken = () =>
         document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -45,21 +60,28 @@ export default function DirectHireModal({ maid, onClose }) {
         setError('');
     };
 
-    // Validate step 0 (contact info)
-    const isStep0Valid = () =>
+    // Validate contact info step (guests only)
+    const isContactValid = () =>
         form.contact_name.trim().length >= 2 &&
         form.contact_phone.trim().length >= 10 &&
         form.contact_email.includes('@');
 
-    // Validate step 1 (location)
-    const isStep1Valid = () => form.location.trim().length >= 3;
+    // Validate location step
+    const isLocationValid = () => form.location.trim().length >= 3;
+
+    // Step indices for each "page"
+    // Guest: step 0 = contact, step 1 = location, step 2 = confirm
+    // Auth:  step 0 = location, step 1 = confirm
+    const isConfirmStep = step === steps.length - 1;
+    const isLocationStep = isLoggedIn ? step === 0 : step === 1;
+    const isContactStep = !isLoggedIn && step === 0;
 
     const handleNext = () => {
-        if (step === 0 && !isStep0Valid()) {
+        if (isContactStep && !isContactValid()) {
             setError('Please fill in your name, a valid phone number, and email.');
             return;
         }
-        if (step === 1 && !isStep1Valid()) {
+        if (isLocationStep && !isLocationValid()) {
             setError('Please enter your city/state (e.g. Lekki, Lagos).');
             return;
         }
@@ -68,7 +90,11 @@ export default function DirectHireModal({ maid, onClose }) {
     };
 
     const handleSubmit = async () => {
-        if (!isStep0Valid() || !isStep1Valid()) {
+        if (!isLocationValid()) {
+            setError('Please enter your location before proceeding.');
+            return;
+        }
+        if (!isLoggedIn && !isContactValid()) {
             setError('Please complete all required fields.');
             return;
         }
@@ -77,6 +103,18 @@ export default function DirectHireModal({ maid, onClose }) {
         setError('');
 
         try {
+            const payload = {
+                maid_id: maid.id,
+                location: form.location,
+                ...(isLoggedIn
+                    ? { user_id: user.id }
+                    : {
+                        contact_name: form.contact_name,
+                        contact_phone: form.contact_phone,
+                        contact_email: form.contact_email,
+                    }),
+            };
+
             const response = await fetch('/onboarding/direct-hire', {
                 method: 'POST',
                 headers: {
@@ -84,10 +122,7 @@ export default function DirectHireModal({ maid, onClose }) {
                     'X-CSRF-TOKEN': csrfToken(),
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({
-                    maid_id: maid.id,
-                    ...form,
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (response.status === 422) {
@@ -116,8 +151,8 @@ export default function DirectHireModal({ maid, onClose }) {
         }
     };
 
-    // Step 2: Review + Submit
-    if (step === 2) {
+    // ── Confirm Step ────────────────────────────────────────────────────────────
+    if (isConfirmStep) {
         return (
             <ModalShell overlayRef={overlayRef} onOverlayClick={handleOverlayClick} onClose={onClose}>
                 <div className="text-center mb-6">
@@ -129,7 +164,7 @@ export default function DirectHireModal({ maid, onClose }) {
                 </div>
 
                 {/* Maid Summary */}
-                <div className="bg-teal/5 border border-teal/10 rounded-brand-lg p-4 flex items-center gap-4 mb-6">
+                <div className="bg-teal/5 border border-teal/10 rounded-brand-lg p-4 flex items-center gap-4 mb-5">
                     <div className="w-16 h-16 rounded-brand-lg overflow-hidden flex-shrink-0 bg-teal/10">
                         {maid.avatar ? (
                             <img src={maid.avatar} alt={maid.name} className="w-full h-full object-cover" />
@@ -145,25 +180,51 @@ export default function DirectHireModal({ maid, onClose }) {
                         <p className="text-xs text-muted">{maid.location}</p>
                     </div>
                     {maid.verified && (
-                        <span className="text-[10px] bg-success/10 text-success px-2 py-0.5 rounded-full font-mono font-bold">✓ Verified</span>
+                        <span className="text-[10px] bg-success/10 text-success px-2 py-0.5 rounded-full font-mono font-bold flex-shrink-0">✓ Verified</span>
                     )}
                 </div>
 
-                {/* Contact Summary */}
-                <div className="bg-gray-50 rounded-brand-lg p-4 mb-6 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-muted">Name</span>
-                        <span className="font-medium text-espresso">{form.contact_name}</span>
+                {/* Unavailability notice */}
+                {isUnavailable && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-brand-md p-3 mb-4 flex gap-2 items-start text-xs text-amber-800">
+                        <span className="text-base leading-none flex-shrink-0">⚠️</span>
+                        <span>
+                            <strong>{firstName}</strong> is currently marked as <strong className="capitalize">{maid.availability_status}</strong>.
+                            You can still proceed — our team will contact {firstName} to confirm availability.
+                        </span>
                     </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted">Phone</span>
-                        <span className="font-medium text-espresso">{form.contact_phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted">Email</span>
-                        <span className="font-medium text-espresso truncate ml-4 text-right">{form.contact_email}</span>
-                    </div>
-                    <div className="flex justify-between">
+                )}
+
+                {/* Contact / User Summary */}
+                <div className="bg-gray-50 rounded-brand-lg p-4 mb-5 space-y-2 text-sm">
+                    {isLoggedIn ? (
+                        <>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Account</span>
+                                <span className="font-medium text-espresso truncate ml-4 text-right">{user.name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Email</span>
+                                <span className="font-medium text-espresso truncate ml-4 text-right">{user.email}</span>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Name</span>
+                                <span className="font-medium text-espresso">{form.contact_name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Phone</span>
+                                <span className="font-medium text-espresso">{form.contact_phone}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted">Email</span>
+                                <span className="font-medium text-espresso truncate ml-4 text-right">{form.contact_email}</span>
+                            </div>
+                        </>
+                    )}
+                    <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
                         <span className="text-muted">Your Location</span>
                         <span className="font-medium text-espresso">{form.location}</span>
                     </div>
@@ -177,12 +238,13 @@ export default function DirectHireModal({ maid, onClose }) {
 
                 <p className="text-xs text-muted text-center mb-4">
                     You'll be taken to pay the matching fee to finalize hiring {firstName}.
-                    Your account will be created automatically.
+                    {!isLoggedIn && ' Your account will be created automatically.'}
                 </p>
 
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
+                    id="direct-hire-confirm-btn"
                     className="w-full bg-teal text-white py-4 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-lg shadow-teal/20 disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                     {loading ? (
@@ -193,13 +255,14 @@ export default function DirectHireModal({ maid, onClose }) {
                     ) : `Proceed to Payment →`}
                 </button>
 
-                <button onClick={() => setStep(0)} className="w-full text-muted text-xs mt-3 hover:text-espresso transition-colors">
+                <button onClick={() => setStep(s => s - 1)} className="w-full text-muted text-xs mt-3 hover:text-espresso transition-colors">
                     ← Edit Details
                 </button>
             </ModalShell>
         );
     }
 
+    // ── Steps 0/1 ───────────────────────────────────────────────────────────────
     return (
         <ModalShell overlayRef={overlayRef} onOverlayClick={handleOverlayClick} onClose={onClose}>
             {/* Header */}
@@ -217,7 +280,9 @@ export default function DirectHireModal({ maid, onClose }) {
                     <div>
                         <p className="text-[10px] text-teal font-mono uppercase tracking-widest">Hiring</p>
                         <p className="font-bold text-espresso text-base leading-tight">{maid.name}</p>
-                        {maid.availability_status === 'available' && (
+                        {isUnavailable ? (
+                            <span className="text-[10px] text-amber-600 font-bold capitalize">{maid.availability_status}</span>
+                        ) : (
                             <span className="text-[10px] text-success font-bold flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 bg-success rounded-full inline-block animate-pulse"></span>
                                 Available Now
@@ -228,7 +293,7 @@ export default function DirectHireModal({ maid, onClose }) {
 
                 {/* Step Indicator */}
                 <div className="flex items-center gap-2">
-                    {['Your Info', 'Location', 'Confirm'].map((label, i) => (
+                    {steps.map((label, i) => (
                         <div key={label} className="flex items-center gap-2 flex-1">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
                                 i < step ? 'bg-teal text-white' : i === step ? 'bg-teal text-white ring-2 ring-teal/30' : 'bg-gray-100 text-muted'
@@ -238,14 +303,33 @@ export default function DirectHireModal({ maid, onClose }) {
                             <span className={`text-[10px] font-mono uppercase tracking-wide hidden sm:block ${i === step ? 'text-teal font-bold' : 'text-muted'}`}>
                                 {label}
                             </span>
-                            {i < 2 && <div className={`flex-1 h-px ${i < step ? 'bg-teal' : 'bg-gray-100'}`} />}
+                            {i < steps.length - 1 && <div className={`flex-1 h-px ${i < step ? 'bg-teal' : 'bg-gray-100'}`} />}
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Step 0: Contact Info */}
-            {step === 0 && (
+            {/* Unavailability banner */}
+            {isUnavailable && (
+                <div className="bg-amber-50 border border-amber-200 rounded-brand-md p-3 mb-4 flex gap-2 items-start text-xs text-amber-800">
+                    <span className="text-base leading-none flex-shrink-0">⚠️</span>
+                    <span>
+                        <strong>{firstName}</strong> is currently <strong className="capitalize">{maid.availability_status}</strong>.
+                        You can still express interest — our team will reach out to confirm if they become available.
+                    </span>
+                </div>
+            )}
+
+            {/* Logged-in greeting */}
+            {isLoggedIn && (
+                <div className="bg-teal/5 border border-teal/10 rounded-brand-md p-3 mb-4 flex gap-2 items-center text-xs text-teal">
+                    <span className="text-base leading-none flex-shrink-0">👋</span>
+                    <span>Welcome back, <strong>{user.name?.split(' ')[0]}</strong>! Just confirm your location to proceed.</span>
+                </div>
+            )}
+
+            {/* ── Guest Step 0: Contact Info ─────────────────────────────── */}
+            {isContactStep && (
                 <div className="space-y-4">
                     <div>
                         <h2 className="font-display text-xl text-espresso font-light mb-1">Just a few details</h2>
@@ -255,6 +339,7 @@ export default function DirectHireModal({ maid, onClose }) {
                     <div>
                         <label className="block text-xs text-muted font-mono uppercase tracking-wide mb-1">Your Full Name *</label>
                         <input
+                            id="direct-hire-name"
                             type="text"
                             value={form.contact_name}
                             onChange={e => updateField('contact_name', e.target.value)}
@@ -267,6 +352,7 @@ export default function DirectHireModal({ maid, onClose }) {
                     <div>
                         <label className="block text-xs text-muted font-mono uppercase tracking-wide mb-1">Phone Number *</label>
                         <input
+                            id="direct-hire-phone"
                             type="tel"
                             value={form.contact_phone}
                             onChange={e => updateField('contact_phone', e.target.value)}
@@ -278,6 +364,7 @@ export default function DirectHireModal({ maid, onClose }) {
                     <div>
                         <label className="block text-xs text-muted font-mono uppercase tracking-wide mb-1">Email Address *</label>
                         <input
+                            id="direct-hire-email"
                             type="email"
                             value={form.contact_email}
                             onChange={e => updateField('contact_email', e.target.value)}
@@ -289,8 +376,8 @@ export default function DirectHireModal({ maid, onClose }) {
                 </div>
             )}
 
-            {/* Step 1: Location */}
-            {step === 1 && (
+            {/* ── Location Step ──────────────────────────────────────────── */}
+            {isLocationStep && (
                 <div className="space-y-4">
                     <div>
                         <h2 className="font-display text-xl text-espresso font-light mb-1">Where are you located?</h2>
@@ -300,6 +387,7 @@ export default function DirectHireModal({ maid, onClose }) {
                     <div>
                         <label className="block text-xs text-muted font-mono uppercase tracking-wide mb-1">Your City & State *</label>
                         <input
+                            id="direct-hire-location"
                             type="text"
                             value={form.location}
                             onChange={e => updateField('location', e.target.value)}
@@ -338,10 +426,11 @@ export default function DirectHireModal({ maid, onClose }) {
                     </button>
                 )}
                 <button
+                    id={isLocationStep ? 'direct-hire-location-next' : 'direct-hire-next'}
                     onClick={handleNext}
                     className="flex-1 bg-teal text-white py-3 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-md shadow-teal/20"
                 >
-                    {step === 1 ? 'Review & Confirm →' : 'Continue →'}
+                    {isLocationStep ? 'Review & Confirm →' : 'Continue →'}
                 </button>
             </div>
 

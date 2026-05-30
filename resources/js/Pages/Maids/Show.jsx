@@ -419,6 +419,7 @@ export default function Show({ maid }) {
                         location: maid.location,
                         availability_status: maid.availability_status,
                         verified: maid.verified,
+                        rate: maid.expected_salary,
                     }}
                     onClose={() => setHireModalOpen(false)}
                 />
