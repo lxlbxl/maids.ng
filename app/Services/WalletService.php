@@ -287,6 +287,18 @@ class WalletService
             $transaction = $wallet->requestWithdrawal($amount, $description);
 
             DB::commit();
+
+            if ($transaction) {
+                \App\Events\WithdrawalRequested::dispatch(
+                    $wallet,
+                    $amount,
+                    $wallet->bank_name ?? 'N/A',
+                    $wallet->account_number ?? 'N/A',
+                    $wallet->account_name ?? 'N/A',
+                    'WD-' . $transaction->id
+                );
+            }
+
             return $transaction;
         } catch (\Exception $e) {
             DB::rollBack();

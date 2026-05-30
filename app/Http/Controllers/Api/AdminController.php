@@ -218,15 +218,12 @@ class AdminController extends ApiController
         $reason = $validator->validated()['reason'];
 
         // Refund the amount to wallet
-        $this->walletService->credit(
-            $withdrawal->wallet->user_id,
+        $this->walletService->creditMaidWallet(
+            $withdrawal->maid_id,
             $withdrawal->amount,
-            'refund',
-            null,
-            [
-                'withdrawal_id' => $withdrawal->id,
-                'rejection_reason' => $reason,
-            ]
+            'Refund of rejected withdrawal request: ' . $reason,
+            $withdrawal->id,
+            'withdrawal_refund'
         );
 
         // Update withdrawal status
@@ -238,6 +235,15 @@ class AdminController extends ApiController
                 'rejection_reason' => $reason,
             ]),
         ]);
+
+        // Fire WithdrawalRejected event
+        $maidWallet = $this->walletService->getOrCreateMaidWallet($withdrawal->maid_id);
+        \App\Events\WithdrawalRejected::dispatch(
+            $maidWallet,
+            $withdrawal->amount,
+            $reason,
+            $user->id
+        );
 
         return $this->success($withdrawal->fresh(), 'Withdrawal rejected and amount refunded to user wallet.');
     }

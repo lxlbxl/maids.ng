@@ -10,6 +10,9 @@ use App\Events\SalaryOverdue;
 use App\Events\SalaryPaymentProcessed;
 use App\Events\WithdrawalApproved;
 use App\Events\WithdrawalRequested;
+use App\Events\WithdrawalRejected;
+use App\Events\BookingCreated;
+use App\Events\PaymentConfirmed;
 use App\Listeners\CreateAssignmentFromMatch;
 use App\Listeners\CreateSalarySchedule;
 use App\Listeners\EscalateOverdueToAdmin;
@@ -92,6 +95,19 @@ class EventServiceProvider extends ServiceProvider
         MatchingJobCompleted::class => [
             CreateAssignmentFromMatch::class,
             NotifyEmployerOfMatching::class,
+            DispatchWebhook::class,
+        ],
+
+        // Outbound Webhook-only Events
+        BookingCreated::class => [
+            DispatchWebhook::class,
+        ],
+
+        PaymentConfirmed::class => [
+            DispatchWebhook::class,
+        ],
+
+        WithdrawalRejected::class => [
             DispatchWebhook::class,
         ],
     ];

@@ -691,6 +691,11 @@ class SalaryManagementService
                     $schedule->payment_status = 'overdue';
                     $schedule->escalate();
                     $schedule->save();
+
+                    // Dispatch SalaryOverdue event
+                    $daysOverdue = $schedule->next_salary_due_date ? now()->diffInDays($schedule->next_salary_due_date) : 0;
+                    \App\Events\SalaryOverdue::dispatch($schedule, $daysOverdue);
+
                     continue;
                 }
 

@@ -391,7 +391,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{id}', [WebhookController::class, 'show']);
                 Route::post('/{id}/test', [WebhookController::class, 'test']);
                 Route::get('/{id}/deliveries', [WebhookController::class, 'deliveries']);
-                Route::post('/{id}', [WebhookController::class, 'store']);
+                Route::post('/', [WebhookController::class, 'store']);
                 Route::put('/{id}', [WebhookController::class, 'update']);
                 Route::delete('/{id}', [WebhookController::class, 'destroy']);
                 Route::post('/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery']);

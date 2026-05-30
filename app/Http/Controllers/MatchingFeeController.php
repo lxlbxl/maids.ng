@@ -99,6 +99,15 @@ class MatchingFeeController extends Controller
             'gateway_response' => $gatewayData,
         ]);
 
+        if ($payment->employer) {
+            \App\Events\PaymentConfirmed::dispatch(
+                $payment->employer,
+                $payment->reference,
+                (int) $payment->amount,
+                $payment->payment_type ?? 'matching_fee'
+            );
+        }
+
         // Set the correct matching status based on payment type
         $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
         $payment->preference->update(['matching_status' => $newStatus]);
@@ -183,6 +192,15 @@ class MatchingFeeController extends Controller
                     'paid_at' => now(),
                     'gateway_response' => $gatewayData,
                 ]);
+
+                if ($payment->employer) {
+                    \App\Events\PaymentConfirmed::dispatch(
+                        $payment->employer,
+                        $payment->reference,
+                        (int) $payment->amount,
+                        $payment->payment_type ?? 'matching_fee'
+                    );
+                }
 
                 $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
                 $payment->preference->update(['matching_status' => $newStatus]);

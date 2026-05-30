@@ -17,4 +17,32 @@ class PaymentConfirmed
         public readonly string $type,
     ) {
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'payment.successful';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'user_id' => $this->user->id,
+            'user_name' => $this->user->name,
+            'reference' => $this->reference,
+            'amount' => $this->amount,
+            'type' => $this->type,
+            'payment' => [
+                'reference' => $this->reference,
+                'amount' => $this->amount,
+                'type' => $this->type,
+                'created_at' => now()->toIso8601String(),
+            ],
+        ];
+    }
 }
