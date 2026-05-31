@@ -1,8 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import DirectHireModal from '@/Components/DirectHireModal';
+import EmployerHireModal from '@/Components/EmployerHireModal';
 
 export default function Search({ maids, filters }) {
+    const { auth } = usePage().props;
+    const isEmployer = !!auth?.user && (auth.user.roles?.includes('employer') || auth.user.roles?.includes('admin'));
+
     const [search, setSearch] = useState(filters?.search || '');
     const [location, setLocation] = useState(filters?.location || '');
     const [schedule, setSchedule] = useState(filters?.schedule || '');
@@ -199,10 +203,35 @@ export default function Search({ maids, filters }) {
             </div>
 
             {hiringMaid && (
-                <DirectHireModal
-                    maid={hiringMaid}
-                    onClose={() => setHiringMaid(null)}
-                />
+                isEmployer ? (
+                    <EmployerHireModal
+                        maid={{
+                            id: hiringMaid.id,
+                            name: hiringMaid.name,
+                            avatar: hiringMaid.avatar,
+                            role: hiringMaid.role,
+                            location: hiringMaid.location,
+                            availability_status: hiringMaid.availability_status,
+                            verified: hiringMaid.verified,
+                            rate: hiringMaid.rate || hiringMaid.expected_salary,
+                        }}
+                        onClose={() => setHiringMaid(null)}
+                    />
+                ) : (
+                    <DirectHireModal
+                        maid={{
+                            id: hiringMaid.id,
+                            name: hiringMaid.name,
+                            avatar: hiringMaid.avatar,
+                            role: hiringMaid.role,
+                            location: hiringMaid.location,
+                            availability_status: hiringMaid.availability_status,
+                            verified: hiringMaid.verified,
+                            rate: hiringMaid.rate || hiringMaid.expected_salary,
+                        }}
+                        onClose={() => setHiringMaid(null)}
+                    />
+                )
             )}
         </>
     );

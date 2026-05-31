@@ -1,8 +1,24 @@
 import { Head, Link } from '@inertiajs/react';
 import EmployerLayout from '@/Layouts/EmployerLayout';
+import EmployerHireModal from '@/Components/EmployerHireModal';
+import { useState } from 'react';
+
 
 export default function EmployerDashboard({ auth, preferences = [], bookings = [], payments = [], stats = {}, appSettings }) {
     const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
+    const [selectedMaid, setSelectedMaid] = useState(null);
+    const [selectedPreferenceId, setSelectedPreferenceId] = useState(null);
+    const [showHireModal, setShowHireModal] = useState(false);
+    const openHireModal = (maid, preferenceId = null) => {
+        setSelectedMaid(maid);
+        setSelectedPreferenceId(preferenceId);
+        setShowHireModal(true);
+    };
+    const closeHireModal = () => {
+        setShowHireModal(false);
+        setSelectedMaid(null);
+        setSelectedPreferenceId(null);
+    };
     return (
         <EmployerLayout user={auth?.user}>
             <Head title="Employer Dashboard" />
@@ -59,11 +75,19 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
                                         )}
                                     </div>
                                 </div>
-                                {p.matching_status === 'matched' && (
-                                    <Link href={`/employer/matching/payment/${p.id}`} className="bg-copper text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-copper/80 transition-all text-center flex-shrink-0">
-                                        Pay {feeLabel} & Unlock
-                                    </Link>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => openHireModal(p.maid, p.id)}
+                                        className="bg-teal text-white px-4 py-2 rounded-brand-md text-sm font-medium hover:bg-teal/90 transition-all flex items-center gap-1.5"
+                                    >
+                                        ⚡ Hire Now
+                                    </button>
+                                    {p.matching_status === 'matched' && (
+                                        <Link href={`/employer/matching/payment/${p.id}`} className="bg-copper text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-copper/80 transition-all text-center flex-shrink-0">
+                                            Pay {feeLabel} & Unlock
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -120,6 +144,13 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
                     </div>
                 )}
             </div>
+            {showHireModal && selectedMaid && (
+                <EmployerHireModal
+                    maid={selectedMaid}
+                    onClose={closeHireModal}
+                    preferenceId={selectedPreferenceId}
+                />
+            )}
         </EmployerLayout>
     );
 }

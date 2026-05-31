@@ -385,15 +385,15 @@ Route::prefix('v1')->group(function () {
             */
 
             Route::prefix('webhooks')->group(function () {
-                Route::get('/', [WebhookController::class, 'index']);
+                Route::get('', [WebhookController::class, 'index']);
+                Route::post('', [WebhookController::class, 'store']);
                 Route::get('/statistics', [WebhookController::class, 'statistics']);
                 Route::get('/events', [WebhookController::class, 'availableEvents']);
                 Route::get('/{id}', [WebhookController::class, 'show']);
-                Route::post('/{id}/test', [WebhookController::class, 'test']);
-                Route::get('/{id}/deliveries', [WebhookController::class, 'deliveries']);
-                Route::post('/', [WebhookController::class, 'store']);
                 Route::put('/{id}', [WebhookController::class, 'update']);
                 Route::delete('/{id}', [WebhookController::class, 'destroy']);
+                Route::post('/{id}/test', [WebhookController::class, 'test']);
+                Route::get('/{id}/deliveries', [WebhookController::class, 'deliveries']);
                 Route::post('/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery']);
             });
         });

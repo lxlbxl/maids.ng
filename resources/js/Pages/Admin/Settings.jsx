@@ -738,7 +738,7 @@ export default function Settings({ auth, settings, aiManifest, mcpServers: initi
                             <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div>
                                     <h2 className="text-2xl font-display mb-2 text-teal">Identity Verification</h2>
-                                    <p className="text-white/40 text-xs italic">Configure QoreID for NIN and background verification.</p>
+                                    <p className="text-white/40 text-xs italic">Configure QoreID for Identity Verification (NIN).</p>
                                 </div>
 
                                 <div className="space-y-6">

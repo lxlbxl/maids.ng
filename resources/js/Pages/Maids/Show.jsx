@@ -1,8 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import DirectHireModal from '@/Components/DirectHireModal';
+import EmployerHireModal from '@/Components/EmployerHireModal';
 
 export default function Show({ maid }) {
+    const { auth } = usePage().props;
+    const isEmployer = !!auth?.user && (auth.user.roles?.includes('employer') || auth.user.roles?.includes('admin'));
     const [hireModalOpen, setHireModalOpen] = useState(false);
     // Calculate rating breakdown from reviews
     const reviews = maid.reviews || [];
@@ -410,19 +413,35 @@ export default function Show({ maid }) {
                 </div>
             </div>
             {hireModalOpen && (
-                <DirectHireModal
-                    maid={{
-                        id: maid.id,
-                        name: maid.name,
-                        avatar: maid.avatar,
-                        role: maid.role,
-                        location: maid.location,
-                        availability_status: maid.availability_status,
-                        verified: maid.verified,
-                        rate: maid.expected_salary,
-                    }}
-                    onClose={() => setHireModalOpen(false)}
-                />
+                isEmployer ? (
+                    <EmployerHireModal
+                        maid={{
+                            id: maid.id,
+                            name: maid.name,
+                            avatar: maid.avatar,
+                            role: maid.role,
+                            location: maid.location,
+                            availability_status: maid.availability_status,
+                            verified: maid.verified,
+                            rate: maid.expected_salary,
+                        }}
+                        onClose={() => setHireModalOpen(false)}
+                    />
+                ) : (
+                    <DirectHireModal
+                        maid={{
+                            id: maid.id,
+                            name: maid.name,
+                            avatar: maid.avatar,
+                            role: maid.role,
+                            location: maid.location,
+                            availability_status: maid.availability_status,
+                            verified: maid.verified,
+                            rate: maid.expected_salary,
+                        }}
+                        onClose={() => setHireModalOpen(false)}
+                    />
+                )
             )}
         </>
     );

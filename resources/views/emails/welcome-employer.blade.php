@@ -69,7 +69,7 @@
                     </div>
                     <div class="tip-item">
                         <span class="tip-icon">✅</span>
-                        <span>All our helpers undergo background verification for your safety.</span>
+                        <span>All our helpers undergo Identity Verification (NIN) for your safety.</span>
                     </div>
                     <div class="tip-item">
                         <span class="tip-icon">💬</span>
