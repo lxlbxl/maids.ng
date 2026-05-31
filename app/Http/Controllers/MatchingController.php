@@ -262,6 +262,79 @@ class MatchingController extends Controller
     }
 
     /**
+     * Direct Hire a specific maid without going through matching.
+     */
+    public function directHire(Request $request)
+    {
+        $validated = $request->validate([
+            'maid_id' => 'required|exists:users,id',
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'location' => 'required|string|max:255',
+            'schedule' => 'required|string|max:50',
+        ]);
+
+        $email = $validated['contact_email'];
+        $name = $validated['contact_name'];
+        $phone = $validated['contact_phone'] ?? null;
+
+        $existingUser = User::where('email', $email)->first();
+        $isNewAccount = !$existingUser;
+        $tempPassword = null;
+
+        if ($isNewAccount) {
+            $tempPassword = Str::random(10);
+            $user = User::create([
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'password' => Hash::make($tempPassword),
+                'status' => 'active',
+            ]);
+            $user->assignRole('employer');
+        } else {
+            $user = $existingUser;
+            if (!$user->name || $user->name === 'Guest Employer') {
+                $user->update(['name' => $name]);
+            }
+            if ($phone && !$user->phone) {
+                $user->update(['phone' => $phone]);
+            }
+        }
+
+        // Send welcome email on first-time creation
+        if ($isNewAccount) {
+            try {
+                Mail::to($user->email)->send(new WelcomeEmployerMail($user, $tempPassword));
+            } catch (\Throwable $e) {
+                Log::warning('Welcome email failed: ' . $e->getMessage());
+            }
+        }
+
+        // Auto-login the user
+        Auth::loginUsingId($user->id);
+
+        // Create Employer Preference
+        $preference = EmployerPreference::create([
+            'employer_id' => $user->id,
+            'contact_name' => $name,
+            'contact_email' => $email,
+            'contact_phone' => $phone,
+            'location' => $validated['location'],
+            'schedule' => $validated['schedule'],
+            'selected_maid_id' => $validated['maid_id'],
+            'matching_status' => 'matched',
+            'urgency' => 'immediately', // Default for direct hire
+        ]);
+
+        return response()->json([
+            'redirect' => route('employer.matching.payment', $preference->id),
+            'preference_id' => $preference->id,
+        ]);
+    }
+
+    /**
      * Show payment page for matching fee.
      */
     public function showPayment($preferenceId)
