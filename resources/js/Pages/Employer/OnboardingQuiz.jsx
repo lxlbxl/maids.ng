@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
+import DirectHireModal from '@/Components/DirectHireModal';
 
 const STEPS = [
     {
@@ -48,6 +49,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     const [accountCreated, setAccountCreated] = useState(false);
     const [accountMessage, setAccountMessage] = useState('');
     const [guaranteeLoading, setGuaranteeLoading] = useState(false);
+    const [directHiringMaid, setDirectHiringMaid] = useState(null);
     const quizStartTime = useRef(Date.now());
     const hasTrackedStart = useRef(false);
 
@@ -185,23 +187,30 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 }),
             });
             const data = await response.json();
-            setMatches(data.matches || []);
+            const foundMatches = data.matches || [];
+            setMatches(foundMatches);
             setPreferenceId(data.preference_id);
+            
+            if (foundMatches.length > 0) {
+                setDirectHiringMaid(foundMatches[0]);
+            }
 
             // Track quiz completion
             sendBeaconEvent('quiz_complete', {
                 total_steps: STEPS.length,
                 duration_seconds: Math.round((Date.now() - quizStartTime.current) / 1000),
-                matches_count: data.matches?.length || 0,
+                matches_count: foundMatches.length,
                 has_contact: true,
             });
         } catch (err) {
             // Fallback: show demo matches
-            setMatches([
+            const fallbackMatches = [
                 { id: 1, name: 'Blessing Okafor', role: 'Live-in Helper', location: 'Ajah, Lagos', rating: 4.8, rate: 45000, skills: ['cleaning', 'cooking'], match: 92, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 4 },
                 { id: 2, name: 'Grace Adeyemi', role: 'Nanny', location: 'Ikeja, Lagos', rating: 4.9, rate: 55000, skills: ['childcare', 'cooking'], match: 87, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 5 },
                 { id: 3, name: 'Joy Nwosu', role: 'Housekeeper', location: 'Lekki, Lagos', rating: 4.95, rate: 65000, skills: ['deep-cleaning', 'cooking'], match: 81, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 6 },
-            ]);
+            ];
+            setMatches(fallbackMatches);
+            setDirectHiringMaid(fallbackMatches[0]);
 
             // Still track completion even with fallback
             sendBeaconEvent('quiz_complete', {
@@ -375,7 +384,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                         {/* Action CTA Button */}
                                         <div className="flex items-center justify-center md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 dark:border-white/5 pt-4 md:pt-0">
                                             <button 
-                                                onClick={() => selectMaid(maid.id)} 
+                                                onClick={() => setDirectHiringMaid(maid)} 
                                                 className="w-full md:w-auto bg-teal text-white px-6 py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all hover:scale-[1.02] shadow-brand-1 whitespace-nowrap"
                                             >
                                                 Select & Continue →
@@ -386,6 +395,12 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                             </div>
                         </div>
                     </div>
+                    {directHiringMaid && (
+                        <DirectHireModal
+                            maid={directHiringMaid}
+                            onClose={() => setDirectHiringMaid(null)}
+                        />
+                    )}
                 </>
             );
         }
@@ -420,7 +435,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                                 { icon: '🔍', title: 'We Search For You', desc: 'Our team actively sources helpers matching your exact preferences, location, and budget.' },
                                 { icon: '⏱️', title: '14-Day Guarantee', desc: 'If we can\'t find a match within 14 days, you get a full refund — no questions asked.' },
                                 { icon: '💰', title: 'No Double Payment', desc: 'Once matched, you won\'t pay the regular matching fee again. This covers everything.' },
-                                { icon: '✅', title: 'Fully Verified', desc: 'Every matched helper undergoes full background verification before being assigned to you.' },
+                                { icon: '✅', title: 'NIN Verified', desc: 'Every matched helper undergoes strict Identity Verification (NIN) before being assigned to you.' },
                             ].map(card => (
                                 <div key={card.title} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-6 border border-gray-200 dark:border-white/10 shadow-brand-1 hover:shadow-brand-2 transition-shadow">
                                     <span className="text-2xl mb-3 block">{card.icon}</span>
