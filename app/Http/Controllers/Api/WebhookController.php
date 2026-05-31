@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-class WebhookController extends Controller
+class WebhookController extends ApiController
 {
     protected WebhookService $webhookService;
 
@@ -106,7 +106,7 @@ class WebhookController extends Controller
             'created_by' => $user->id,
         ]);
 
-        return $this->success($webhook->fresh(), 'Webhook created successfully', 201);
+        return $this->success($webhook->fresh(), 'Webhook created successfully', [], 201);
     }
 
     /**
