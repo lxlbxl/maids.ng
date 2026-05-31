@@ -1,6 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import DirectHireModal from '@/Components/DirectHireModal';
 
 export default function Show({ maid }) {
+    const [hireModalOpen, setHireModalOpen] = useState(false);
+
     return (
         <>
             <Head title={`${maid.name} — Helper Profile | Maids.ng`} />
@@ -14,7 +18,7 @@ export default function Show({ maid }) {
                         </Link>
                         <div className="flex items-center gap-4">
                             <Link href="/maids" className="text-sm text-muted hover:text-espresso transition-colors">← Back to Search</Link>
-                            <Link href="/register" className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Book Now</Link>
+                            <button onClick={() => setHireModalOpen(true)} className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Book Now</button>
                         </div>
                     </div>
                 </nav>
@@ -110,11 +114,11 @@ export default function Show({ maid }) {
                         <div className="space-y-6">
                             <div className="bg-white rounded-brand-lg border border-gray-100 shadow-brand-2 p-6 sticky top-24">
                                 <h3 className="font-display text-lg text-espresso mb-4">Ready to Book?</h3>
-                                <p className="text-muted text-sm mb-6">Get started with our AI-powered matching to find out if {maid.name?.split(' ')[0]} is the right fit for your household.</p>
-                                <Link href="/register" className="block w-full bg-teal text-white text-center py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-lg shadow-teal/20">
-                                    Start Matching →
-                                </Link>
-                                <p className="text-center text-[10px] text-muted mt-3 font-mono uppercase tracking-widest">Powered by Scout Agent</p>
+                                <p className="text-muted text-sm mb-6">Found the right fit? Skip the wait and hire {maid.name?.split(' ')[0]} directly.</p>
+                                <button onClick={() => setHireModalOpen(true)} className="block w-full bg-teal text-white text-center py-3.5 rounded-brand-md font-bold text-sm hover:bg-teal/90 transition-all shadow-lg shadow-teal/20">
+                                    Hire Now ⚡
+                                </button>
+                                <p className="text-center text-[10px] text-muted mt-3 font-mono uppercase tracking-widest">Secured by Paystack</p>
                             </div>
 
                             <div className="bg-teal/5 rounded-brand-lg border border-teal/10 p-6">
@@ -133,6 +137,13 @@ export default function Show({ maid }) {
                     </div>
                 </div>
             </div>
+
+            {hireModalOpen && (
+                <DirectHireModal
+                    maid={maid}
+                    onClose={() => setHireModalOpen(false)}
+                />
+            )}
         </>
     );
 }

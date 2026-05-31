@@ -45,6 +45,7 @@ Route::get('/onboarding', function () {
 
 // Public onboarding API routes (no auth required)
 Route::post('/onboarding/create-account', [MatchingController::class, 'createAccount'])->name('onboarding.create-account');
+Route::post('/onboarding/direct-hire', [MatchingController::class, 'directHire'])->name('onboarding.direct-hire');
 Route::post('/onboarding/find-matches', [MatchingController::class, 'findMatches'])->name('onboarding.find-matches');
 Route::post('/onboarding/guarantee-match', [MatchingController::class, 'activateGuaranteeMatch'])->name('onboarding.guarantee-match');
 
