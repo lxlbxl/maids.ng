@@ -3,7 +3,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
-export default function Settings({ auth, settings, aiManifest }) {
+export default function Settings({ auth, settings, aiManifest, mcpServers: initialMcpServers = [] }) {
     const [activeTab, setActiveTab] = useState('ai');
     const [fetchedModels, setFetchedModels] = useState({});
     const [modelSearch, setModelSearch] = useState('');
@@ -15,6 +15,15 @@ export default function Settings({ auth, settings, aiManifest }) {
     const [generatedToken, setGeneratedToken] = useState(null);
     const dropdownRef = useRef(null);
     const initialFetchDone = useRef({});
+
+    // MCP Manager state
+    const [mcpServers, setMcpServers] = useState(initialMcpServers);
+    const [mcpForm, setMcpForm] = useState({ name: '', base_url: '', auth_token: '' });
+    const [mcpEditId, setMcpEditId] = useState(null);
+    const [mcpLoading, setMcpLoading] = useState(false);
+    const [mcpMsg, setMcpMsg] = useState(null);
+    const [mcpTestResult, setMcpTestResult] = useState({});
+    const [mcpSnippet, setMcpSnippet] = useState({});
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -236,6 +245,7 @@ export default function Settings({ auth, settings, aiManifest }) {
                         { id: 'email', name: 'Email Settings', icon: '✉️' },
                         { id: 'scripts', name: 'Scripts & Pixels', icon: '🌐' },
                         { id: 'api', name: 'API & Security', icon: '🔑' },
+                        { id: 'mcp', name: 'MCP Manager', icon: '🔌' },
                         { id: 'deployment', name: 'Deployment & Cron', icon: '🚀' },
                     ].map(tab => (
                         <button
@@ -942,6 +952,206 @@ export default function Settings({ auth, settings, aiManifest }) {
                                 </div>
                             </div>
                         )}
+                        {activeTab === 'mcp' && (
+                            <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div>
+                                    <h2 className="text-2xl font-display mb-2 text-teal">MCP Server Manager</h2>
+                                    <p className="text-white/40 text-xs italic">Register external MCP servers, monitor their status, and get connection snippets.</p>
+                                </div>
+
+                                {/* Add / Edit Form */}
+                                <div className="bg-white/5 border border-white/10 rounded-brand-xl p-8 space-y-6">
+                                    <h3 className="font-display text-lg text-white/80">{mcpEditId ? 'Edit Server' : 'Add New MCP Server'}</h3>
+                                    {mcpMsg && (
+                                        <p className={`text-xs px-4 py-2 rounded border ${mcpMsg.type === 'success' ? 'text-teal border-teal/20 bg-teal/5' : 'text-red-400 border-red-400/20 bg-red-400/5'}`}>
+                                            {mcpMsg.text}
+                                        </p>
+                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Server Name</p>
+                                            <input
+                                                type="text"
+                                                value={mcpForm.name}
+                                                onChange={e => setMcpForm(f => ({ ...f, name: e.target.value }))}
+                                                placeholder="e.g. Maids Primary"
+                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Base URL</p>
+                                            <input
+                                                type="url"
+                                                value={mcpForm.base_url}
+                                                onChange={e => setMcpForm(f => ({ ...f, base_url: e.target.value }))}
+                                                placeholder="https://api.maids.ng"
+                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Auth Token (optional)</p>
+                                            <input
+                                                type="password"
+                                                value={mcpForm.auth_token}
+                                                onChange={e => setMcpForm(f => ({ ...f, auth_token: e.target.value }))}
+                                                placeholder="Bearer token..."
+                                                className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            disabled={mcpLoading}
+                                            onClick={async () => {
+                                                if (!mcpForm.name || !mcpForm.base_url) {
+                                                    setMcpMsg({ type: 'error', text: 'Name and Base URL are required.' });
+                                                    return;
+                                                }
+                                                setMcpLoading(true);
+                                                setMcpMsg(null);
+                                                try {
+                                                    const url = mcpEditId
+                                                        ? route('admin.mcp.update', mcpEditId)
+                                                        : route('admin.mcp.store');
+                                                    const method = mcpEditId ? 'put' : 'post';
+                                                    const res = await axios[method](url, mcpForm);
+                                                    setMcpMsg({ type: 'success', text: mcpEditId ? 'Server updated.' : 'Server added.' });
+                                                    // Refresh server list from server response or reload
+                                                    const listRes = await axios.get(route('admin.mcp.index'), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                                                    if (listRes.data?.servers) setMcpServers(listRes.data.servers);
+                                                    setMcpForm({ name: '', base_url: '', auth_token: '' });
+                                                    setMcpEditId(null);
+                                                } catch (e) {
+                                                    setMcpMsg({ type: 'error', text: e.response?.data?.message || e.message });
+                                                } finally {
+                                                    setMcpLoading(false);
+                                                }
+                                            }}
+                                            className="px-8 py-3 bg-teal text-black font-mono text-[10px] uppercase tracking-widest font-bold rounded-brand-lg hover:brightness-110 transition-all disabled:opacity-50"
+                                        >
+                                            {mcpLoading ? 'Saving...' : mcpEditId ? 'Update Server' : 'Add Server'}
+                                        </button>
+                                        {mcpEditId && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setMcpEditId(null); setMcpForm({ name: '', base_url: '', auth_token: '' }); setMcpMsg(null); }}
+                                                className="px-6 py-3 bg-white/5 border border-white/10 text-white/60 font-mono text-[10px] uppercase tracking-widest rounded-brand-lg hover:bg-white/10 transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Server List */}
+                                <div className="space-y-4">
+                                    <h3 className="font-display text-lg text-white/80">Registered Servers ({mcpServers.length})</h3>
+                                    {mcpServers.length === 0 && (
+                                        <div className="text-center py-12 text-white/20 text-sm font-mono">No MCP servers registered yet.</div>
+                                    )}
+                                    {mcpServers.map(srv => (
+                                        <div key={srv.id} className="bg-[#0e0e10] border border-white/5 rounded-brand-xl p-6 space-y-4">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-display text-white text-base">{srv.name}</span>
+                                                        <span className={`text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded ${
+                                                            srv.status === 'online' ? 'bg-teal/10 text-teal border border-teal/20'
+                                                            : srv.status === 'offline' ? 'bg-red-400/10 text-red-400 border border-red-400/20'
+                                                            : 'bg-white/5 text-white/30 border border-white/10'
+                                                        }`}>
+                                                            {srv.status || 'unknown'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-white/40 text-xs font-mono">{srv.base_url}</p>
+                                                    <p className="text-white/20 text-[10px] font-mono">
+                                                        Last ping: {srv.last_ping_at ? new Date(srv.last_ping_at).toLocaleString() : '—'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            setMcpTestResult(prev => ({ ...prev, [srv.id]: { loading: true } }));
+                                                            try {
+                                                                const res = await axios.post(route('admin.mcp.test', srv.id));
+                                                                setMcpTestResult(prev => ({ ...prev, [srv.id]: res.data }));
+                                                                if (res.data.usage) setMcpSnippet(prev => ({ ...prev, [srv.id]: res.data.usage }));
+                                                                // Update status in list
+                                                                setMcpServers(prev => prev.map(s => s.id === srv.id ? { ...s, status: res.data.success ? 'online' : 'offline', last_ping_at: new Date().toISOString() } : s));
+                                                            } catch(e) {
+                                                                setMcpTestResult(prev => ({ ...prev, [srv.id]: { success: false, message: e.message } }));
+                                                            }
+                                                        }}
+                                                        className="text-[10px] font-mono uppercase tracking-widest px-4 py-2 bg-teal/5 border border-teal/20 text-teal rounded-brand-lg hover:bg-teal/10 transition-all"
+                                                    >
+                                                        {mcpTestResult[srv.id]?.loading ? 'Pinging...' : 'Ping & Snippet'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setMcpEditId(srv.id); setMcpForm({ name: srv.name, base_url: srv.base_url, auth_token: '' }); setMcpMsg(null); setActiveTab('mcp'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                                        className="text-[10px] font-mono uppercase tracking-widest px-4 py-2 bg-white/5 border border-white/10 text-white/50 rounded-brand-lg hover:bg-white/10 hover:text-white transition-all"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            if (!confirm(`Remove "${srv.name}"?`)) return;
+                                                            await axios.delete(route('admin.mcp.destroy', srv.id));
+                                                            setMcpServers(prev => prev.filter(s => s.id !== srv.id));
+                                                        }}
+                                                        className="text-[10px] font-mono uppercase tracking-widest px-4 py-2 bg-red-400/5 border border-red-400/10 text-red-400/60 rounded-brand-lg hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Test result */}
+                                            {mcpTestResult[srv.id] && !mcpTestResult[srv.id].loading && (
+                                                <div className={`text-xs px-4 py-2 rounded border ${
+                                                    mcpTestResult[srv.id].success ? 'text-teal bg-teal/5 border-teal/10' : 'text-red-400 bg-red-400/5 border-red-400/10'
+                                                }`}>
+                                                    {mcpTestResult[srv.id].success ? '✓ Online' : `✗ ${mcpTestResult[srv.id].message || 'Connection failed'}`}
+                                                </div>
+                                            )}
+
+                                            {/* Usage snippet */}
+                                            {mcpSnippet[srv.id] && (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">Connection Snippet (PHP)</p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigator.clipboard.writeText(mcpSnippet[srv.id])}
+                                                            className="text-[10px] font-mono uppercase tracking-widest text-teal/60 hover:text-teal transition-colors"
+                                                        >
+                                                            Copy
+                                                        </button>
+                                                    </div>
+                                                    <pre className="bg-black/40 border border-white/5 rounded-brand-lg p-4 text-teal/80 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">{mcpSnippet[srv.id]}</pre>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Usage Guide */}
+                                <div className="bg-white/5 border border-white/10 rounded-brand-xl p-8 space-y-4">
+                                    <h3 className="font-display text-lg text-white/80">Usage Guide</h3>
+                                    <div className="space-y-3 text-white/40 text-xs leading-relaxed">
+                                        <p>• <span className="text-white/60">Register a server</span> by entering its name, base URL, and optional Bearer token above.</p>
+                                        <p>• Use <span className="text-teal/80">Ping & Snippet</span> to test connectivity. A successful ping sets the server status to <span className="text-teal">Online</span> and updates the Last Ping timestamp.</p>
+                                        <p>• The <span className="text-white/60">Connection Snippet</span> is a ready-to-use PHP example you can drop into any custom integration.</p>
+                                        <p>• <span className="text-white/60">Last ping</span> is automatically updated every time the MCP service makes a successful tool call to that server.</p>
+                                        <p>• MCP servers with <span className="text-red-400">Offline</span> status indicate the server could not be reached — check credentials and network connectivity.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === 'email' && (
                             <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <div>

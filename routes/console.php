@@ -86,3 +86,13 @@ Schedule::command('webhooks:process')
     ->everyMinute()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/webhooks.log'));
+
+// ============================================
+// AUDIT LOG RETENTION PURGE
+// ============================================
+
+// Purge API audit logs older than the admin-configured retention period (daily at 03:00)
+Schedule::call(function () {
+    \App\Http\Controllers\AdminAuditLogController::purgeOldLogs();
+})->dailyAt('03:00')->name('purge-audit-logs');
+

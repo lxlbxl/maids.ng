@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminVerificationTransactionController;
 use App\Http\Controllers\Admin\PromptTemplateController;
 use App\Http\Controllers\Admin\KnowledgeBaseController;
 use App\Http\Controllers\Admin\AgentConversationController;
+use App\Http\Controllers\Admin\McpController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminMaidController;
 use App\Http\Controllers\AdminBookingController;
@@ -282,6 +283,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/notifications', [AdminNotificationController::class, 'store'])->name('notifications.broadcast');
         Route::get('/audit', [AdminAuditLogController::class, 'index'])->name('audit');
         Route::delete('/audit/purge', [AdminAuditLogController::class, 'destroyAll'])->name('audit.purge');
+        Route::post('/audit/retention', [AdminAuditLogController::class, 'updateRetention'])->name('audit.retention');
+
+        // MCP Server Manager
+        Route::get('/mcp', [McpController::class, 'index'])->name('mcp.index');
+        Route::post('/mcp', [McpController::class, 'store'])->name('mcp.store');
+        Route::put('/mcp/{id}', [McpController::class, 'update'])->name('mcp.update');
+        Route::delete('/mcp/{id}', [McpController::class, 'destroy'])->name('mcp.destroy');
+        Route::post('/mcp/{id}/test', [McpController::class, 'testConnection'])->name('mcp.test');
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
         Route::post('/settings/api-token', [AdminSettingsController::class, 'generateApiToken'])->name('settings.api-token');
         Route::post('/settings/revoke-tokens', [AdminSettingsController::class, 'revokeApiTokens'])->name('settings.revoke-tokens');

@@ -49,9 +49,10 @@ class AdminSettingsController extends Controller
         }
 
         return Inertia::render('Admin/Settings', [
-            'settings' => $settings,
+            'settings'   => $settings,
             'aiManifest' => $aiService->getProviderManifest(),
             'smsProvider' => $smsProvider,
+            'mcpServers' => \App\Models\McpServer::orderBy('name')->get(),
         ]);
     }
 
