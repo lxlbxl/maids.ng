@@ -14,6 +14,7 @@ export default function AdminLayout({ children }) {
         { name: 'Salary Ops', href: '/admin/salary', icon: '💸' },
         { name: 'Financial Control', href: '/admin/payments', icon: '💰' },
         { name: 'System Settings', href: '/admin/settings', icon: '⚙️' },
+        { name: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
     ];
 
     const agents = [

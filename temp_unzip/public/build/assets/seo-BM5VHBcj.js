@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",function(){var t=document.querySelectorAll(".faq-item");t.forEach(function(n){var e=n.querySelector("h3");e&&(e.style.cursor="pointer",e.addEventListener("click",function(){var a=n.querySelectorAll(".faq-short-answer, .faq-full-answer");a.forEach(function(r){r.style.display=r.style.display==="none"?"":"none"})}))})});

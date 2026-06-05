@@ -1,0 +1,200 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\SeoService;
+
+class SeoServiceSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $services = [
+            [
+                'name' => 'Housekeeper',
+                'slug' => 'housekeeper',
+                'plural' => 'Housekeepers',
+                'also_known_as' => ['house help', 'maid', 'house cleaner', 'domestic worker'],
+                'short_description' => 'A housekeeper manages daily household tasks including cleaning, laundry, cooking, and general home maintenance.',
+                'full_description' => 'A housekeeper is the backbone of any well-run Nigerian household. From sweeping and mopping to laundry, ironing, meal preparation, and keeping the home organized, a good housekeeper makes daily life significantly easier for busy families. On Maids.ng, housekeepers are the most requested service category.',
+                'duties' => 'Cleaning, laundry, cooking, general home maintenance, grocery shopping, and keeping the household organized.',
+                'who_needs_this' => 'Busy professionals, dual-income families, expatriates, and households with children who need daily domestic support.',
+                'what_to_look_for' => 'Look for cleanliness standards, reliability, cooking ability, trustworthiness, and willingness to follow instructions.',
+                'salary_min' => 30000,
+                'salary_max' => 80000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 40000, 'max' => 100000],
+                    'abuja' => ['min' => 36000, 'max' => 90000],
+                    'port-harcourt' => ['min' => 33000, 'max' => 85000],
+                ],
+                'live_in_available' => true,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 95,
+            ],
+            [
+                'name' => 'Nanny',
+                'slug' => 'nanny',
+                'plural' => 'Nannies',
+                'also_known_as' => ['babysitter', 'childminder', 'au pair'],
+                'short_description' => 'A nanny provides professional childcare including feeding, school runs, light housework, and child development support.',
+                'full_description' => 'A nanny is more than a babysitter — they are a trusted caregiver who plays a crucial role in your children\'s daily lives. From preparing meals and helping with homework to school runs and bedtime routines, a good nanny becomes part of the family. Maids.ng verifies all nannies through NIN checks and background screening.',
+                'duties' => 'Childcare, feeding, school runs, light housework, homework assistance, and maintaining children\'s routines.',
+                'who_needs_this' => 'Working parents, families with young children, single parents, and households needing dedicated childcare support.',
+                'what_to_look_for' => 'Experience with children, patience, first-aid knowledge, references from previous employers, and genuine love for childcare.',
+                'salary_min' => 40000,
+                'salary_max' => 100000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 50000, 'max' => 120000],
+                    'abuja' => ['min' => 48000, 'max' => 115000],
+                    'port-harcourt' => ['min' => 44000, 'max' => 110000],
+                ],
+                'live_in_available' => true,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 88,
+            ],
+            [
+                'name' => 'Cook',
+                'slug' => 'cook',
+                'plural' => 'Cooks',
+                'also_known_as' => ['chef', 'house cook', 'personal chef'],
+                'short_description' => 'A cook prepares meals, manages the kitchen, and handles grocery shopping for your household.',
+                'full_description' => 'A dedicated household cook transforms mealtime from a daily chore into a pleasure. Whether you need someone skilled in Nigerian cuisine, continental dishes, or specialized dietary cooking, a professional cook handles all kitchen management from meal planning to grocery shopping.',
+                'duties' => 'Meal preparation, kitchen management, grocery shopping, menu planning, and maintaining kitchen cleanliness.',
+                'who_needs_this' => 'Families who value home-cooked meals, busy professionals, households with specific dietary needs, and entertaining hosts.',
+                'what_to_look_for' => 'Cooking skills, hygiene standards, knowledge of different cuisines, ability to follow dietary requirements, and kitchen management skills.',
+                'salary_min' => 45000,
+                'salary_max' => 120000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 55000, 'max' => 140000],
+                    'abuja' => ['min' => 54000, 'max' => 130000],
+                    'port-harcourt' => ['min' => 50000, 'max' => 125000],
+                ],
+                'live_in_available' => true,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 72,
+            ],
+            [
+                'name' => 'Driver',
+                'slug' => 'driver',
+                'plural' => 'Drivers',
+                'also_known_as' => ['chauffeur', 'personal driver', 'household driver'],
+                'short_description' => 'A household driver handles school runs, errands, airport pickups, and general family transportation needs.',
+                'full_description' => 'A reliable household driver is essential for busy Nigerian families. From daily school runs to airport pickups, market trips, and weekend outings, a trusted driver ensures your family\'s safety on the road. Maids.ng verifies all drivers for valid licenses and clean driving records.',
+                'duties' => 'School runs, errands, airport pickups, general driving, vehicle maintenance, and ensuring passenger safety.',
+                'who_needs_this' => 'Families with school-age children, executives, households with elderly members, and anyone needing regular transportation.',
+                'what_to_look_for' => 'Valid driver\'s license, clean driving record, knowledge of local routes, punctuality, and vehicle maintenance skills.',
+                'salary_min' => 50000,
+                'salary_max' => 130000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 65000, 'max' => 150000],
+                    'abuja' => ['min' => 60000, 'max' => 140000],
+                    'port-harcourt' => ['min' => 55000, 'max' => 135000],
+                ],
+                'live_in_available' => false,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 80,
+            ],
+            [
+                'name' => 'Elderly Carer',
+                'slug' => 'elderly-carer',
+                'plural' => 'Elderly Carers',
+                'also_known_as' => ['caregiver', 'aged care', 'home health aide'],
+                'short_description' => 'An elderly carer provides personal care, medication management, companionship, and mobility support for senior family members.',
+                'full_description' => 'Caring for elderly parents or relatives requires patience, skill, and compassion. An elderly carer assists with daily activities like bathing, dressing, medication management, meal preparation, and provides essential companionship. Maids.ng ensures all carers are verified and trained for this sensitive role.',
+                'duties' => 'Personal care, medication management, companionship, mobility support, meal preparation, and monitoring health conditions.',
+                'who_needs_this' => 'Families with elderly parents or relatives who need daily assistance, post-surgery recovery patients, and households with special needs.',
+                'what_to_look_for' => 'Compassion, patience, experience with elderly care, basic medical knowledge, reliability, and emotional intelligence.',
+                'salary_min' => 55000,
+                'salary_max' => 150000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 70000, 'max' => 180000],
+                    'abuja' => ['min' => 66000, 'max' => 170000],
+                    'port-harcourt' => ['min' => 60000, 'max' => 160000],
+                ],
+                'live_in_available' => true,
+                'part_time_available' => false,
+                'nin_required' => true,
+                'demand_index' => 60,
+            ],
+            [
+                'name' => 'Cleaner',
+                'slug' => 'cleaner',
+                'plural' => 'Cleaners',
+                'also_known_as' => ['house cleaner', 'cleaning lady', 'office cleaner'],
+                'short_description' => 'A cleaner provides deep cleaning, post-event cleaning, move-in/move-out cleaning, and regular maintenance cleaning.',
+                'full_description' => 'A professional cleaner goes beyond regular housekeeping to provide thorough deep cleaning services. Whether you need post-construction cleanup, move-in/move-out cleaning, or periodic deep cleaning, a dedicated cleaner ensures your home is spotless and hygienic.',
+                'duties' => 'Deep cleaning, post-event cleaning, move-in/move-out cleaning, window cleaning, and maintaining hygiene standards.',
+                'who_needs_this' => 'Homeowners needing periodic deep cleaning, tenants moving in or out, event hosts, and offices requiring professional cleaning.',
+                'what_to_look_for' => 'Attention to detail, knowledge of cleaning products, efficiency, reliability, and experience with deep cleaning tasks.',
+                'salary_min' => 20000,
+                'salary_max' => 60000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 25000, 'max' => 75000],
+                    'abuja' => ['min' => 24000, 'max' => 72000],
+                    'port-harcourt' => ['min' => 22000, 'max' => 66000],
+                ],
+                'live_in_available' => false,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 85,
+            ],
+            [
+                'name' => 'Laundry Person',
+                'slug' => 'laundry-person',
+                'plural' => 'Laundry Staff',
+                'also_known_as' => ['laundress', 'washerman', 'laundry help'],
+                'short_description' => 'Laundry staff handles washing, ironing, folding, and wardrobe management for your household.',
+                'full_description' => 'Managing laundry for a large household is a full-time job. A dedicated laundry person ensures all clothes, linens, and fabrics are properly washed, ironed, folded, and stored. This frees up significant time for families, especially those with large wardrobes or multiple children.',
+                'duties' => 'Washing, ironing, folding, wardrobe management, stain treatment, and fabric care.',
+                'who_needs_this' => 'Large families, busy professionals, households with children, and anyone who spends too much time on laundry.',
+                'what_to_look_for' => 'Knowledge of fabric care, ironing skills, stain removal expertise, efficiency, and attention to detail.',
+                'salary_min' => 20000,
+                'salary_max' => 50000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 25000, 'max' => 60000],
+                    'abuja' => ['min' => 24000, 'max' => 58000],
+                    'port-harcourt' => ['min' => 22000, 'max' => 55000],
+                ],
+                'live_in_available' => false,
+                'part_time_available' => true,
+                'nin_required' => true,
+                'demand_index' => 55,
+            ],
+            [
+                'name' => 'Home Manager',
+                'slug' => 'home-manager',
+                'plural' => 'Home Managers',
+                'also_known_as' => ['house manager', 'estate manager', 'household manager'],
+                'short_description' => 'A home manager supervises other staff, manages household budgeting, handles admin tasks, and coordinates vendors.',
+                'full_description' => 'A home manager is the chief operating officer of your household. They supervise other domestic staff, manage the household budget, coordinate with vendors and service providers, handle household administration, and ensure everything runs smoothly. This role is common in large households and estates.',
+                'duties' => 'Supervising other staff, budgeting, household administration, vendor management, event coordination, and ensuring household operations.',
+                'who_needs_this' => 'Large households, estate owners, high-net-worth families, and busy executives who need comprehensive household management.',
+                'what_to_look_for' => 'Management experience, organizational skills, financial literacy, communication skills, leadership ability, and trustworthiness.',
+                'salary_min' => 100000,
+                'salary_max' => 300000,
+                'salary_by_city' => [
+                    'lagos' => ['min' => 130000, 'max' => 350000],
+                    'abuja' => ['min' => 120000, 'max' => 340000],
+                    'port-harcourt' => ['min' => 110000, 'max' => 320000],
+                ],
+                'live_in_available' => true,
+                'part_time_available' => false,
+                'nin_required' => true,
+                'demand_index' => 40,
+            ],
+        ];
+
+        foreach ($services as $svc) {
+            SeoService::updateOrCreate(
+                ['slug' => $svc['slug']],
+                $svc
+            );
+        }
+
+        $this->command->info('SeoServiceSeeder: seeded ' . count($services) . ' services.');
+    }
+}
