@@ -26,7 +26,6 @@ class WalletService
                 'total_refunded' => 0,
                 'currency' => $currency,
                 'timezone' => config('app.timezone', 'Africa/Lagos'),
-                'is_active' => true,
             ]
         );
     }
@@ -44,9 +43,26 @@ class WalletService
                 'total_withdrawn' => 0,
                 'pending_withdrawal' => 0,
                 'currency' => $currency,
-                'is_active' => true,
             ]
         );
+    }
+
+    /**
+     * Get and lock employer wallet for transaction.
+     */
+    private function getLockedEmployerWallet(int $employerId, string $currency = 'NGN'): EmployerWallet
+    {
+        $wallet = $this->getOrCreateEmployerWallet($employerId, $currency);
+        return EmployerWallet::where('id', $wallet->id)->lockForUpdate()->first();
+    }
+
+    /**
+     * Get and lock maid wallet for transaction.
+     */
+    private function getLockedMaidWallet(int $maidId, string $currency = 'NGN'): MaidWallet
+    {
+        $wallet = $this->getOrCreateMaidWallet($maidId, $currency);
+        return MaidWallet::where('id', $wallet->id)->lockForUpdate()->first();
     }
 
     /**
@@ -62,7 +78,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateEmployerWallet($employerId);
+            $wallet = $this->getLockedEmployerWallet($employerId);
             $transaction = $wallet->credit($amount, $description, $referenceId, $referenceType);
 
             DB::commit();
@@ -91,7 +107,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateEmployerWallet($employerId);
+            $wallet = $this->getLockedEmployerWallet($employerId);
 
             if (!$wallet->hasSufficientBalance($amount)) {
                 DB::rollBack();
@@ -126,7 +142,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateEmployerWallet($employerId);
+            $wallet = $this->getLockedEmployerWallet($employerId);
 
             if (!$wallet->hasSufficientBalance($amount)) {
                 DB::rollBack();
@@ -161,7 +177,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateEmployerWallet($employerId);
+            $wallet = $this->getLockedEmployerWallet($employerId);
             $transaction = $wallet->releaseFromEscrow($amount, $description, $referenceId, $referenceType);
 
             DB::commit();
@@ -190,16 +206,22 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $employerWallet = $this->getOrCreateEmployerWallet($employerId);
-            $maidWallet = $this->getOrCreateMaidWallet($maidId, $employerWallet->currency);
+            // Always lock wallets in a consistent order (e.g. Employer then Maid) to prevent deadlocks
+            $employerWallet = $this->getLockedEmployerWallet($employerId);
+            $maidWallet = $this->getLockedMaidWallet($maidId, $employerWallet->currency);
 
             if ($employerWallet->escrow_balance < $amount) {
                 DB::rollBack();
                 return null;
             }
 
-            // Release from employer escrow and transfer to maid
+            // Release from employer escrow
             $transaction = $employerWallet->releaseEscrowToMaid($amount, $maidId, $description, $referenceId);
+
+            if ($transaction) {
+                // Credit maid wallet directly here instead of inside EmployerWallet
+                $maidWallet->credit($amount, $description, $referenceId, 'salary_payment');
+            }
 
             DB::commit();
             return $transaction;
@@ -228,7 +250,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateMaidWallet($maidId);
+            $wallet = $this->getLockedMaidWallet($maidId);
             $transaction = $wallet->credit($amount, $description, $referenceId, $referenceType);
 
             DB::commit();
@@ -255,7 +277,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateMaidWallet($maidId);
+            $wallet = $this->getLockedMaidWallet($maidId);
 
             if (!$wallet->hasSufficientBalance($amount)) {
                 DB::rollBack();
@@ -265,6 +287,18 @@ class WalletService
             $transaction = $wallet->requestWithdrawal($amount, $description);
 
             DB::commit();
+
+            if ($transaction) {
+                \App\Events\WithdrawalRequested::dispatch(
+                    $wallet,
+                    $amount,
+                    $wallet->bank_name ?? 'N/A',
+                    $wallet->account_number ?? 'N/A',
+                    $wallet->account_name ?? 'N/A',
+                    'WD-' . $transaction->id
+                );
+            }
+
             return $transaction;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -288,7 +322,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateMaidWallet($maidId);
+            $wallet = $this->getLockedMaidWallet($maidId);
             $transaction = $wallet->approveWithdrawal($transactionId, $paymentReference);
 
             DB::commit();
@@ -315,7 +349,7 @@ class WalletService
         try {
             DB::beginTransaction();
 
-            $wallet = $this->getOrCreateMaidWallet($maidId);
+            $wallet = $this->getLockedMaidWallet($maidId);
             $transaction = $wallet->rejectWithdrawal($transactionId, $reason);
 
             DB::commit();
@@ -427,5 +461,47 @@ class WalletService
     {
         $wallet = $this->getOrCreateMaidWallet($maidId);
         return $wallet->hasSufficientBalance($amount);
+    }
+
+    /**
+     * Check employer wallet balance and sufficiency for an amount.
+     */
+    public function checkBalance(int $employerId, float $amount): array
+    {
+        $wallet = $this->getOrCreateEmployerWallet($employerId);
+        return [
+            'has_sufficient' => $wallet->hasSufficientBalance($amount),
+            'balance' => $wallet->getAvailableBalance(),
+        ];
+    }
+
+    /**
+     * Transfer directly to maid wallet. Convenience wrapper for payout operations.
+     * If employerId is provided, transfers from employer escrow; otherwise credits directly.
+     */
+    public function transferToMaid(
+        ?int $employerId,
+        int $maidId,
+        float $amount,
+        ?int $assignmentId = null,
+        string $description = 'Payout to maid'
+    ): ?WalletTransaction {
+        if ($employerId) {
+            return $this->transferEscrowToMaid(
+                $employerId,
+                $maidId,
+                $amount,
+                $description,
+                $assignmentId
+            );
+        }
+
+        return $this->creditMaidWallet(
+            $maidId,
+            $amount,
+            $description,
+            $assignmentId,
+            'salary_payment'
+        );
     }
 }

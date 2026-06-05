@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->decimal('total_spent', 12, 2)->default(0);
             $table->string('currency', 3)->default('NGN');
             $table->string('timezone', 50)->default('Africa/Lagos');
+            $table->timestamp('last_activity_at')->nullable();
             $table->timestamps();
 
             $table->unique('employer_id');

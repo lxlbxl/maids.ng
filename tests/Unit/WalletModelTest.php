@@ -298,7 +298,7 @@ class WalletModelTest extends TestCase
         $wallet = MaidWallet::create([
             'maid_id' => $this->maid->id,
             'balance' => 50000,
-            'pending_withdrawal' => 20000,
+            'pending_withdrawal' => 0,
             'currency' => 'NGN',
         ]);
 

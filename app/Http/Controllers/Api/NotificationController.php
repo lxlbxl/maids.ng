@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Jobs\RetryNotificationJob;
 use App\Models\NotificationLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-class NotificationController extends Controller
+class NotificationController extends ApiController
 {
     /**
      * Get notification history for the authenticated user.
@@ -35,10 +35,7 @@ class NotificationController extends Controller
         $notifications = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $notifications,
-        ]);
+        return $this->paginated($notifications, 'Notifications retrieved successfully');
     }
 
     /**
@@ -52,10 +49,7 @@ class NotificationController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification,
-        ]);
+        return $this->success($notification, 'Notification retrieved successfully');
     }
 
     /**
@@ -71,10 +65,7 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification marked as read.',
-        ]);
+        return $this->success(null, 'Notification marked as read.');
     }
 
     /**
@@ -88,10 +79,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'All notifications marked as read.',
-        ]);
+        return $this->success(null, 'All notifications marked as read.');
     }
 
     /**
@@ -104,11 +92,7 @@ class NotificationController extends Controller
         $count = NotificationLog::where('user_id', $user->id)
             ->whereNull('read_at')
             ->count();
-
-        return response()->json([
-            'success' => true,
-            'data' => ['unread_count' => $count],
-        ]);
+        return $this->success(['count' => $count], 'Unread count retrieved successfully');
     }
 
     /**
@@ -119,10 +103,7 @@ class NotificationController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $stats = [
@@ -141,10 +122,7 @@ class NotificationController extends Controller
                 ->count(),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
+        return $this->success($stats, 'Notification statistics retrieved successfully');
     }
 
     /**
@@ -155,20 +133,14 @@ class NotificationController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $failed = NotificationLog::where('status', 'failed')
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $failed,
-        ]);
+        return $this->paginated($failed, 'Failed notifications retrieved successfully');
     }
 
     /**
@@ -179,26 +151,33 @@ class NotificationController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $notification = NotificationLog::findOrFail($id);
 
         if ($notification->status !== 'failed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only failed notifications can be retried.',
-            ], 422);
+            return $this->error('Only failed notifications can be retried.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         RetryNotificationJob::dispatch($notification);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification retry queued.',
-        ]);
+        return $this->success(null, 'Notification retry queued.');
+    }
+
+    /**
+     * Delete a notification.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $user = Auth::user();
+
+        $notification = NotificationLog::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $notification->delete();
+
+        return $this->success(null, 'Notification deleted successfully.');
     }
 }

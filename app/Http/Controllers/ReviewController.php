@@ -17,16 +17,19 @@ class ReviewController extends Controller
     }
 
     public function indexMaid() { 
+        $user = Auth::user();
+        $profile = $user->maidProfile;
+
         return Inertia::render('Maid/Reviews', [
-            'reviews' => Review::where('maid_id', Auth::id())
+            'reviews' => Review::where('maid_id', $user->id)
                 ->with('employer')
                 ->latest()
                 ->paginate(10),
-            'sentinelLogs' => \App\Models\AgentActivityLog::where('agent', 'Sentinel')
+            'sentinelLogs' => $profile ? \App\Models\AgentActivityLog::where('agent_name', 'Sentinel')
                 ->where('subject_type', \App\Models\MaidProfile::class)
-                ->where('subject_id', Auth::user()->maidProfile->id)
+                ->where('subject_id', $profile->id)
                 ->latest()
-                ->get()
+                ->get() : []
         ]); 
     }
 

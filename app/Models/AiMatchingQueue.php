@@ -281,8 +281,7 @@ class AiMatchingQueue extends Model
      */
     public function canRetry(): bool
     {
-        return $this->attempt_count < $this->max_attempts
-            && in_array($this->status, ['failed', 'pending']);
+        return $this->attempt_count < $this->max_attempts;
     }
 
     /**
@@ -324,15 +323,17 @@ class AiMatchingQueue extends Model
             'timestamp' => now()->toIso8601String(),
         ];
 
+        // Determine if job can be retried based on attempt count vs max attempts
+        $canRetry = $this->attempt_count < $this->max_attempts;
+
         $update = [
-            'status' => 'failed',
+            'status' => $canRetry ? 'pending' : 'failed',
             'last_error' => $error,
             'error_log' => $errorLog,
             'failure_category' => $category,
         ];
 
-        if ($this->canRetry()) {
-            $update['status'] = 'pending';
+        if ($canRetry) {
             $update['next_attempt_at'] = now()->addMinutes($this->retry_delay_minutes);
         }
 

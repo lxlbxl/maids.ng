@@ -76,9 +76,9 @@ abstract class ApiController extends Controller
      * @return JsonResponse
      */
     protected function error(
-        string $message = 'Error',
-        int $code = Response::HTTP_BAD_REQUEST,
-        ?array $errors = null,
+        string $message = 'Error occurred',
+        int $code = 400,
+        mixed $errors = null,
         ?string $errorCode = null
     ): JsonResponse {
         $response = [
@@ -99,6 +99,8 @@ abstract class ApiController extends Controller
 
         return response()->json($response, $code);
     }
+
+
 
     /**
      * Paginated Response Format

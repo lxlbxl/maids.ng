@@ -1,487 +1,455 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Card, CardContent } from '@/Components/ui/card';
-import { Button } from '@/Components/ui/button';
-import { Badge } from '@/Components/ui/badge';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
-import { Checkbox } from '@/Components/ui/checkbox';
-import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/Components/ui/table';
-import { toast } from 'sonner';
-import { Plus, Trash2, Power, Edit, X, ChevronDown, Search, Check, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const defaultFormState = {
-    name: '',
-    url: '',
-    secret: '',
-    events: [],
-    timeout: 30,
-    max_retries: 3,
-    is_active: true,
-    verify_ssl: true,
-};
+export default function Webhooks({ auth, initialWebhooks, statistics }) {
+    const [webhooks, setWebhooks] = useState(initialWebhooks?.data || []);
+    const [loading, setLoading] = useState(false);
+    const [selectedWebhook, setSelectedWebhook] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [availableEvents, setAvailableEvents] = useState({});
+    const [stats, setStats] = useState(statistics || {});
+    const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
 
-export default function Webhooks({ auth, webhooks = [], stats = {} }) {
-    const [modalOpen, setModalOpen]     = useState(false);
-    const [editingWebhook, setEditing]  = useState(null);
-    const [availableEvents, setAvailableEvents] = useState([]);
-    const [loadingEvents, setLoadingEvents] = useState(true);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const dropdownRef = useRef(null);
+    const { data, setData, post, put, processing, errors, reset } = useForm({
+        name: '',
+        url: '',
+        secret: '',
+        events: [],
+        active: true,
+        verify_ssl: true,
+        timeout_seconds: 30,
+        max_retries: 3,
+    });
 
-    const { data, setData, post, put, processing, errors, reset } = useForm(defaultFormState);
+    // Fetch webhooks
+    const fetchWebhooks = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get('/api/v1/admin/webhooks');
+            setWebhooks(res.data.data?.data || []);
+            if (res.data.data?.statistics) {
+                setStats(res.data.data.statistics);
+            }
+        } catch (error) {
+            console.error('Failed to fetch webhooks:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch available events
+    const fetchAvailableEvents = async () => {
+        try {
+            const res = await axios.get('/api/v1/admin/webhooks/events');
+            setAvailableEvents(res.data.data || {});
+        } catch (error) {
+            console.error('Failed to fetch events:', error);
+        }
+    };
 
     useEffect(() => {
-        let isMounted = true;
-        fetch('/admin/webhooks/events')
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to fetch events');
-                return res.json();
-            })
-            .then(data => {
-                if (isMounted) {
-                    setAvailableEvents(data);
-                    setLoadingEvents(false);
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching webhook events:", err);
-                if (isMounted) {
-                    setLoadingEvents(false);
-                }
-            });
-        return () => { isMounted = false; };
+        fetchWebhooks();
+        fetchAvailableEvents();
     }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setDropdownOpen(false);
-            }
-        };
-        if (dropdownOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [dropdownOpen]);
-
-    const openCreate = () => {
-        setEditing(null);
+    // Open form for new webhook
+    const openNewForm = () => {
         reset();
-        setModalOpen(true);
+        setSelectedWebhook(null);
+        setShowForm(true);
     };
 
-    const openEdit = (wh) => {
-        setEditing(wh);
+    // Open form for editing
+    const openEditForm = (webhook) => {
         setData({
-            name:       wh.name,
-            url:        wh.url,
-            secret:     wh.secret || '',
-            events:     wh.events || [],
-            timeout:    wh.timeout,
-            max_retries: wh.max_retries,
-            is_active:  wh.is_active,
-            verify_ssl: wh.verify_ssl,
+            name: webhook.name || '',
+            url: webhook.url || '',
+            secret: '',
+            events: webhook.events || [],
+            active: webhook.active ?? true,
+            verify_ssl: webhook.verify_ssl ?? true,
+            timeout_seconds: webhook.timeout_seconds || 30,
+            max_retries: webhook.max_retries || 3,
         });
-        setModalOpen(true);
+        setSelectedWebhook(webhook);
+        setShowForm(true);
     };
 
-    const closeModal = () => { 
-        setModalOpen(false); 
-        setSearchQuery('');
-        reset(); 
-    };
-
-    const toggleEvent = (id) =>
-        setData('events', data.events.includes(id)
-            ? data.events.filter(e => e !== id)
-            : [...data.events, id]);
-
-    const filteredEvents = availableEvents.filter(ev =>
-        ev.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ev.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (ev.description && ev.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
-    const handleSubmit = (e) => {
+    // Submit form
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!data.events || data.events.length === 0) {
-            toast.error('Validation failed — select at least one event');
-            return;
+
+        try {
+            if (selectedWebhook) {
+                const res = await axios.put(`/api/v1/admin/webhooks/${selectedWebhook.id}`, data);
+                if (res.data.success) {
+                    setShowForm(false);
+                    fetchWebhooks();
+                }
+            } else {
+                const res = await axios.post('/api/v1/admin/webhooks', data);
+                if (res.data.success) {
+                    setShowForm(false);
+                    fetchWebhooks();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to save webhook:', error);
+            alert(error.response?.data?.message || 'Failed to save webhook');
         }
-        const opts = {
-            onSuccess: () => { toast.success(editingWebhook ? 'Webhook updated' : 'Webhook created'); closeModal(); },
-            onError:   () => toast.error('Validation failed — check the form'),
-        };
-        editingWebhook
-            ? put(route('admin.webhooks.update', editingWebhook.id), opts)
-            : post(route('admin.webhooks.store'), opts);
     };
 
-    const handleToggle = (wh) =>
-        router.post(route('admin.webhooks.toggle', wh.id), {}, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Status updated'),
-        });
+    // Delete webhook
+    const deleteWebhook = async (id) => {
+        if (!confirm('Are you sure you want to delete this webhook?')) return;
 
-    const handleDelete = (wh) => {
-        if (!confirm('Delete this webhook?')) return;
-        router.delete(route('admin.webhooks.destroy', wh.id), {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Webhook deleted'),
-        });
+        try {
+            const res = await axios.delete(`/api/v1/admin/webhooks/${id}`);
+            if (res.data.success) {
+                fetchWebhooks();
+            }
+        } catch (error) {
+            console.error('Failed to delete webhook:', error);
+        }
     };
+
+    // Test webhook
+    const testWebhook = async (id) => {
+        try {
+            const res = await axios.post(`/api/v1/admin/webhooks/${id}/test`);
+            if (res.data.success) {
+                alert('Webhook test successful!');
+            } else {
+                alert('Webhook test failed: ' + (res.data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Webhook test failed: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    // Toggle event selection
+    const toggleEvent = (event) => {
+        if (data.events.includes(event)) {
+            setData('events', data.events.filter(e => e !== event));
+        } else {
+            setData('events', [...data.events, event]);
+        }
+    };
+
+    // Filter webhooks
+    const filteredWebhooks = webhooks.filter(webhook => {
+        if (filter === 'active' && !webhook.active) return false;
+        if (filter === 'inactive' && webhook.active) return false;
+        if (search && !webhook.name.toLowerCase().includes(search.toLowerCase()) &&
+            !webhook.url.toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
+    });
 
     return (
-        <AdminLayout auth={auth}>
-            <Head title="Webhooks" />
+        <AdminLayout>
+            <Head title="Webhooks | Mission Control" />
 
-            <div className="p-6 space-y-6">
-
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Webhooks</h1>
-                        <p className="text-gray-400 mt-1 text-sm">
-                            Manage outgoing webhook integrations for real-time event notifications.
-                        </p>
-                    </div>
-                    <Button
-                        onClick={openCreate}
-                        className="bg-teal-600 hover:bg-teal-700 text-white"
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> NEW WEBHOOK
-                    </Button>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-[#0f1115] border-gray-800 text-white">
-                        <CardContent className="p-6">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">TOTAL DELIVERIES</p>
-                            <p className="text-3xl font-light">{stats?.total_deliveries ?? 0}</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-[#0f1115] border-gray-800 text-white">
-                        <CardContent className="p-6">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">SUCCESS RATE</p>
-                            <p className="text-3xl font-light text-yellow-500">{stats?.success_rate ?? '0%'}</p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Table */}
-                <Card className="bg-[#0f1115] border-gray-800 text-white">
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-gray-800 hover:bg-transparent">
-                                    <TableHead className="text-gray-400">NAME & URL</TableHead>
-                                    <TableHead className="text-gray-400">EVENTS</TableHead>
-                                    <TableHead className="text-gray-400">STATUS</TableHead>
-                                    <TableHead className="text-gray-400 text-right">ACTIONS</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {webhooks.length === 0 ? (
-                                    <TableRow className="border-gray-800 hover:bg-transparent">
-                                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                                            No webhooks configured yet. Click <strong>NEW WEBHOOK</strong> to add one.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : webhooks.map(wh => (
-                                    <TableRow key={wh.id} className="border-gray-800 hover:bg-gray-900/50">
-                                        <TableCell>
-                                            <div className="font-medium text-gray-200">{wh.name}</div>
-                                            <div className="text-xs text-gray-500 mt-1 truncate max-w-xs">{wh.url}</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {(wh.events || []).map(ev => (
-                                                    <Badge key={ev} variant="outline" className="text-[10px] bg-gray-800 border-gray-700 text-gray-300">
-                                                        {ev}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={wh.is_active
-                                                ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
-                                                : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}>
-                                                {wh.is_active ? 'Active' : 'Disabled'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button variant="ghost" size="sm" onClick={() => handleToggle(wh)}
-                                                    className={wh.is_active ? 'text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10' : 'text-teal-500 hover:text-teal-400 hover:bg-teal-500/10'}
-                                                    title={wh.is_active ? 'Disable' : 'Enable'}>
-                                                    <Power className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => openEdit(wh)}
-                                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10">
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(wh)}
-                                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+            <div className="mb-10">
+                <h1 className="font-display text-4xl font-light tracking-tight text-white mb-2">Webhooks</h1>
+                <p className="text-white/40 text-sm">Manage outgoing webhook integrations for real-time event notifications.</p>
             </div>
 
-            {/* Modal */}
-            {modalOpen && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
-                        onClick={closeModal}
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-[#1a1a1f] border border-white/5 rounded-brand-xl p-6">
+                    <p className="text-white/40 text-xs font-mono uppercase tracking-widest mb-2">Total Deliveries</p>
+                    <p className="text-3xl font-display text-white">{stats.total_deliveries || 0}</p>
+                </div>
+                <div className="bg-[#1a1a1f] border border-white/5 rounded-brand-xl p-6">
+                    <p className="text-white/40 text-xs font-mono uppercase tracking-widest mb-2">Successful</p>
+                    <p className="text-3xl font-display text-teal">{stats.successful || 0}</p>
+                </div>
+                <div className="bg-[#1a1a1f] border border-white/5 rounded-brand-xl p-6">
+                    <p className="text-white/40 text-xs font-mono uppercase tracking-widest mb-2">Failed</p>
+                    <p className="text-3xl font-display text-red-400">{stats.failed || 0}</p>
+                </div>
+                <div className="bg-[#1a1a1f] border border-white/5 rounded-brand-xl p-6">
+                    <p className="text-white/40 text-xs font-mono uppercase tracking-widest mb-2">Success Rate</p>
+                    <p className="text-3xl font-display text-amber-400">{stats.success_rate || 0}%</p>
+                </div>
+            </div>
+
+            {/* Filters and Actions */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1 flex gap-2">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`px-4 py-2 rounded-brand-lg text-sm font-mono uppercase tracking-wider transition-all ${filter === 'all'
+                                ? 'bg-teal text-black'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                            }`}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setFilter('active')}
+                        className={`px-4 py-2 rounded-brand-lg text-sm font-mono uppercase tracking-wider transition-all ${filter === 'active'
+                                ? 'bg-teal text-black'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                            }`}
+                    >
+                        Active
+                    </button>
+                    <button
+                        onClick={() => setFilter('inactive')}
+                        className={`px-4 py-2 rounded-brand-lg text-sm font-mono uppercase tracking-wider transition-all ${filter === 'inactive'
+                                ? 'bg-teal text-black'
+                                : 'bg-white/5 text-white/60 hover:bg-white/10'
+                            }`}
+                    >
+                        Inactive
+                    </button>
+                </div>
+
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search webhooks..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-2 text-white text-sm focus:border-teal/50 outline-none"
                     />
-                    {/* Panel */}
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="bg-[#0f1115] border border-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto text-white">
-                            {/* Modal Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-                                <h2 className="text-lg font-semibold">
-                                    {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
-                                </h2>
-                                <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors">
-                                    <X className="w-5 h-5" />
-                                </button>
+                    <button
+                        onClick={openNewForm}
+                        className="px-6 py-2 bg-teal text-black font-mono text-xs uppercase tracking-widest font-bold rounded-brand-lg hover:bg-teal-light transition-all"
+                    >
+                        + New Webhook
+                    </button>
+                </div>
+            </div>
+
+            {/* Webhooks List */}
+            <div className="bg-[#121214] border border-white/5 rounded-brand-xl overflow-hidden">
+                {loading ? (
+                    <div className="p-8 text-center text-white/40">Loading webhooks...</div>
+                ) : filteredWebhooks.length === 0 ? (
+                    <div className="p-8 text-center text-white/40">
+                        No webhooks found. Create one to get started.
+                    </div>
+                ) : (
+                    <table className="w-full">
+                        <thead className="bg-white/5 border-b border-white/5">
+                            <tr>
+                                <th className="text-left p-4 text-white/40 font-mono text-xs uppercase tracking-widest">Name</th>
+                                <th className="text-left p-4 text-white/40 font-mono text-xs uppercase tracking-widest">URL</th>
+                                <th className="text-left p-4 text-white/40 font-mono text-xs uppercase tracking-widest">Events</th>
+                                <th className="text-left p-4 text-white/40 font-mono text-xs uppercase tracking-widest">Status</th>
+                                <th className="text-left p-4 text-white/40 font-mono text-xs uppercase tracking-widest">Last Triggered</th>
+                                <th className="text-right p-4 text-white/40 font-mono text-xs uppercase tracking-widest">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredWebhooks.map((webhook) => (
+                                <tr key={webhook.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${webhook.active ? 'bg-teal' : 'bg-white/20'}`} />
+                                            <span className="text-white font-medium">{webhook.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <span className="text-white/60 text-sm truncate max-w-xs block">{webhook.url}</span>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex flex-wrap gap-1">
+                                            {webhook.events?.slice(0, 3).map(event => (
+                                                <span key={event} className="text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white/60 px-2 py-1 rounded">
+                                                    {event.split('.').pop()}
+                                                </span>
+                                            ))}
+                                            {webhook.events?.length > 3 && (
+                                                <span className="text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white/60 px-2 py-1 rounded">
+                                                    +{webhook.events.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <span className={`text-xs font-mono uppercase tracking-wider px-2 py-1 rounded ${webhook.active
+                                                ? 'bg-teal/10 text-teal'
+                                                : 'bg-white/10 text-white/40'
+                                            }`}>
+                                            {webhook.active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-white/40 text-sm">
+                                        {webhook.last_triggered_at
+                                            ? new Date(webhook.last_triggered_at).toLocaleString()
+                                            : 'Never'}
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() => testWebhook(webhook.id)}
+                                                className="text-[10px] font-mono uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors"
+                                            >
+                                                Test
+                                            </button>
+                                            <button
+                                                onClick={() => openEditForm(webhook)}
+                                                className="text-[10px] font-mono uppercase tracking-wider text-teal hover:text-teal-light transition-colors"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => deleteWebhook(webhook.id)}
+                                                className="text-[10px] font-mono uppercase tracking-wider text-red-400 hover:text-red-300 transition-colors"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Form Modal */}
+            {showForm && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#121214] border border-white/10 rounded-brand-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-display text-white">
+                                {selectedWebhook ? 'Edit Webhook' : 'Create Webhook'}
+                            </h2>
+                            <button
+                                onClick={() => setShowForm(false)}
+                                className="text-white/40 hover:text-white transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40">Name</label>
+                                <input
+                                    type="text"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    placeholder="My Webhook"
+                                    required
+                                />
                             </div>
 
-                            {/* Modal Body */}
-                            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40">URL</label>
+                                <input
+                                    type="url"
+                                    value={data.url}
+                                    onChange={(e) => setData('url', e.target.value)}
+                                    className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    placeholder="https://example.com/webhook"
+                                    required
+                                />
+                            </div>
 
-                                {/* Name */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</Label>
-                                    <Input
-                                        value={data.name}
-                                        onChange={e => setData('name', e.target.value)}
-                                        placeholder="e.g. n8n Integration"
-                                        className="bg-[#1a1d24] border-gray-700 text-white placeholder-gray-600 focus-visible:ring-teal-500"
-                                    />
-                                    {errors.name && <p className="text-red-400 text-xs">{errors.name}</p>}
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40">Secret (for signature verification)</label>
+                                <input
+                                    type="text"
+                                    value={data.secret}
+                                    onChange={(e) => setData('secret', e.target.value)}
+                                    className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    placeholder={selectedWebhook ? 'Leave blank to keep current' : 'Generate random if empty'}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">Events</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-[#0a0a0b] border border-white/10 rounded-brand-lg">
+                                    {Object.entries(availableEvents).map(([key, label]) => (
+                                        <label key={key} className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-2 rounded">
+                                            <input
+                                                type="checkbox"
+                                                checked={data.events.includes(key)}
+                                                onChange={() => toggleEvent(key)}
+                                                className="w-4 h-4 rounded border-white/20 text-teal focus:ring-teal/20 bg-[#1a1a1f]"
+                                            />
+                                            <span className="text-white/80 text-sm">{label}</span>
+                                        </label>
+                                    ))}
                                 </div>
+                            </div>
 
-                                {/* URL */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">URL</Label>
-                                    <Input
-                                        type="url"
-                                        value={data.url}
-                                        onChange={e => setData('url', e.target.value)}
-                                        placeholder="https://your-service.com/webhook"
-                                        className="bg-[#1a1d24] border-gray-700 text-white placeholder-gray-600 focus-visible:ring-teal-500"
-                                    />
-                                    {errors.url && <p className="text-red-400 text-xs">{errors.url}</p>}
-                                </div>
-
-                                {/* Secret */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                        Secret <span className="text-gray-600 normal-case font-normal">(optional — used for HMAC-SHA256 signature)</span>
-                                    </Label>
-                                    <Input
-                                        value={data.secret}
-                                        onChange={e => setData('secret', e.target.value)}
-                                        placeholder="Leave empty to skip signature verification"
-                                        className="bg-[#1a1d24] border-gray-700 text-white placeholder-gray-600 focus-visible:ring-teal-500"
-                                    />
-                                </div>
-
-                                {/* Events */}
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                        Events <span className="text-gray-600 normal-case font-normal">(select which events to subscribe to)</span>
-                                    </Label>
-                                    
-                                    <div className="relative" ref={dropdownRef}>
-                                        {/* Multi-Select Input Trigger */}
-                                        <div
-                                            onClick={() => setDropdownOpen(!dropdownOpen)}
-                                            className={`flex min-h-[44px] w-full items-center justify-between rounded-md border bg-[#1a1d24] px-3 py-2 text-sm cursor-pointer select-none transition-all duration-200
-                                                ${dropdownOpen ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-gray-700 hover:border-gray-600'}
-                                            `}
-                                        >
-                                            {data.events.length === 0 ? (
-                                                <span className="text-gray-500">Select events to subscribe to</span>
-                                            ) : (
-                                                <div className="flex flex-wrap gap-1.5 pr-6">
-                                                    {data.events.map(eventId => {
-                                                        const ev = availableEvents.find(e => e.id === eventId);
-                                                        const label = ev ? ev.label : eventId;
-                                                        return (
-                                                            <Badge
-                                                                key={eventId}
-                                                                className="bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20 px-2 py-0.5 rounded flex items-center gap-1 text-xs"
-                                                            >
-                                                                {label}
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toggleEvent(eventId);
-                                                                    }}
-                                                                    className="hover:text-teal-300 rounded-full p-0.5"
-                                                                >
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            </Badge>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                            <div className="flex items-center gap-2 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2">
-                                                {loadingEvents && <Loader2 className="w-4 h-4 animate-spin text-teal-500" />}
-                                                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-teal-500' : ''}`} />
-                                            </div>
-                                        </div>
-
-                                        {/* Dropdown Menu */}
-                                        {dropdownOpen && (
-                                            <div className="absolute z-50 w-full mt-1 bg-[#161922] border border-gray-800 rounded-md shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-                                                {/* Search Box */}
-                                                <div className="relative border-b border-gray-800 p-2">
-                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                                                    <input
-                                                        type="text"
-                                                        value={searchQuery}
-                                                        onChange={e => setSearchQuery(e.target.value)}
-                                                        placeholder="Search events..."
-                                                        className="w-full bg-[#1e222b] border border-gray-750 rounded-md pl-9 pr-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50"
-                                                        onClick={e => e.stopPropagation()} // Prevent closing dropdown
-                                                    />
-                                                </div>
-
-                                                {/* Options List */}
-                                                <div className="max-h-60 overflow-y-auto p-1 divide-y divide-gray-800/30">
-                                                    {loadingEvents ? (
-                                                        <div className="flex items-center justify-center py-6 text-sm text-gray-500 gap-2">
-                                                            <Loader2 className="w-4 h-4 animate-spin text-teal-500" />
-                                                            Fetching events...
-                                                        </div>
-                                                    ) : filteredEvents.length === 0 ? (
-                                                        <div className="py-6 text-center text-sm text-gray-500">
-                                                            {availableEvents.length === 0 ? 'No events available' : 'No matching events'}
-                                                        </div>
-                                                    ) : (
-                                                        filteredEvents.map(ev => {
-                                                            const isSelected = data.events.includes(ev.id);
-                                                            return (
-                                                                <div
-                                                                    key={ev.id}
-                                                                    onClick={() => toggleEvent(ev.id)}
-                                                                    className={`flex items-start gap-3 px-3 py-2 text-sm rounded cursor-pointer transition-colors select-none
-                                                                        ${isSelected ? 'bg-teal-500/5 text-white' : 'hover:bg-gray-800/40 text-gray-350 hover:text-white'}
-                                                                    `}
-                                                                >
-                                                                    <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors
-                                                                        ${isSelected ? 'bg-teal-500 border-teal-500 text-white' : 'border-gray-600'}
-                                                                    `}>
-                                                                        {isSelected && <Check className="w-3 h-3" />}
-                                                                    </div>
-                                                                    <div className="space-y-0.5">
-                                                                        <div className="font-medium text-xs md:text-sm">{ev.label}</div>
-                                                                        <div className="text-[11px] text-gray-500 font-mono">{ev.id}</div>
-                                                                        {ev.description && (
-                                                                            <div className="text-[11px] text-gray-400 mt-0.5 font-light leading-snug">
-                                                                                {ev.description}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    {errors.events && <p className="text-red-400 text-xs">{errors.events}</p>}
+                                    <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40">Timeout (seconds)</label>
+                                    <input
+                                        type="number"
+                                        value={data.timeout_seconds}
+                                        onChange={(e) => setData('timeout_seconds', parseInt(e.target.value))}
+                                        min="5"
+                                        max="120"
+                                        className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    />
                                 </div>
 
-                                {/* Timeout & Retries */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Timeout (seconds)</Label>
-                                        <Input
-                                            type="number" min={1} max={120}
-                                            value={data.timeout}
-                                            onChange={e => setData('timeout', parseInt(e.target.value))}
-                                            className="bg-[#1a1d24] border-gray-700 text-white focus-visible:ring-teal-500"
-                                        />
-                                        {errors.timeout && <p className="text-red-400 text-xs">{errors.timeout}</p>}
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Max Retries</Label>
-                                        <Input
-                                            type="number" min={0} max={10}
-                                            value={data.max_retries}
-                                            onChange={e => setData('max_retries', parseInt(e.target.value))}
-                                            className="bg-[#1a1d24] border-gray-700 text-white focus-visible:ring-teal-500"
-                                        />
-                                        {errors.max_retries && <p className="text-red-400 text-xs">{errors.max_retries}</p>}
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40">Max Retries</label>
+                                    <input
+                                        type="number"
+                                        value={data.max_retries}
+                                        onChange={(e) => setData('max_retries', parseInt(e.target.value))}
+                                        min="1"
+                                        max="10"
+                                        className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-4 py-3 text-white focus:border-teal/50 outline-none"
+                                    />
                                 </div>
+                            </div>
 
-                                {/* Toggles */}
-                                <div className="flex items-center gap-8 pt-1">
-                                    <div className="flex items-center gap-2.5">
-                                        <Checkbox
-                                            id="is_active"
-                                            checked={data.is_active}
-                                            onCheckedChange={v => setData('is_active', v)}
-                                            className={data.is_active ? 'bg-teal-500 border-teal-500' : 'border-gray-600'}
-                                        />
-                                        <label htmlFor="is_active" className="text-sm text-gray-300 cursor-pointer select-none"
-                                            onClick={() => setData('is_active', !data.is_active)}>
-                                            Active
-                                        </label>
-                                    </div>
-                                    <div className="flex items-center gap-2.5">
-                                        <Checkbox
-                                            id="verify_ssl"
-                                            checked={data.verify_ssl}
-                                            onCheckedChange={v => setData('verify_ssl', v)}
-                                            className={data.verify_ssl ? 'bg-teal-500 border-teal-500' : 'border-gray-600'}
-                                        />
-                                        <label htmlFor="verify_ssl" className="text-sm text-gray-300 cursor-pointer select-none"
-                                            onClick={() => setData('verify_ssl', !data.verify_ssl)}>
-                                            Verify SSL
-                                        </label>
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.active}
+                                        onChange={(e) => setData('active', e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 text-teal focus:ring-teal/20 bg-[#1a1a1f]"
+                                    />
+                                    <span className="text-white/80 text-sm">Active</span>
+                                </label>
 
-                                {/* Footer */}
-                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
-                                    <Button type="button" variant="ghost" onClick={closeModal}
-                                        className="text-gray-400 hover:text-white hover:bg-gray-800">
-                                        CANCEL
-                                    </Button>
-                                    <Button type="submit" disabled={processing}
-                                        className="bg-teal-600 hover:bg-teal-700 text-white min-w-[100px]">
-                                        {processing ? 'Saving…' : (editingWebhook ? 'UPDATE' : 'CREATE')}
-                                    </Button>
-                                </div>
-                            </form>
-                        </div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.verify_ssl}
+                                        onChange={(e) => setData('verify_ssl', e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 text-teal focus:ring-teal/20 bg-[#1a1a1f]"
+                                    />
+                                    <span className="text-white/80 text-sm">Verify SSL</span>
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForm(false)}
+                                    className="px-6 py-3 bg-white/5 text-white/60 font-mono text-xs uppercase tracking-widest rounded-brand-lg hover:bg-white/10 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="px-6 py-3 bg-teal text-black font-mono text-xs uppercase tracking-widest font-bold rounded-brand-lg hover:bg-teal-light transition-all disabled:opacity-50"
+                                >
+                                    {processing ? 'Saving...' : (selectedWebhook ? 'Update' : 'Create')}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </>
+                </div>
             )}
         </AdminLayout>
     );

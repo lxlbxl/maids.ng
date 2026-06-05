@@ -13,25 +13,46 @@ class OpenAiDriver implements AiProvider
 
     public function __construct()
     {
-        $this->apiKey = Setting::get('openai_key');
-        $this->model = Setting::get('openai_model', 'gpt-4o-mini');
+        $this->apiKey = Setting::get('openai_key') ?: env('OPENAI_API_KEY');
+        $this->model = Setting::get('openai_model') ?: env('OPENAI_MODEL', 'gpt-4o-mini');
     }
 
-    public function chat(string $prompt, array $options = []): array
+    public function chat(string|array $prompt, array $options = []): array
     {
         if (!$this->apiKey) {
             return ['error' => 'OpenAI API key missing.', 'message' => 'Please configure your OpenAI key in System Settings.'];
         }
 
+        $model = $options['model'] ?? $this->model;
+
+        $payload = [
+            'model' => $model,
+        ];
+
+        // Reasoning models (o1, o3, o4, gpt-5) only support temperature=1
+        if (!str_starts_with($model, 'o1')
+            && !str_starts_with($model, 'o3')
+            && !str_starts_with($model, 'o4')
+            && !str_starts_with($model, 'gpt-5')) {
+            $payload['temperature'] = $options['temperature'] ?? 0.7;
+        }
+
+        if (is_array($prompt)) {
+            $payload['messages'] = $prompt;
+        } else {
+            $payload['messages'] = [
+                ['role' => 'system', 'content' => $options['system_prompt'] ?? 'You are an AI agent operating a marketplace for household help.'],
+                ['role' => 'user', 'content' => $prompt]
+            ];
+        }
+
+        if (isset($options['tools'])) {
+            $payload['tools'] = $options['tools'];
+            $payload['tool_choice'] = $options['tool_choice'] ?? 'auto';
+        }
+
         $response = Http::withToken($this->apiKey)
-            ->post('https://api.openai.com/v1/chat/completions', [
-                'model' => $options['model'] ?? $this->model,
-                'messages' => [
-                    ['role' => 'system', 'content' => $options['system_prompt'] ?? 'You are an AI agent operating a marketplace for household help.'],
-                    ['role' => 'user', 'content' => $prompt]
-                ],
-                'temperature' => $options['temperature'] ?? 0.7,
-            ]);
+            ->post('https://api.openai.com/v1/chat/completions', $payload);
 
         if ($response->failed()) {
             return ['error' => 'OpenAI API Call Failed', 'message' => $response->json('error.message', 'Unknown error')];

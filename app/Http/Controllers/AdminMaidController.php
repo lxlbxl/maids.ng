@@ -19,10 +19,22 @@ class AdminMaidController extends Controller
             ->paginate(20);
 
         $stats = [
-            'total' => \App\Models\User::role('maid')->count(),
-            'active' => \App\Models\User::role('maid')->where('status', 'active')->count(),
-            'verified' => \App\Models\MaidProfile::where('nin_verified', true)->count(),
+            'total' => 0,
+            'active' => 0,
+            'verified' => 0,
+            'pending_verification' => 0,
+            'new_this_week' => 0,
         ];
+
+        try {
+            $stats['total'] = \App\Models\User::role('maid')->count();
+            $stats['active'] = \App\Models\User::role('maid')->where('status', 'active')->count();
+            $stats['verified'] = \App\Models\MaidProfile::where('nin_verified', true)->count();
+            $stats['pending_verification'] = \App\Models\MaidProfile::where('nin_verified', false)->whereNotNull('nin')->count();
+            $stats['new_this_week'] = \App\Models\User::role('maid')->where('created_at', '>=', now()->subDays(7))->count();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Maid stats error: " . $e->getMessage());
+        }
 
         return Inertia::render('Admin/Maids', [
             'maids' => $maids,

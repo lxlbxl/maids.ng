@@ -1,2 +1,50 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /agent/
+Disallow: /webhooks/
+Disallow: /debug_settings.php
+Disallow: /install.php
+Disallow: /deploy.php
+Disallow: /deploy-all
+Disallow: /deploy-fix-db
+Disallow: /composer.phar
+
+# Sitemap index
+Sitemap: https://maids.ng/sitemap.xml
+Sitemap: https://maids.ng/sitemap-static.xml
+
+# AI crawlers — allow full access
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /

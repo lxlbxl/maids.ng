@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\MatchingJobCompleted;
-use App\Models\Assignment;
+use App\Models\MaidAssignment;
 use App\Services\WalletService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,16 +64,17 @@ class CreateAssignmentFromMatch implements ShouldQueue
         }
 
         // Create the assignment
-        $assignment = Assignment::create([
+        $assignment = MaidAssignment::create([
             'employer_id' => $employerId,
             'maid_id' => $maidId,
+            'preference_id' => $job->preference_id,
+            'assigned_by' => 'ai',
+            'assignment_type' => 'guarantee_match',
             'job_type' => $payload['requirements']['job_type'] ?? 'full_time',
-            'monthly_salary' => $payload['requirements']['salary_range']['max'] ?? 50000,
-            'salary_day' => $payload['requirements']['salary_day'] ?? 1,
-            'location' => $payload['requirements']['location'] ?? null,
+            'salary_amount' => $payload['requirements']['salary_range']['max'] ?? 50000,
+            'job_location' => $payload['requirements']['location'] ?? null,
             'start_date' => now()->addDays(7),
             'status' => 'pending_acceptance',
-            'matching_job_id' => $job->id,
             'context_json' => [
                 'match_score' => $bestMatch['score'] ?? null,
                 'match_reasons' => $bestMatch['reasons'] ?? [],

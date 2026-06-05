@@ -1,10 +1,10 @@
 # Maids.ng - AI-Powered Domestic Staff Matching Platform
 
-[![Laravel](https://img.shields.io/badge/Laravel-11.x-red.svg)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-Proprietary-green.svg)]()
 
-Maids.ng is a next-generation domestic staff matching platform that leverages AI to connect employers with verified domestic helpers in Nigeria. Built with Laravel 11, Inertia.js, and React, it features an intelligent matching engine, automated salary management, and comprehensive verification systems.
+Maids.ng is a next-generation domestic staff matching platform that leverages AI to connect employers with verified domestic helpers in Nigeria. Built with Laravel 12, Inertia.js, and React, it features an intelligent matching engine, automated salary management, comprehensive verification systems, and a full CLI/MCP agent ecosystem.
 
 ## 🚀 Features
 
@@ -33,16 +33,31 @@ Maids.ng is a next-generation domestic staff matching platform that leverages AI
 - **Review System**: Rating and review mechanism for both parties
 - **Guarantee Match**: Premium service with replacement guarantee
 
+### 🤖 CLI Agent System (NEW)
+- **30 API Endpoints**: Dedicated `/api/v1/cli/*` routes for agent automation
+- **Python CLI Tool**: Full-featured command-line interface for all operations
+- **Audit Logging**: Comprehensive action tracking in `storage/logs/audit.log`
+- **User Impersonation**: Agents can act on behalf of users via `X-User-ID` header
+- **MCP Server Support**: Model Context Protocol integration for external AI agents
+
+### 🔗 Webhook System (NEW)
+- **Webhook Management**: Create, configure, and monitor webhooks via admin panel
+- **Event-Driven Delivery**: Automatic webhook dispatch on platform events
+- **Delivery Tracking**: Full delivery history with retry logic
+- **Signature Verification**: HMAC-based webhook signature validation
+
 ## 🛠️ Tech Stack
 
-- **Backend**: Laravel 11, PHP 8.2+
+- **Backend**: Laravel 12, PHP 8.2+
 - **Frontend**: React 18, Inertia.js, Tailwind CSS
-- **Database**: MySQL/PostgreSQL with SQLite for testing
-- **AI Integration**: OpenAI GPT-4, Anthropic Claude
+- **Database**: MySQL 8.0+ / PostgreSQL 14+
+- **AI Integration**: OpenAI GPT-4, Anthropic Claude, OpenRouter
 - **SMS Providers**: Termii, Twilio, Africa's Talking
 - **Payment**: Paystack, Flutterwave
 - **Queue**: Laravel Queues with database driver
 - **Testing**: PHPUnit, Pest
+- **CLI**: Python 3.10+ with Typer, Pydantic, HTTPX
+- **MCP**: Model Context Protocol server (Python/FastMCP)
 
 ## 📋 Requirements
 
@@ -51,6 +66,7 @@ Maids.ng is a next-generation domestic staff matching platform that leverages AI
 - Node.js 18+ and NPM
 - MySQL 8.0+ or PostgreSQL 14+
 - Redis (optional, for caching and queues)
+- Python 3.10+ (for CLI/MCP tools)
 
 ## 🚀 Installation
 
@@ -92,6 +108,7 @@ Edit `.env` and configure:
 - SMS provider credentials (Termii/Twilio)
 - Payment gateway keys (Paystack/Flutterwave)
 - AI provider keys (OpenAI/Anthropic)
+- MCP secret key for agent authentication
 
 ### 5. Database Setup
 
@@ -112,6 +129,12 @@ php artisan storage:link
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+```
+
+### 8. Install CLI Tool (Optional)
+
+```bash
+pip install ./cli
 ```
 
 ## 🔧 Configuration
@@ -165,6 +188,13 @@ FLUTTERWAVE_SECRET_KEY=FLWSECK_TEST-...
 FLUTTERWAVE_ENCRYPTION_KEY=...
 ```
 
+### MCP/CLI Agent Authentication
+
+```env
+MCP_SECRET_KEY=your-mcp-secret-key
+CLI_AGENT_TOKEN=your-cli-agent-token
+```
+
 ## 🧪 Testing
 
 ### Run All Tests
@@ -189,9 +219,9 @@ php artisan test tests/Feature/Api/AssignmentTest.php
 ### Test Coverage
 
 The platform includes comprehensive tests for:
-- **API Endpoints**: Assignment, Notification, Matching Queue, Wallet, Salary
-- **Model Logic**: SalarySchedule calculations, Wallet transactions
-- **Authentication**: Role-based access control
+- **API Endpoints**: Assignment, Notification, Matching Queue, Wallet, Salary, CLI Agent
+- **Model Logic**: SalarySchedule calculations, Wallet transactions, Webhooks
+- **Authentication**: Role-based access control, MCP token validation
 - **Payment Flows**: Webhook handling, transaction processing
 
 ## 📚 API Documentation
@@ -204,6 +234,12 @@ All API endpoints (except public ones) require Bearer token authentication:
 Authorization: Bearer {your-token}
 ```
 
+For CLI Agent routes, use the MCP secret key:
+```http
+Authorization: Bearer {MCP_SECRET_KEY}
+X-User-ID: {user-id-to-impersonate}
+```
+
 ### Public Endpoints
 
 | Method | Endpoint | Description |
@@ -214,6 +250,33 @@ Authorization: Bearer {your-token}
 | POST | `/api/v1/auth/register` | Register user |
 | POST | `/api/v1/auth/login` | Login user |
 
+### CLI Agent Endpoints (`/api/v1/cli/*`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/cli/health` | System health check |
+| GET | `/api/v1/cli/status` | Full system status |
+| GET | `/api/v1/cli/maids` | List all maids |
+| GET | `/api/v1/cli/maids/{id}` | Get maid profile |
+| PATCH | `/api/v1/cli/maids/{id}/availability` | Update availability |
+| GET | `/api/v1/cli/assignments` | List assignments |
+| GET | `/api/v1/cli/assignments/{id}` | Get assignment details |
+| POST | `/api/v1/cli/assignments/{id}/accept` | Accept assignment |
+| POST | `/api/v1/cli/assignments/{id}/reject` | Reject assignment |
+| POST | `/api/v1/cli/assignments/{id}/complete` | Complete assignment |
+| GET | `/api/v1/cli/bookings` | List bookings |
+| POST | `/api/v1/cli/bookings/create` | Create booking |
+| POST | `/api/v1/cli/bookings/{id}/cancel` | Cancel booking |
+| GET | `/api/v1/cli/wallet` | Get wallet balance |
+| GET | `/api/v1/cli/wallet/transactions` | List transactions |
+| GET | `/api/v1/cli/notifications` | List notifications |
+| POST | `/api/v1/cli/notifications/{id}/read` | Mark as read |
+| GET | `/api/v1/cli/users` | List users (admin) |
+| GET | `/api/v1/cli/users/{id}` | Get user details |
+| PUT | `/api/v1/cli/users/{id}/status` | Update user status |
+| GET | `/api/v1/cli/employers/{id}/preferences` | Get employer preferences |
+| PATCH | `/api/v1/cli/employers/{id}/preferences` | Update preferences |
+
 ### Protected Endpoints
 
 #### Employer
@@ -221,19 +284,140 @@ Authorization: Bearer {your-token}
 - `GET /api/v1/employer/assignments` - View assignments
 - `POST /api/v1/assignments/{id}/accept` - Accept assignment
 - `GET /api/v1/wallets` - View wallet
+- `GET /api/v1/cli/bookings/user` - Get user bookings
 
 #### Maid
 - `GET /api/v1/maid/dashboard` - Dashboard data
 - `GET /api/v1/maid/assignments` - View assignments
 - `GET /api/v1/maid/earnings` - View earnings
+- `GET /api/v1/cli/maids/{id}/earnings` - Get maid earnings
 
 #### Admin
 - `GET /api/v1/admin/dashboard` - Admin dashboard
 - `GET /api/v1/admin/users` - List users
 - `GET /api/v1/admin/assignments` - All assignments
 - `GET /api/v1/admin/matching/queue` - Matching queue status
+- `GET /api/v1/admin/webhooks` - List webhooks
+- `POST /api/v1/admin/webhooks` - Create webhook
+- `GET /api/v1/cli/users` - List all users
+- `PUT /api/v1/cli/users/{id}/status` - Update user status
 
 See `docs/api/` for complete API documentation.
+
+## 🤖 CLI Tool Usage
+
+### Installation
+
+```bash
+pip install ./cli
+```
+
+### Configuration
+
+```bash
+# Set API endpoint
+maids config set-api-url https://api.maids.ng
+
+# Set authentication token (use MCP_SECRET_KEY)
+maids config set-api-key your-mcp-secret-key
+
+# Set default user ID for impersonation
+maids config set-user-id 1
+```
+
+### Commands
+
+```bash
+# System status
+maids status check
+maids status health
+
+# List maids
+maids maid list --location "Lagos" --verified
+maids maid get 123
+
+# Manage assignments
+maids assignment list --status pending
+maids assignment accept 123
+maids assignment reject 123 --reason "Not suitable"
+maids assignment stats --json
+
+# Bookings
+maids booking list --user-id 456
+maids booking create --employer-id 1 --maid-id 2 --salary 50000
+
+# Wallet
+maids wallet balance --user-id 1
+maids wallet transactions --user-id 1
+
+# Notifications
+maids notification list --unread
+maids notification mark-read 123
+
+# User management (admin)
+maids user list --role maid
+maids user get 456
+maids user update-status 456 --status suspended
+
+# JSON output for automation
+maids assignment stats --json
+```
+
+See `cli/README.md` for full CLI documentation.
+
+## 🔗 Webhook System
+
+### Creating Webhooks
+
+Via Admin Panel:
+1. Navigate to Admin Dashboard → Webhooks
+2. Click "Create Webhook"
+3. Configure:
+   - Name and URL
+   - Events to subscribe
+   - Secret for signature verification
+
+Via API:
+```bash
+POST /api/v1/admin/webhooks
+{
+  "name": "Assignment Notifications",
+  "url": "https://your-app.com/webhook",
+  "events": ["assignment.accepted", "assignment.rejected"],
+  "secret": "your-webhook-secret"
+}
+```
+
+### Webhook Payload
+
+```json
+{
+  "id": "wh_123",
+  "event": "assignment.accepted",
+  "data": {
+    "assignment_id": 456,
+    "employer_id": 1,
+    "maid_id": 2,
+    "accepted_at": "2026-05-25T12:00:00Z"
+  },
+  "timestamp": "2026-05-25T12:00:00Z"
+}
+```
+
+### Signature Verification
+
+Webhooks include `X-Webhook-Signature` header with HMAC-SHA256 signature:
+
+```python
+import hmac
+import hashlib
+
+signature = hmac.new(
+    secret.encode(),
+    payload.encode(),
+    hashlib.sha256
+).hexdigest()
+```
 
 ## 🚀 Deployment
 
@@ -242,11 +426,25 @@ See `docs/api/` for complete API documentation.
 1. **Upload files** via FTP/SFTP or Git
 2. **Set document root** to `public/` directory
 3. **Create database** and import schema
-4. **Configure `.env`** with production credentials
+4. **Configure `.env`** with production credentials:
+   - Set `QUEUE_CONNECTION=database`
 5. **Run deployment** (admin only):
    ```
    GET /deploy-all?token={DEPLOY_SECRET}
    ```
+
+### 📋 Background Tasks & Cron Jobs (Shared Hosting)
+
+For the platform to function correctly on shared hosting, you must set up the following Cron Jobs in your control panel (e.g., cPanel):
+
+| Frequency | Command | Purpose |
+|-----------|---------|---------|
+| Every Minute | `* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1` | Runs the task scheduler (Reminders, AI Matching Queue) |
+| Every Minute | `* * * * * cd /path/to/project && php artisan queue:work --stop-when-empty >> /dev/null 2>&1` | Processes background jobs (SMS, Emails, Matching) |
+
+> [!IMPORTANT]
+> Replace `/path/to/project` with the actual absolute path to your application on the server.
+
 
 ### VPS/Cloud Deployment
 
@@ -293,6 +491,19 @@ See `docs/api/` for complete API documentation.
    * * * * * cd /var/www/maids.ng && php artisan schedule:run >> /dev/null 2>&1
    ```
 
+### MCP Server Deployment
+
+```bash
+cd mcp
+docker-compose up -d
+```
+
+Or manually:
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
 ## 🔐 Security
 
 ### Deploy Routes Protection
@@ -302,6 +513,19 @@ Deploy routes (`/deploy-all`, `/deploy-fix-db`) are protected with:
 - Admin role verification
 - Deploy secret token validation
 
+### MCP/CLI Agent Security
+
+- Bearer token authentication via `MCP_SECRET_KEY`
+- Optional user impersonation with `X-User-ID` header
+- All agent actions logged to audit log
+- Rate limiting on all endpoints
+
+### Webhook Security
+
+- HMAC-SHA256 signature verification
+- Configurable per-webhook secrets
+- Delivery retry with exponential backoff
+
 ### Security Best Practices
 
 - All passwords hashed with Bcrypt
@@ -310,6 +534,7 @@ Deploy routes (`/deploy-all`, `/deploy-fix-db`) are protected with:
 - XSS protection via React escaping
 - Rate limiting on API endpoints
 - Webhook signature verification
+- Audit logging for all agent actions
 
 ## 📝 Environment Variables
 
@@ -339,6 +564,10 @@ DEPLOY_SECRET=your-secure-deploy-secret
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 
+# MCP/CLI Agents
+MCP_SECRET_KEY=your-mcp-secret-key
+CLI_AGENT_TOKEN=your-cli-agent-token
+
 # SMS
 TERMII_API_KEY=...
 TWILIO_SID=...
@@ -352,6 +581,10 @@ MAIL_MAILER=smtp
 MAIL_HOST=smtp.mailgun.org
 MAIL_USERNAME=...
 MAIL_PASSWORD=...
+
+# Audit Logging
+LOG_CHANNEL=stack
+LOG_LEVEL=info
 ```
 
 ## 🤝 Contributing

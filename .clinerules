@@ -1,0 +1,15 @@
+# Maids.ng — Cline Rules
+
+Read `AGENTS.md` for the full codebase map (directory structure, data model, controllers, services, conventions).
+
+## Key Rules
+
+- **Schema:** `database/database.sql` is authoritative — migrations may be partial
+- **Services > Controllers** — business logic lives in `app/Services/`, controllers are thin
+- **Roles:** `admin`, `maid`, `employer`
+- **Inertia SSR** for web, **JSON** for API routes under `app/Http/Controllers/Api/`
+- **Tailwind CSS** + React 18 + Vite
+- **Ignore:** `legacy-v1/`, `maids-ng-v2/`, `fix-*.php`, `diagnose-*.php`, `check.php` — not app code
+- **Payments:** Paystack integration
+- **SMS:** Multi-provider (Twilio, Termii, Africa's Talking)
+- **Real-time:** Laravel Echo + Pusher

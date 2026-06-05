@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\WithdrawalApproved;
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Admin\{ApproveWithdrawalRequest, RejectWithdrawalRequest, UpdateUserStatusRequest, UpdateSettingsRequest, BatchSalaryPaymentRequest, AdjustWalletBalanceRequest};
 use App\Models\AiMatchingQueue;
 use App\Models\EmployerWallet;
 use App\Models\MaidAssignment;
@@ -16,11 +16,13 @@ use App\Services\SalaryManagementService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
-class AdminController extends Controller
+class AdminController extends ApiController
 {
     protected WalletService $walletService;
     protected SalaryManagementService $salaryService;
@@ -40,11 +42,8 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $stats = [
@@ -93,10 +92,56 @@ class AdminController extends Controller
             ],
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
+        return $this->success($stats, 'Dashboard statistics retrieved successfully');
+    }
+
+    /**
+     * System Health Check.
+     */
+    public function systemHealth(): JsonResponse
+    {
+        $checks = [
+            'database' => $this->checkDatabase(),
+            'cache' => $this->checkCache(),
+            'storage' => $this->checkStorage(),
+        ];
+
+        $allHealthy = collect($checks)->every(fn($check) => $check['status'] === 'healthy');
+
+        return $this->success([
+            'status' => $allHealthy ? 'healthy' : 'degraded',
+            'checks' => $checks,
+            'timestamp' => now()->toIso8601String(),
+        ], $allHealthy ? 'All systems operational' : 'Some systems are experiencing issues');
+    }
+
+    /**
+     * Verify a maid (admin manual approval).
+     */
+    public function verifyMaid(int $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+
+        if (!$user->isMaid()) {
+            return $this->error('User is not a maid', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $profile = $user->maidProfile;
+
+        if (!$profile) {
+            return $this->notFound('Maid profile');
+        }
+
+        $profile->update([
+            'nin_verified' => true,
+            'background_verified' => true,
         ]);
+
+        return $this->success([
+            'user_id' => $user->id,
+            'nin_verified' => $profile->nin_verified,
+            'background_verified' => $profile->background_verified,
+        ], 'Maid verified successfully');
     }
 
     /**
@@ -106,53 +151,30 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
-        $withdrawals = WalletTransaction::where('type', 'withdrawal')
+        $withdrawals = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
-            ->with(['wallet.user'])
+            ->with(['employer', 'maid'])
             ->orderBy('created_at', 'asc')
             ->paginate(20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $withdrawals,
-        ]);
+        return $this->paginated($withdrawals, 'Pending withdrawals retrieved successfully');
     }
 
     /**
      * Approve a withdrawal request.
      */
-    public function approveWithdrawal(Request $request, int $id): JsonResponse
+    public function approveWithdrawal(ApproveWithdrawalRequest $request, int $id): JsonResponse
     {
         $user = Auth::user();
+        $validated = $request->validated();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
-        }
-
-        $withdrawal = WalletTransaction::where('type', 'withdrawal')
+        $withdrawal = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
             ->findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
 
         // Update withdrawal status
         $withdrawal->update([
@@ -160,18 +182,14 @@ class AdminController extends Controller
             'approved_at' => now(),
             'approved_by' => $user->id,
             'metadata' => array_merge($withdrawal->metadata ?? [], [
-                'admin_notes' => $request->notes,
+                'admin_notes' => $validated['notes'] ?? null,
             ]),
         ]);
 
         // Fire event for bank transfer processing
         WithdrawalApproved::dispatch($withdrawal);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Withdrawal approved successfully. Bank transfer will be processed shortly.',
-            'data' => $withdrawal->fresh(),
-        ]);
+        return $this->success($withdrawal->fresh(), 'Withdrawal approved successfully. Bank transfer will be processed shortly.');
     }
 
     /**
@@ -181,14 +199,11 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
-        $withdrawal = WalletTransaction::where('type', 'withdrawal')
+        $withdrawal = WalletTransaction::where('transaction_type', 'withdrawal')
             ->where('status', 'pending')
             ->findOrFail($id);
 
@@ -197,22 +212,18 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->validationError($validator->errors()->toArray());
         }
 
+        $reason = $validator->validated()['reason'];
+
         // Refund the amount to wallet
-        $this->walletService->credit(
-            $withdrawal->wallet->user_id,
+        $this->walletService->creditMaidWallet(
+            $withdrawal->maid_id,
             $withdrawal->amount,
-            'refund',
-            null,
-            [
-                'withdrawal_id' => $withdrawal->id,
-                'rejection_reason' => $request->reason,
-            ]
+            'Refund of rejected withdrawal request: ' . $reason,
+            $withdrawal->id,
+            'withdrawal_refund'
         );
 
         // Update withdrawal status
@@ -221,15 +232,20 @@ class AdminController extends Controller
             'rejected_at' => now(),
             'rejected_by' => $user->id,
             'metadata' => array_merge($withdrawal->metadata ?? [], [
-                'rejection_reason' => $request->reason,
+                'rejection_reason' => $reason,
             ]),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Withdrawal rejected and amount refunded to user wallet.',
-            'data' => $withdrawal->fresh(),
-        ]);
+        // Fire WithdrawalRejected event
+        $maidWallet = $this->walletService->getOrCreateMaidWallet($withdrawal->maid_id);
+        \App\Events\WithdrawalRejected::dispatch(
+            $maidWallet,
+            $withdrawal->amount,
+            $reason,
+            $user->id
+        );
+
+        return $this->success($withdrawal->fresh(), 'Withdrawal rejected and amount refunded to user wallet.');
     }
 
     /**
@@ -239,11 +255,8 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $query = User::query();
@@ -271,10 +284,7 @@ class AdminController extends Controller
         $users = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $users,
-        ]);
+        return $this->paginated($users, 'Users retrieved successfully');
     }
 
     /**
@@ -284,11 +294,8 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $userDetails = User::with([
@@ -300,52 +307,27 @@ class AdminController extends Controller
             'assignmentsAsMaid',
         ])->findOrFail($id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $userDetails,
-        ]);
+        return $this->success($userDetails, 'User details retrieved successfully');
     }
 
     /**
      * Update user status.
      */
-    public function updateUserStatus(Request $request, int $id): JsonResponse
+    public function updateUserStatus(UpdateUserStatusRequest $request, int $id): JsonResponse
     {
         $user = Auth::user();
-
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
-        }
-
+        $validated = $request->validated();
+ 
         $targetUser = User::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:active,suspended,banned',
-            'reason' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $targetUser->update([
-            'status' => $request->status,
-            'status_reason' => $request->reason,
+            'status' => $validated['status'],
+            'status_reason' => $validated['reason'] ?? null,
             'status_updated_at' => now(),
             'status_updated_by' => $user->id,
         ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User status updated successfully.',
-            'data' => $targetUser->fresh(),
-        ]);
+ 
+        return $this->success($targetUser->fresh(), 'User status updated successfully.');
     }
 
     /**
@@ -355,11 +337,8 @@ class AdminController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+        if (!$user->isAdmin()) {
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $settings = [
@@ -373,60 +352,25 @@ class AdminController extends Controller
             'ai_matching_enabled' => config('services.ai_matching.enabled', true),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $settings,
-        ]);
+        return $this->success($settings, 'System settings retrieved successfully');
     }
 
     /**
      * Update system settings.
      */
-    public function updateSettings(Request $request): JsonResponse
+    public function updateSettings(UpdateSettingsRequest $request): JsonResponse
     {
         $user = Auth::user();
-
-        if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'matching_fee' => 'nullable|numeric|min:0',
-            'platform_fee_percentage' => 'nullable|numeric|min:0|max:100',
-            'min_withdrawal_amount' => 'nullable|numeric|min:0',
-            'max_withdrawal_amount' => 'nullable|numeric|min:0',
-            'work_hours_start' => 'nullable|integer|min:0|max:23',
-            'work_hours_end' => 'nullable|integer|min:0|max:23',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+        $validated = $request->validated();
 
         // Update settings in database or cache
-        foreach ($request->only([
-            'matching_fee',
-            'platform_fee_percentage',
-            'min_withdrawal_amount',
-            'max_withdrawal_amount',
-            'work_hours_start',
-            'work_hours_end',
-        ]) as $key => $value) {
+        foreach ($validated as $key => $value) {
             if ($value !== null) {
                 \App\Models\Setting::set($key, $value);
             }
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Settings updated successfully.',
-        ]);
+ 
+        return $this->success(null, 'Settings updated successfully.');
     }
 
     /**
@@ -434,19 +378,8 @@ class AdminController extends Controller
      */
     public function salarySchedules(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'nullable|string|in:pending,reminder_sent,payment_initiated,paid,overdue,disputed',
-            'employer_id' => 'nullable|integer',
-            'maid_id' => 'nullable|integer',
-            'per_page' => 'nullable|integer|min:1|max:100',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-        }
-
         $query = SalarySchedule::with(['employer:id,name,email,phone', 'maid:id,name,email,phone', 'assignment:id,status']);
-
+ 
         if ($request->filled('status')) {
             $query->where('payment_status', $request->status);
         }
@@ -456,9 +389,9 @@ class AdminController extends Controller
         if ($request->filled('maid_id')) {
             $query->where('maid_id', $request->maid_id);
         }
-
+ 
         $schedules = $query->orderBy('next_salary_due_date')->paginate($request->input('per_page', 20));
-
+ 
         $summary = [
             'total' => SalarySchedule::count(),
             'active' => SalarySchedule::where('is_active', true)->count(),
@@ -467,14 +400,11 @@ class AdminController extends Controller
             'overdue' => SalarySchedule::where('payment_status', 'overdue')->count(),
             'total_monthly_obligation' => SalarySchedule::where('is_active', true)->sum('monthly_salary'),
         ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'schedules' => $schedules,
-            ],
-        ]);
+ 
+        return $this->success([
+            'summary' => $summary,
+            'schedules' => $schedules,
+        ], 'Salary schedules retrieved successfully');
     }
 
     /**
@@ -503,14 +433,11 @@ class AdminController extends Controller
                 'level_2' => $query->getCollection()->where('escalation_level', 2)->count(),
             ],
         ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'overdue' => $query,
-            ],
-        ]);
+ 
+        return $this->success([
+            'summary' => $summary,
+            'overdue' => $query,
+        ], 'Overdue salaries retrieved successfully');
     }
 
     /**
@@ -521,22 +448,18 @@ class AdminController extends Controller
         $schedule = SalarySchedule::findOrFail($id);
 
         if ($schedule->payment_status === 'paid') {
-            return response()->json(['success' => false, 'message' => 'Schedule is already paid.'], 422);
+            return $this->error('Schedule is already paid.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
+ 
         $schedule->escalate();
-
+ 
         $level = $schedule->escalation_level;
         if ($level >= 2) {
             $schedule->payment_status = 'overdue';
             $schedule->save();
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Escalated to level {$level}.",
-            'data' => $schedule->fresh(),
-        ]);
+ 
+        return $this->success($schedule->fresh(), "Escalated to level {$level}.");
     }
 
     /**
@@ -547,7 +470,7 @@ class AdminController extends Controller
         $schedule = SalarySchedule::with('employer')->findOrFail($id);
 
         if (!$schedule->employer) {
-            return response()->json(['success' => false, 'message' => 'Employer not found.'], 404);
+            return $this->error('Employer not found.', Response::HTTP_NOT_FOUND);
         }
 
         $amountFormatted = number_format($schedule->monthly_salary, 2);
@@ -565,58 +488,44 @@ class AdminController extends Controller
         if ($result['success'] || $result['scheduled']) {
             $schedule->markReminderSent();
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => $result['success'] ? 'Reminder sent successfully.' : 'Reminder scheduled for next work hours.',
-            'data' => $result,
-        ]);
+ 
+        return $this->success($result, $result['success'] ? 'Reminder sent successfully.' : 'Reminder scheduled for next work hours.');
     }
 
     /**
      * Process batch salary payments for multiple schedules.
      */
-    public function processBatchPayment(Request $request): JsonResponse
+    public function processBatchPayment(BatchSalaryPaymentRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'schedule_ids' => 'required|array',
-            'schedule_ids.*' => 'integer|exists:salary_schedules,id',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-        }
-
-        $user = Auth::user();
+        $validated = $request->validated();
         $results = ['processed' => 0, 'failed' => 0, 'skipped' => 0, 'errors' => []];
-
+ 
         DB::beginTransaction();
         try {
-            foreach ($request->schedule_ids as $scheduleId) {
+            foreach ($validated['schedule_ids'] as $scheduleId) {
                 $schedule = SalarySchedule::with('assignment')->find($scheduleId);
-
+ 
                 if (!$schedule) {
                     $results['skipped']++;
                     continue;
                 }
-
+ 
                 if ($schedule->payment_status === 'paid') {
                     $results['skipped']++;
                     continue;
                 }
-
+ 
                 if (!$schedule->assignment || $schedule->assignment->status !== 'active') {
                     $results['skipped']++;
                     continue;
                 }
-
+ 
                 $result = $this->salaryService->processSalaryPayment(
                     $schedule->assignment_id,
                     $schedule->monthly_salary,
-                    'Admin batch payment: ' . ($request->notes ?? '')
+                    'Admin batch payment: ' . ($validated['notes'] ?? '')
                 );
-
+ 
                 if ($result) {
                     $schedule->advancePeriod();
                     $results['processed']++;
@@ -625,21 +534,14 @@ class AdminController extends Controller
                     $results['errors'][] = "Schedule #{$scheduleId}: Insufficient balance or processing error";
                 }
             }
-
+ 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Batch payment failed: ' . $e->getMessage(),
-            ], 500);
+            return $this->error('Batch payment failed: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Batch payment complete. {$results['processed']} processed, {$results['failed']} failed, {$results['skipped']} skipped.",
-            'data' => $results,
-        ]);
+ 
+        return $this->success($results, "Batch payment complete. {$results['processed']} processed, {$results['failed']} failed, {$results['skipped']} skipped.");
     }
 
     /**
@@ -652,29 +554,25 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return $this->error($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $schedule = SalarySchedule::findOrFail($id);
-
+ 
         if ($schedule->payment_status === 'paid') {
-            return response()->json(['success' => false, 'message' => 'Already paid.'], 422);
+            return $this->error('Already paid.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
+ 
         $user = Auth::user();
-
+ 
         $schedule->update([
             'payment_status' => 'paid',
-            'special_notes' => ($schedule->special_notes ?? '') . "\n[Admin override by {$user->id}: {$request->notes}]",
+            'special_notes' => ($schedule->special_notes ?? '') . "\n[Admin override by {$user->id}: " . ($request->notes ?? '') . "]",
         ]);
-
+ 
         $schedule->advancePeriod();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Schedule marked as paid.',
-            'data' => $schedule->fresh(),
-        ]);
+ 
+        return $this->success($schedule->fresh(), 'Schedule marked as paid.');
     }
 
     /**
@@ -690,7 +588,7 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return $this->error($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $query = AiMatchingQueue::with(['employer:id,name,email', 'maid:id,name', 'preference:id', 'assignment:id', 'reviewer:id,name']);
@@ -727,14 +625,11 @@ class AdminController extends Controller
                 'failed' => AiMatchingQueue::failed()->whereDate('updated_at', today())->count(),
             ],
         ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'jobs' => $jobs,
-            ],
-        ]);
+ 
+        return $this->success([
+            'summary' => $summary,
+            'jobs' => $jobs,
+        ], 'AI matching jobs retrieved successfully');
     }
 
     /**
@@ -746,10 +641,7 @@ class AdminController extends Controller
             ->with(['employer', 'maid', 'preference', 'assignment', 'reviewer', 'parentJob', 'childJobs'])
             ->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'data' => $job,
-        ]);
+        return $this->success($job, 'AI matching job details retrieved successfully');
     }
 
     /**
@@ -760,10 +652,7 @@ class AdminController extends Controller
         $job = AiMatchingQueue::where('job_id', $jobId)->firstOrFail();
 
         if (!$job->canRetry()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Job cannot be retried (max attempts reached or not in retryable state).',
-            ], 422);
+            return $this->error('Job cannot be retried (max attempts reached or not in retryable state).', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $job->update([
@@ -771,11 +660,7 @@ class AdminController extends Controller
             'next_attempt_at' => now(),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Job queued for retry.',
-            'data' => ['job_id' => $job->job_id, 'status' => 'pending'],
-        ]);
+        return $this->success(['job_id' => $job->job_id, 'status' => 'pending'], 'Job queued for retry.');
     }
 
     /**
@@ -786,18 +671,12 @@ class AdminController extends Controller
         $job = AiMatchingQueue::where('job_id', $jobId)->firstOrFail();
 
         if (!in_array($job->status, ['pending', 'scheduled'])) {
-            return response()->json([
-                'success' => false,
-                'message' => "Cannot cancel job with status: {$job->status}",
-            ], 422);
+            return $this->error("Cannot cancel job with status: {$job->status}", Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $job->cancel();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Job cancelled.',
-        ]);
+        return $this->success(null, 'Job cancelled.');
     }
 
     /**
@@ -812,7 +691,7 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return $this->error($validator->errors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $type = $request->input('wallet_type', 'employer');
@@ -860,40 +739,27 @@ class AdminController extends Controller
             ],
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'wallets' => $wallets,
-            ],
-        ]);
+        return $this->success([
+            'summary' => $summary,
+            'wallets' => $wallets,
+        ], 'Wallet overview retrieved successfully');
     }
 
     /**
      * Adjust a wallet balance (admin override).
      */
-    public function adjustWalletBalance(Request $request, int $walletId): JsonResponse
+    public function adjustWalletBalance(AdjustWalletBalanceRequest $request, int $walletId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'wallet_type' => 'required|string|in:employer,maid',
-            'amount' => 'required|numeric',
-            'reason' => 'required|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-        }
-
-        $user = Auth::user();
-        $amount = (float) $request->amount;
-
-        if ($request->wallet_type === 'employer') {
+        $validated = $request->validated();
+        $amount = (float) $validated['amount'];
+ 
+        if ($validated['wallet_type'] === 'employer') {
             $wallet = EmployerWallet::findOrFail($walletId);
-
+ 
             if ($wallet->employer_id === null) {
-                return response()->json(['success' => false, 'message' => 'Invalid wallet.'], 422);
+                return $this->error('Invalid wallet.', Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
+ 
             DB::beginTransaction();
             try {
                 $balanceBefore = $wallet->balance;
@@ -903,7 +769,7 @@ class AdminController extends Controller
                 }
                 $wallet->last_activity_at = now();
                 $wallet->save();
-
+ 
                 WalletTransaction::create([
                     'wallet_type' => 'employer',
                     'employer_id' => $wallet->employer_id,
@@ -911,23 +777,23 @@ class AdminController extends Controller
                     'amount' => abs($amount),
                     'balance_before' => $balanceBefore,
                     'balance_after' => $wallet->balance,
-                    'description' => "Admin adjustment: {$request->reason}",
+                    'description' => "Admin adjustment: " . $validated['reason'],
                     'status' => 'completed',
                     'processed_at' => now(),
                 ]);
-
+ 
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return $this->error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         } else {
             $wallet = MaidWallet::findOrFail($walletId);
-
+ 
             if ($wallet->maid_id === null) {
-                return response()->json(['success' => false, 'message' => 'Invalid wallet.'], 422);
+                return $this->error('Invalid wallet.', Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-
+ 
             DB::beginTransaction();
             try {
                 $balanceBefore = $wallet->balance;
@@ -937,7 +803,7 @@ class AdminController extends Controller
                 }
                 $wallet->last_activity_at = now();
                 $wallet->save();
-
+ 
                 WalletTransaction::create([
                     'wallet_type' => 'maid',
                     'maid_id' => $wallet->maid_id,
@@ -945,23 +811,19 @@ class AdminController extends Controller
                     'amount' => abs($amount),
                     'balance_before' => $balanceBefore,
                     'balance_after' => $wallet->balance,
-                    'description' => "Admin adjustment: {$request->reason}",
+                    'description' => "Admin adjustment: " . $validated['reason'],
                     'status' => 'completed',
                     'processed_at' => now(),
                 ]);
-
+ 
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return $this->error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Wallet balance adjusted by " . ($amount > 0 ? '+' : '') . "N" . number_format($amount, 2),
-            'data' => $wallet->fresh(),
-        ]);
+ 
+        return $this->success($wallet->fresh(), "Wallet balance adjusted by " . ($amount > 0 ? '+' : '') . "N" . number_format($amount, 2));
     }
 
     /**
@@ -977,7 +839,7 @@ class AdminController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return $this->validationError($validator->errors()->toArray());
         }
 
         $query = SalaryPayment::with(['employer:id,name', 'maid:id,name', 'assignment:id', 'processor:id,name']);
@@ -993,7 +855,7 @@ class AdminController extends Controller
         }
 
         $payments = $query->orderBy('due_date', 'desc')->paginate($request->input('per_page', 20));
-
+ 
         $summary = [
             'total' => SalaryPayment::count(),
             'total_amount' => SalaryPayment::sum('net_amount'),
@@ -1002,13 +864,178 @@ class AdminController extends Controller
             'overdue' => SalaryPayment::overdue()->count(),
             'disputed' => SalaryPayment::where('status', 'disputed')->count(),
         ];
+ 
+        return $this->success([
+            'summary' => $summary,
+            'payments' => $payments,
+        ], 'Salary payment history retrieved successfully');
+    }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => $summary,
-                'payments' => $payments,
-            ],
+    /**
+     * Get all assignments.
+     */
+    public function assignments(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $query = MaidAssignment::with(['employer', 'maid']);
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        $assignments = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return $this->paginated($assignments, 'Assignments retrieved successfully');
+    }
+
+    /**
+     * Get assignment detail.
+     */
+    public function assignmentDetail(int $id): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $assignment = MaidAssignment::with(['employer', 'maid', 'salarySchedules', 'payments'])
+            ->findOrFail($id);
+
+        return $this->success($assignment, 'Assignment details retrieved successfully');
+    }
+
+    /**
+     * Cancel an assignment.
+     */
+    public function cancelAssignment(int $id, Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $request->validate(['reason' => 'required|string']);
+
+        $assignment = MaidAssignment::findOrFail($id);
+        $assignment->update([
+            'status' => 'cancelled',
+            'context_json' => array_merge($assignment->context_json ?? [], [
+                'cancellation_reason' => $request->reason,
+                'cancelled_by' => Auth::id(),
+                'cancelled_at' => now(),
+            ])
         ]);
+
+        return $this->success($assignment, 'Assignment cancelled successfully');
+    }
+
+    /**
+     * Get withdrawal requests.
+     */
+    public function withdrawals(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $query = WalletTransaction::where('transaction_type', 'withdrawal_request')
+            ->with('user');
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $withdrawals = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return $this->paginated($withdrawals, 'Withdrawals retrieved successfully');
+    }
+
+    /**
+     * Get AI config.
+     */
+    public function aiConfig(): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $settings = \App\Models\Setting::where('group', 'ai_matching')->get()->pluck('value', 'key');
+        return $this->success($settings, 'AI Configuration retrieved');
+    }
+
+    /**
+     * Update AI config.
+     */
+    public function updateAiConfig(Request $request): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        $validated = $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        foreach ($validated['settings'] as $key => $value) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key, 'group' => 'ai_matching'],
+                ['value' => $value, 'type' => is_bool($value) ? 'boolean' : 'string']
+            );
+        }
+
+        return $this->success(null, 'AI Configuration updated successfully');
+    }
+
+    /**
+     * Test AI connection.
+     */
+    public function testAiConnection(): JsonResponse
+    {
+        if (!Auth::user()->isAdmin()) {
+            return $this->forbidden('Unauthorized.');
+        }
+
+        try {
+            $aiService = app(\App\Services\Ai\AiService::class);
+            $aiService->chat('Hello, testing connection.', ['max_tokens' => 10]);
+            return $this->success(['status' => 'ok'], 'AI Connection successful');
+        } catch (\Exception $e) {
+            return $this->error('AI Connection failed: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function checkDatabase(): array
+    {
+        try {
+            \DB::connection()->getPdo();
+            return ['status' => 'healthy', 'message' => 'Database connection OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Database connection failed'];
+        }
+    }
+
+    private function checkCache(): array
+    {
+        try {
+            \Cache::put('health_check', true, 10);
+            \Cache::forget('health_check');
+            return ['status' => 'healthy', 'message' => 'Cache OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Cache unavailable'];
+        }
+    }
+
+    private function checkStorage(): array
+    {
+        try {
+            $path = storage_path('app/health_check');
+            \File::put($path, 'ok');
+            \File::delete($path);
+            return ['status' => 'healthy', 'message' => 'Storage OK'];
+        } catch (\Exception $e) {
+            return ['status' => 'unhealthy', 'message' => 'Storage write failed'];
+        }
     }
 }

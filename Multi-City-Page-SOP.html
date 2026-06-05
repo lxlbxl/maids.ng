@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multi-City SEO Page SOP</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0d0d0d;
+    --paper: #f5f2ec;
+    --accent: #c8381e;
+    --accent-dim: #e8c5be;
+    --muted: #5a5650;
+    --rule: #d4cfc8;
+    --pass-bg: #eef6ee;
+    --pass-border: #4a8c4a;
+    --warn-bg: #fdf3ef;
+    --warn-border: #c8381e;
+    --step-bg: #f0ede6;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'Instrument Serif', serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #e8e4dc;
+    font-family: var(--font-body);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 0;
+  }
+
+  /* ── Download Button ── */
+  .download-bar {
+    width: 210mm;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+  .dl-btn {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--ink);
+    border: none;
+    padding: 10px 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .dl-btn:hover { background: var(--accent); }
+
+  /* ── A4 Page Shell ── */
+  .page {
+    width: 210mm;
+    height: 297mm;
+    background: var(--paper);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .page + .page { margin-top: 4px; }
+
+  /* ── Accent bar top ── */
+  .page-accent-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── Inner content area ── */
+  .page-inner {
+    padding: 14mm 18mm 12mm 18mm;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    justify-content: space-between;
+  }
+  .cover-top { display: flex; flex-direction: column; gap: 6mm; }
+  .cover-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .cover-rule {
+    width: 100%;
+    height: 1.5px;
+    background: var(--ink);
+  }
+  .cover-title {
+    font-family: var(--font-head);
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .cover-title span { color: var(--accent); }
+  .cover-subtitle {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--muted);
+    margin-top: 2mm;
+    max-width: 130mm;
+    line-height: 1.4;
+  }
+
+  .cover-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin-top: 8mm;
+  }
+  .cover-stat {
+    background: var(--step-bg);
+    border-left: 3px solid var(--accent);
+    padding: 5mm 6mm;
+  }
+  .cover-stat-num {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .cover-stat-label {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2mm;
+    line-height: 1.4;
+  }
+
+  .cover-toc {
+    margin-top: 7mm;
+    border-top: 1px solid var(--rule);
+    padding-top: 5mm;
+  }
+  .cover-toc-head {
+    font-family: var(--font-head);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3mm;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 8mm;
+  }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    font-family: var(--font-head);
+    font-size: 11px;
+    color: var(--ink);
+  }
+  .toc-num {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .cover-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .cover-meta {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--muted);
+    line-height: 1.8;
+    letter-spacing: 0.08em;
+  }
+  .cover-accent-block {
+    width: 30mm;
+    height: 30mm;
+    background: var(--accent);
+    position: relative;
+  }
+  .cover-accent-block::after {
+    content: 'SOP';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    color: var(--paper);
+  }
+
+  /* ── Section pages ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6mm;
+    padding-bottom: 3mm;
+    border-bottom: 1.5px solid var(--ink);
+  }
+  .phase-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: var(--paper);
+    padding: 2px 8px;
+  }
+  .page-title {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .page-num {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── Phase intro ── */
+  .phase-intro {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 5mm;
+    padding-left: 4mm;
+    border-left: 2px solid var(--accent-dim);
+  }
+
+  /* ── Steps ── */
+  .step {
+    display: flex;
+    gap: 4mm;
+    margin-bottom: 4mm;
+  }
+  .step-num-col {
+    flex-shrink: 0;
+    width: 8mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .step-num {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--paper);
+    background: var(--accent);
+    width: 7mm;
+    height: 7mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-line {
+    width: 1px;
+    flex: 1;
+    background: var(--accent-dim);
+    margin-top: 1mm;
+  }
+  .step-body { flex: 1; }
+  .step-title {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 1.5mm;
+    letter-spacing: 0.01em;
+  }
+  .step-body p {
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .step-body ul {
+    list-style: none;
+    margin-top: 2mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+  }
+  .step-body ul li {
+    font-family: var(--font-body);
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--ink);
+    padding-left: 5mm;
+    position: relative;
+  }
+  .step-body ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+  }
+
+  /* ── Callout boxes ── */
+  .callout {
+    padding: 4mm 5mm;
+    margin-bottom: 4mm;
+    border-left: 3px solid;
+  }
+  .callout.pass {
+    background: var(--pass-bg);
+    border-color: var(--pass-border);
+  }
+  .callout.warn {
+    background: var(--warn-bg);
+    border-color: var(--warn-border);
+  }
+  .callout-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+  .callout.pass .callout-label { color: var(--pass-border); }
+  .callout.warn .callout-label { color: var(--accent); }
+  .callout p {
+    font-family: var(--font-body);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .callout ul {
+    list-style: none;
+    margin-top: 1.5mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1mm;
+  }
+  .callout ul li {
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: var(--ink);
+    padding-left: 4mm;
+    position: relative;
+  }
+  .callout.pass ul li::before { content: '✓'; position: absolute; left: 0; color: var(--pass-border); font-size: 9px; }
+  .callout.warn ul li::before { content: '✕'; position: absolute; left: 0; color: var(--accent); font-size: 9px; }
+
+  /* ── Code / URL examples ── */
+  .url-block {
+    background: var(--ink);
+    padding: 3.5mm 5mm;
+    margin: 2.5mm 0;
+    border-radius: 0;
+  }
+  .url-block code {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #f0ede6;
+    display: block;
+    line-height: 1.8;
+  }
+  .url-block code .hl { color: #ff7a5c; }
+  .url-block code .dim { color: #888; }
+
+  /* ── Two-col layout ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin-bottom: 4mm;
+  }
+
+  /* ── Checklist ── */
+  .checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 2mm;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 3mm;
+    font-family: var(--font-body);
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .check-box {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Section divider ── */
+  .section-div {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    margin: 4mm 0;
+  }
+  .section-div span {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .section-div::before,
+  .section-div::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* ── Pull quote / highlight ── */
+  .pull-quote {
+    border: 1.5px solid var(--ink);
+    padding: 4mm 5mm;
+    margin: 3mm 0;
+    position: relative;
+  }
+  .pull-quote::before {
+    content: '"';
+    font-family: var(--font-head);
+    font-size: 40px;
+    color: var(--accent);
+    position: absolute;
+    top: -5mm;
+    left: 3mm;
+    line-height: 1;
+  }
+  .pull-quote p {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink);
+    padding-top: 2mm;
+  }
+
+  /* ── Pyramid diagram ── */
+  .pyramid-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5mm;
+    margin: 3mm 0;
+  }
+  .pyr-level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--paper);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .pyr-1 { width: 55mm; height: 9mm; background: var(--ink); }
+  .pyr-2 { width: 85mm; height: 9mm; background: #3a3a3a; }
+  .pyr-3 { width: 120mm; height: 9mm; background: var(--muted); }
+  .pyr-4 { width: 155mm; height: 9mm; background: #9a9490; font-size: 9px; }
+  .pyr-arrow {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Table ── */
+  .sop-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0;
+  }
+  .sop-table th {
+    font-family: var(--font-head);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2.5mm 3mm;
+    text-align: left;
+  }
+  .sop-table td {
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    line-height: 1.4;
+    padding: 2mm 3mm;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .sop-table tr:nth-child(even) td { background: var(--step-bg); }
+  .sop-table td:first-child {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── Final page footer ── */
+  .doc-footer {
+    margin-top: auto;
+    padding-top: 4mm;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .doc-footer span {
+    font-family: var(--font-mono);
+    font-size: 7.5px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .inline-code {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: var(--step-bg);
+    padding: 0.5mm 2mm;
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+  }
+
+  .highlight-row {
+    display: flex;
+    gap: 3mm;
+    margin: 3mm 0;
+  }
+  .hl-box {
+    flex: 1;
+    background: var(--step-bg);
+    border-top: 2px solid var(--accent);
+    padding: 3.5mm 4mm;
+  }
+  .hl-box-title {
+    font-family: var(--font-head);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5mm;
+  }
+  .hl-box p {
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  @media print {
+    body { background: none; padding: 0; }
+    .download-bar { display: none; }
+    .page { margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="download-bar">
+  <button class="dl-btn" onclick="downloadPDF()">⬇ Download PDF</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 1 — COVER                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-1">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner cover">
+    <div class="cover-top">
+      <div class="cover-eyebrow">Standard Operating Procedure · Local SEO · Service Area Businesses</div>
+      <div class="cover-rule"></div>
+      <div class="cover-title">
+        Building Multi-City<br>Pages That <span>Actually</span><br>Rank
+      </div>
+      <div class="cover-subtitle">
+        A step-by-step agency-level framework for service area businesses to win organic rankings in every city they serve — without a physical address.
+      </div>
+
+      <div class="cover-grid">
+        <div class="cover-stat">
+          <div class="cover-stat-num">6</div>
+          <div class="cover-stat-label">Phases from research<br>to QA sign-off</div>
+        </div>
+        <div class="cover-stat">
+          <div class="cover-stat-num">$28K</div>
+          <div class="cover-stat-label">Monthly revenue lost<br>missing 8 city rankings</div>
+        </div>
+        <div class="cover-stat">
+          <div class="cover-stat-num">3</div>
+          <div class="cover-stat-label">Core content elements<br>every city page must have</div>
+        </div>
+        <div class="cover-stat">
+          <div class="cover-stat-num">0</div>
+          <div class="cover-stat-label">Thin pages acceptable<br>on a high-authority domain</div>
+        </div>
+      </div>
+
+      <div class="cover-toc">
+        <div class="cover-toc-head">Contents</div>
+        <div class="toc-grid">
+          <div class="toc-item"><span class="toc-num">01</span> Strategic Foundation & City Selection</div>
+          <div class="toc-item"><span class="toc-num">02</span> Site Architecture & URL Structure</div>
+          <div class="toc-item"><span class="toc-num">03</span> Keyword Research Per City</div>
+          <div class="toc-item"><span class="toc-num">04</span> Page Content: The Three Pillars</div>
+          <div class="toc-item"><span class="toc-num">05</span> On-Page SEO & Technical Setup</div>
+          <div class="toc-item"><span class="toc-num">06</span> QA: The Net New Local Data Test</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-meta">
+        Based on: The Branding Agency · Steve · May 10, 2026<br>
+        Applies to: Plumbers · HVAC · Landscapers · Cleaning · Any SAB<br>
+        Classification: Internal SOP · Local SEO Team
+      </div>
+      <div class="cover-accent-block"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 2 — PHASE 01: STRATEGIC FOUNDATION                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-2">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 01</div>
+        <div class="page-title">Strategic Foundation<br>& City Selection</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Pre-Build</span>
+        <span class="page-num">02 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      Before a single page is built, you must know which cities to target and in what order. Building the wrong pages first wastes domain authority and dilutes the signal you need to rank. This phase prevents that.
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">1</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Map every city you physically service — then tier them</div>
+        <p>List every city, town, or district your business can realistically respond to. Then assign a tier based on revenue potential and competitive landscape.</p>
+        <ul>
+          <li><strong>Tier 1 — Build First:</strong> Cities with high search volume, proximity to your base, existing customers, or completed jobs on record</li>
+          <li><strong>Tier 2 — Build Second:</strong> Adjacent cities you serve regularly but have no page presence in</li>
+          <li><strong>Tier 3 — Build Last:</strong> Outlier cities you can serve but have no job history or local knowledge for yet</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">2</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Apply the "Can I Write Something Real?" filter before listing a city</div>
+        <p>For each city on your list, answer one question before it earns a slot: <em>Can I write something about this city that could not be copy-pasted to every other city?</em> If the answer is no, the city is Tier 3. Do not build its page yet.</p>
+        <ul>
+          <li>Do you know at least 3 neighborhood or landmark names in that city?</li>
+          <li>Have you completed one or more jobs there you can reference (even vaguely)?</li>
+          <li>Do you know anything city-specific about housing age, weather, regulations, or demographics that changes how you serve customers there?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">3</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Understand why GBP alone cannot solve multi-city ranking</div>
+        <p>Your Google Business Profile is proximity-bound. GBP proximity to the searcher is one of the heaviest local ranking factors in play right now. If your office or home base is 40 minutes from the city you're targeting, GBP carries you so far and no further. The solution is not more GBP optimization — it is your website structure.</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">⚠ Critical Distinction</div>
+      <p><strong>GBP gets you found near your home base. Your website gets you found everywhere else.</strong> The entire strategy in this SOP is built on that separation. Do not conflate the two channels or expect GBP service-area settings to replace properly built city pages.</p>
+    </div>
+
+    <div class="highlight-row">
+      <div class="hl-box">
+        <div class="hl-box-title">Build pages for</div>
+        <p>Cities where you have job history, local knowledge, or demonstrable service activity — and can write genuinely unique content.</p>
+      </div>
+      <div class="hl-box">
+        <div class="hl-box-title">Defer pages for</div>
+        <p>Cities where the only differentiator is the city name itself. A thin page actively damages domain authority. No page beats a bad page.</p>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Confidential</span>
+      <span>Phase 01 of 06</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 3 — PHASE 02: SITE ARCHITECTURE                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-3">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 02</div>
+        <div class="page-title">Site Architecture<br>& URL Structure</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Architecture</span>
+        <span class="page-num">03 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      How you structure your URLs and internal links is as important as the content itself. The pyramid model below is used by enterprise SEO agencies for national brands. It works at exactly the same level for local service businesses.
+    </div>
+
+    <div class="section-div"><span>The Pyramid Structure</span></div>
+
+    <div class="pyramid-wrap">
+      <div class="pyr-level pyr-1">HOMEPAGE</div>
+      <div class="pyr-arrow">↓ links to ↓</div>
+      <div class="pyr-level pyr-2">CORE SERVICE PAGES &nbsp;/drain-cleaning &nbsp;/water-heater-repair</div>
+      <div class="pyr-arrow">↓ links to ↓</div>
+      <div class="pyr-level pyr-3">CITY-SPECIFIC SERVICE PAGES &nbsp;/drain-cleaning/concord</div>
+      <div class="pyr-arrow">↓ passes authority upward ↓</div>
+      <div class="pyr-level pyr-4">Each city page links back to its parent service page + homepage</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">4</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Build the correct URL pattern for every city page</div>
+        <p>City pages must live under their parent service page, not at the root level. The URL structure itself is a ranking signal — it tells Google <em>what</em> you do and <em>where</em> you do it simultaneously.</p>
+        <div class="url-block">
+          <code><span class="dim">✓ CORRECT:</span></code>
+          <code>yoursite.com/<span class="hl">drain-cleaning</span>/concord</code>
+          <code>yoursite.com/<span class="hl">water-heater-repair</span>/walnut-creek</code>
+          <code>yoursite.com/<span class="hl">sewer-services</span>/pleasant-hill</code>
+          <code>&nbsp;</code>
+          <code><span class="dim">✕ WRONG — kills hierarchy and link equity:</span></code>
+          <code>yoursite.com/service-areas/concord</code>
+          <code>yoursite.com/locations</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">5</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Build bidirectional internal linking between all levels</div>
+        <ul>
+          <li>Homepage → links to all core service pages (in nav and body copy)</li>
+          <li>Each core service page → links to all its city child pages (in a visible "Areas We Serve" section)</li>
+          <li>Each city page → links back to its parent service page AND to the homepage</li>
+          <li>City pages within the same service → cross-link to 2–3 nearby city siblings where natural ("We also serve Walnut Creek and Pleasant Hill")</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">6</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Avoid common architecture mistakes that kill multi-city rankings</div>
+      </div>
+    </div>
+
+    <table class="sop-table">
+      <thead>
+        <tr>
+          <th>Mistake</th>
+          <th>Why It Fails</th>
+          <th>Correct Approach</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>/locations page</td>
+          <td>Flat hierarchy; no topical signal per city</td>
+          <td>Nest city pages under service pages</td>
+        </tr>
+        <tr>
+          <td>All cities at root level</td>
+          <td>No parent service page to inherit authority from</td>
+          <td>Always use /service/city pattern</td>
+        </tr>
+        <tr>
+          <td>No internal links to city pages</td>
+          <td>Pages become orphaned; Google may not crawl them</td>
+          <td>Link from service page + sitemap</td>
+        </tr>
+        <tr>
+          <td>One generic service page, no city pages</td>
+          <td>Zero geographic targeting beyond home city</td>
+          <td>Build service pages first, then city children</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Confidential</span>
+      <span>Phase 02 of 06</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 4 — PHASE 03: KEYWORD RESEARCH PER CITY          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-4">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 03</div>
+        <div class="page-title">Keyword Research<br>Per City</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Research</span>
+        <span class="page-num">04 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      Every city has a distinct search behaviour. Demographics, housing stock, weather, local regulations, and income levels all shape what residents search for — and how they phrase it. Generic keyword research done at the brand level does not serve city pages.
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">7</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Build a primary + secondary keyword set for each city</div>
+        <p>For each city page, identify one primary keyword and 3–5 supporting keywords before writing a single word of content. Use Google Search Console, Google's People Also Ask boxes, and a keyword tool (Ahrefs, Semrush, or free alternatives).</p>
+        <div class="url-block">
+          <code><span class="dim">Example — Plumber, Concord CA:</span></code>
+          <code>Primary: &nbsp;&nbsp;<span class="hl">plumber concord ca</span></code>
+          <code>Support: &nbsp;&nbsp;drain cleaning concord · emergency plumber concord</code>
+          <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;water heater repair concord · sewer line concord ca</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">8</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Research what makes this city's customers ask different questions</div>
+        <p>This feeds directly into the city-specific FAQ you'll build in Phase 4. Before writing the page, investigate:</p>
+        <ul>
+          <li><strong>Housing age:</strong> Older neighborhoods = more pipe failures, more drain issues, different materials</li>
+          <li><strong>Climate:</strong> Cold winters = burst pipes, boiler questions; coastal = corrosion concerns</li>
+          <li><strong>Local regulations:</strong> Some cities have specific permit requirements for HVAC, sewer, or plumbing work</li>
+          <li><strong>New construction vs. established suburbs:</strong> Different product questions and urgency levels</li>
+          <li><strong>Income/demographics:</strong> Affects interest in premium upgrades, warranties, financing options</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">9</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Map keywords to page elements before writing</div>
+        <p>Never write first and optimise after. Assign each keyword to a specific on-page element before opening your CMS.</p>
+      </div>
+    </div>
+
+    <table class="sop-table">
+      <thead>
+        <tr>
+          <th>Keyword Type</th>
+          <th>Place On Page</th>
+          <th>Usage Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Primary Keyword</td>
+          <td>Title tag, H1, first 100 words, URL slug</td>
+          <td>Use exactly once in H1; natural in body</td>
+        </tr>
+        <tr>
+          <td>Secondary Keywords</td>
+          <td>H2/H3 headings, body paragraphs, FAQ questions</td>
+          <td>Do not force; let them appear naturally</td>
+        </tr>
+        <tr>
+          <td>Nearby Cities / Areas</td>
+          <td>Proximity paragraph, footer service area list</td>
+          <td>Written as natural geography, not lists</td>
+        </tr>
+        <tr>
+          <td>Neighbourhood Names</td>
+          <td>Body copy, proof paragraph, meta description</td>
+          <td>Only use names you can actually reference</td>
+        </tr>
+        <tr>
+          <td>FAQ Questions</td>
+          <td>FAQ schema section, H3 question headings</td>
+          <td>Use exact natural language customers use</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout pass">
+      <div class="callout-label">✓ Best Practice</div>
+      <p>Run a quick Google search for <strong>[your service] [city name]</strong> and note every "People Also Ask" question that appears. These are real questions from real searchers in that area — they belong in your city-specific FAQ verbatim, with genuine answers.</p>
+    </div>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Confidential</span>
+      <span>Phase 03 of 06</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 5 — PHASE 04: PAGE CONTENT — THE THREE PILLARS   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-5">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 04</div>
+        <div class="page-title">Page Content:<br>The Three Pillars</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Content Build</span>
+        <span class="page-num">05 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      Most businesses build the URL and stop there. Google does not rank URLs — it ranks pages. Here are the three non-negotiable content elements that separate a ranking city page from a placeholder.
+    </div>
+
+    <div class="section-div"><span>Pillar One — Hyper-Local Proof Content</span></div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">10</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Write content that could only exist if you genuinely know that city</div>
+        <p>This is the single highest-impact section of the page. It must contain information that proves geographic familiarity — not because you inserted the city name, but because you reference specifics that only a local service provider would know.</p>
+        <ul>
+          <li>Name 2–4 specific <strong>neighbourhoods or districts</strong> within the city ("We regularly serve homeowners in the Todos Santos area, Concord Highlands, and the streets around Monument Boulevard")</li>
+          <li>Reference at least <strong>one local landmark</strong> in a service context — not keyword stuffing, but as natural spatial orientation</li>
+          <li>Include <strong>at least one job reference</strong> if you have one: "We recently replaced a full sewer line for a client near Willow Pass Road." Specific. Credible. Unreplicable.</li>
+          <li>Mention anything city-specific that <strong>affects the service</strong> — soil type, pipe age of older neighborhoods, local water hardness, permit process</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">✕ The Mail Merge Killer</div>
+      <p>Never write: <em>"We proudly serve [City Name] and surrounding areas."</em> This is the most common and most penalised pattern on SAB city pages. Google is actively identifying templated geographic claims and de-prioritising pages built on them. Every sentence that could apply to any city on your list is a sentence that weakens this page.</p>
+    </div>
+
+    <div class="section-div"><span>Pillar Two — City-Specific FAQ (3–5 Questions)</span></div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">11</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Build a FAQ that is genuinely unique to this city</div>
+        <p>A plumber serving an older downtown neighborhood gets different questions than one serving new construction subdivisions. Write 3–5 questions that reflect the real concerns of <em>this city's</em> customers, not every city's customers.</p>
+        <ul>
+          <li>Draw from your keyword research (People Also Ask), real customer conversations, and city-specific context (housing age, climate, regulations)</li>
+          <li>Use exact natural-language phrasing customers use — not formal rewrites</li>
+          <li>Answers should be 40–80 words: full enough to be useful, concise enough for rich result eligibility</li>
+          <li>Mark up with <span class="inline-code">FAQPage</span> schema so Google can render FAQ-style rich results in search</li>
+          <li>At least one question should name the city explicitly in the question text</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-div"><span>Pillar Three — Natural Proximity Signals</span></div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">12</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Give Google a geographic anchor through natural spatial language</div>
+        <p>When Google evaluates a page from a business with no physical address in that city, it looks for proximity signals — natural references to local geography that establish spatial context. This is the replacement for the "hard location signal" that a street address would provide.</p>
+
+        <div class="pull-quote">
+          <p>Write your content as if you're explaining to a new customer exactly where you operate: "We serve Concord and the surrounding areas, including Clayton, Concord Highlands, and the neighbourhoods near Monument Boulevard." Natural. Geographic. Anchored.</p>
+        </div>
+
+        <ul>
+          <li>Name 2–3 <strong>neighbouring cities or towns</strong> organically in the body text</li>
+          <li>Include 1–2 <strong>ZIP codes</strong> naturally ("We cover the 94520 and 94521 zip codes")</li>
+          <li>Reference <strong>local landmarks, major roads, or districts</strong> as spatial orientation — not as keywords</li>
+          <li>The goal: every geographic reference should read as something a local business owner would naturally say, not something inserted by an SEO</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Confidential</span>
+      <span>Phase 04 of 06</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 6 — PHASE 05: ON-PAGE SEO & TECHNICAL            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-6">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 05</div>
+        <div class="page-title">On-Page SEO &<br>Technical Setup</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Technical</span>
+        <span class="page-num">06 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      Content quality wins rankings; technical signals protect them. Every city page must be correctly configured before it goes live. None of these elements are optional.
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">13</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Configure all on-page meta elements with city + service specificity</div>
+      </div>
+    </div>
+
+    <table class="sop-table">
+      <thead>
+        <tr>
+          <th>Element</th>
+          <th>Formula / Example</th>
+          <th>Max Length</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Title Tag</td>
+          <td>[Service] in [City] | [Brand Name]<br><em>Drain Cleaning in Concord | Acme Plumbing</em></td>
+          <td>60 chars</td>
+        </tr>
+        <tr>
+          <td>Meta Description</td>
+          <td>[Service] in [City] — [Proof Claim]. [CTA].<br><em>Drain cleaning in Concord since 2008. Licensed, same-day. Call now.</em></td>
+          <td>155 chars</td>
+        </tr>
+        <tr>
+          <td>H1</td>
+          <td>[Service] in [City, State] — one per page only</td>
+          <td>One only</td>
+        </tr>
+        <tr>
+          <td>H2 Headings</td>
+          <td>Cover: service overview, why us, local proof, FAQ section</td>
+          <td>3–6 H2s</td>
+        </tr>
+        <tr>
+          <td>URL Slug</td>
+          <td>/[service-keyword]/[city-name] — lowercase, hyphenated</td>
+          <td>No params</td>
+        </tr>
+        <tr>
+          <td>Image Alt Text</td>
+          <td>"[Service] technician in [City] [State]" — be descriptive</td>
+          <td>125 chars</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">14</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Implement FAQPage schema on every city page with a FAQ section</div>
+        <p>Use <span class="inline-code">FAQPage</span> structured data (JSON-LD format, placed in the <span class="inline-code">&lt;head&gt;</span> or just before <span class="inline-code">&lt;/body&gt;</span>). Each FAQ answer should match the visible on-page answer exactly. Validate with Google's Rich Results Test before publishing.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">15</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Implement LocalBusiness schema with service area declaration</div>
+        <p>On the homepage and key service pages, use <span class="inline-code">LocalBusiness</span> schema with an <span class="inline-code">areaServed</span> property that lists all cities in your service area. On individual city pages, include <span class="inline-code">serviceArea</span> referencing that specific city. This reinforces the geographic signal at the structured data layer.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">16</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Submit each new city page via Search Console after publishing</div>
+        <ul>
+          <li>Add the full URL to Google Search Console → URL Inspection → Request Indexing</li>
+          <li>Update your XML sitemap and resubmit it</li>
+          <li>Add a link to the new city page from an already-indexed parent page immediately on publish — do not let it sit as an orphan</li>
+          <li>Monitor impressions for that URL in Search Console within 2 weeks; if zero, check for crawl errors, indexing issues, or canonical conflicts</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col">
+        <div class="step-num">17</div>
+      </div>
+      <div class="step-body">
+        <div class="step-title">Core Web Vitals & page speed — don't let technical debt kill good content</div>
+        <ul>
+          <li>LCP (Largest Contentful Paint) target: under 2.5 seconds. Compress all images; use WebP format</li>
+          <li>Do not load heavy scripts above the fold on city pages; defer non-critical JS</li>
+          <li>Avoid duplicate content: each city page must be unique — do not use canonical tags pointing to a generic page if you want the city page to rank independently</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Confidential</span>
+      <span>Phase 05 of 06</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE 7 — PHASE 06: QA — NET NEW LOCAL DATA TEST       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="page" id="page-7">
+  <div class="page-accent-bar"></div>
+  <div class="page-inner">
+    <div class="page-header">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1mm;">Phase 06</div>
+        <div class="page-title">QA: The Net New<br>Local Data Test</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;">
+        <span class="phase-badge">Quality Gate</span>
+        <span class="page-num">07 / 07</span>
+      </div>
+    </div>
+
+    <div class="phase-intro">
+      No city page goes live until it passes this test. The Net New Local Data Test is the quality gate that separates a ranking page from a thin page — and a thin page from no page at all. Run this review every single time.
+    </div>
+
+    <div class="section-div"><span>The 7-Point Quality Gate</span></div>
+
+    <div class="checklist" style="margin-bottom:5mm;">
+      <div class="check-item"><div class="check-box"></div><strong>1. Neighbourhood specificity:</strong> &nbsp;Does the page name at least 2–3 specific neighbourhoods, districts, or local areas within the city — not just the city name?</div>
+      <div class="check-item"><div class="check-box"></div><strong>2. Landmark or road reference:</strong> &nbsp;Is there at least one local landmark, major road, or geographic reference used in a natural service context?</div>
+      <div class="check-item"><div class="check-box"></div><strong>3. Job or project proof:</strong> &nbsp;Does the page reference at least one completed job, past customer interaction, or service outcome in or near this city?</div>
+      <div class="check-item"><div class="check-box"></div><strong>4. City-specific FAQ:</strong> &nbsp;Are the FAQ questions genuinely shaped by this city's demographics, housing type, climate, or regulations — not copy-pasted from another city's page?</div>
+      <div class="check-item"><div class="check-box"></div><strong>5. Proximity signals present:</strong> &nbsp;Does the content naturally reference adjacent cities, zip codes, or spatial geography that anchors this page to a real service area?</div>
+      <div class="check-item"><div class="check-box"></div><strong>6. Mail-merge language absent:</strong> &nbsp;Has the phrase "We proudly serve [City] and surrounding areas" (or any equivalent boilerplate) been eliminated from the page entirely?</div>
+      <div class="check-item"><div class="check-box"></div><strong>7. The swap test:</strong> &nbsp;Read the page and mentally swap the city name for a different city on your list. If the page still reads as accurate and plausible, it has failed. Rewrite until it doesn't.</div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">✕ If The Page Fails Any Point</div>
+      <p>Do not publish. A thin city page actively damages your domain authority and signals to Google that you are manufacturing geography rather than demonstrating it. Return to Phase 04 and enrich the content. Publication is not the goal — ranking is.</p>
+    </div>
+
+    <div class="section-div"><span>After Publishing — Ongoing Maintenance</span></div>
+
+    <div class="highlight-row">
+      <div class="hl-box">
+        <div class="hl-box-title">Month 1–3: Monitor</div>
+        <p>Track Search Console impressions and clicks weekly. Expect 4–12 weeks before consistent impressions. Zero impressions at week 3 = crawl or indexing issue; investigate immediately.</p>
+      </div>
+      <div class="hl-box">
+        <div class="hl-box-title">Month 3+: Enrich</div>
+        <p>Add new job references as you complete work in that city. Update FAQ questions based on real customer questions. Add seasonal content (e.g. "Pipe freeze risks in Concord winters").</p>
+      </div>
+    </div>
+
+    <div class="pull-quote">
+      <p>The businesses that dominate multi-city rankings are not the ones that built the most pages — they're the ones that refused to publish a page that couldn't prove it belonged on the map.</p>
+    </div>
+
+    <div style="margin-top:3mm;">
+      <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:2mm;">Quick Reference: City Page Minimum Word Counts</div>
+      <table class="sop-table">
+        <thead><tr><th>Section</th><th>Min. Words</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Intro / Service Overview</td><td>120 words</td><td>Primary keyword, city name, value prop</td></tr>
+          <tr><td>Hyper-Local Proof Section</td><td>150 words</td><td>Neighbourhoods, landmarks, job references</td></tr>
+          <tr><td>Why Choose Us (Local)</td><td>80 words</td><td>Licences, years serving this city, response time</td></tr>
+          <tr><td>City-Specific FAQ</td><td>200 words</td><td>3–5 Q&As with FAQPage schema</td></tr>
+          <tr><td>Proximity / Service Area</td><td>60 words</td><td>Adjacent cities, zip codes, spatial signals</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="doc-footer">
+      <span>Multi-City SEO Page SOP · Based on The Branding Agency / Steve · May 2026</span>
+      <span>Phase 06 of 06 — End of Document</span>
+    </div>
+  </div>
+</div>
+
+<script>
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pages = document.querySelectorAll('.page');
+
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await html2canvas(pages[i], {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#f5f2ec'
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    if (i > 0) doc.addPage();
+    doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+    await new Promise(r => setTimeout(r, 30));
+  }
+
+  doc.save('Multi-City-SEO-Page-SOP.pdf');
+}
+</script>
+</body>
+</html>

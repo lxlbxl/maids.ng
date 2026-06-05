@@ -31,6 +31,8 @@ class SalaryManagementService
         Carbon $startDate,
         ?Carbon $endDate = null
     ): SalarySchedule {
+        $assignment = MaidAssignment::findOrFail($assignmentId);
+
         // Calculate first salary due date (end of first month from start date)
         $firstDueDate = $startDate->copy()->endOfMonth();
 
@@ -41,13 +43,19 @@ class SalaryManagementService
 
         return SalarySchedule::create([
             'assignment_id' => $assignmentId,
+            'employer_id' => $assignment->employer_id,
+            'maid_id' => $assignment->maid_id,
             'monthly_salary' => $monthlySalary,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'next_due_date' => $firstDueDate,
+            'salary_day' => $startDate->day,
+            'employment_start_date' => $startDate,
+            'first_salary_date' => $firstDueDate,
+            'current_period_start' => $startDate,
+            'current_period_end' => $firstDueDate,
+            'next_salary_due_date' => $firstDueDate,
             'last_reminder_sent_at' => null,
             'reminder_count' => 0,
-            'status' => 'active',
+            'is_active' => true,
+            'payment_status' => 'pending',
         ]);
     }
 
@@ -683,6 +691,11 @@ class SalaryManagementService
                     $schedule->payment_status = 'overdue';
                     $schedule->escalate();
                     $schedule->save();
+
+                    // Dispatch SalaryOverdue event
+                    $daysOverdue = $schedule->next_salary_due_date ? now()->diffInDays($schedule->next_salary_due_date) : 0;
+                    \App\Events\SalaryOverdue::dispatch($schedule, $daysOverdue);
+
                     continue;
                 }
 

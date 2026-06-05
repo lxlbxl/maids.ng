@@ -7,19 +7,19 @@ export default function ForgotPassword() {
     return (
         <>
             <Head title="Forgot Password" />
-            <div className="min-h-screen bg-ivory flex items-center justify-center px-6">
+            <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex items-center justify-center px-6 transition-theme">
                 <div className="w-full max-w-md text-center">
-                    <Link href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-10 mx-auto mb-6" /></Link>
-                    <h1 className="font-display text-3xl font-light text-espresso mb-2">Reset <em className="italic text-copper">Password</em></h1>
-                    <p className="text-muted text-sm mb-8">Enter your email to receive a reset link</p>
-                    <form onSubmit={submit} className="bg-white rounded-brand-xl p-8 border border-gray-200 shadow-brand-1 space-y-5 text-left">
+                    <Link href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-10 mx-auto mb-6 dark:brightness-0 dark:invert transition-all" /></Link>
+                    <h1 className="font-display text-3xl font-light text-espresso dark:text-[#f0ede8] mb-2 transition-theme">Reset <em className="italic text-copper">Password</em></h1>
+                    <p className="text-muted dark:text-gray-400 text-sm mb-8">Enter your email to receive a reset link</p>
+                    <form onSubmit={submit} className="bg-white dark:bg-[#1c1c1e] rounded-brand-xl p-8 border border-gray-200 dark:border-white/10 shadow-brand-1 space-y-5 text-left transition-theme">
                         <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} placeholder="you@email.com"
-                            className="w-full h-12 border-2 border-gray-200 rounded-brand-md px-4 text-sm focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none" />
+                            className="w-full h-12 border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-4 text-sm focus:border-teal focus:ring-2 focus:ring-teal/20 outline-none bg-transparent" />
                         <button type="submit" disabled={processing} className="w-full bg-teal text-white py-3 rounded-brand-md font-medium hover:bg-teal-dark transition-all shadow-brand-1 disabled:opacity-50">
                             {processing ? 'Sending...' : 'Send Reset Link'}
                         </button>
                     </form>
-                    <p className="text-sm text-muted mt-6"><Link href="/login" className="text-teal font-medium">← Back to Login</Link></p>
+                    <p className="text-sm text-muted dark:text-gray-400 mt-6"><Link href="/login" className="text-teal font-medium">← Back to Login</Link></p>
                 </div>
             </div>
         </>

@@ -10,6 +10,9 @@ use App\Events\SalaryOverdue;
 use App\Events\SalaryPaymentProcessed;
 use App\Events\WithdrawalApproved;
 use App\Events\WithdrawalRequested;
+use App\Events\WithdrawalRejected;
+use App\Events\BookingCreated;
+use App\Events\PaymentConfirmed;
 use App\Listeners\CreateAssignmentFromMatch;
 use App\Listeners\CreateSalarySchedule;
 use App\Listeners\EscalateOverdueToAdmin;
@@ -29,6 +32,7 @@ use App\Listeners\TriggerReplacementSearch;
 use App\Listeners\UpdateMaidAvailabilityOnAccept;
 use App\Listeners\UpdateMaidAvailabilityOnComplete;
 use App\Listeners\UpdateScheduleAfterPayment;
+use App\Listeners\DispatchWebhook;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -44,18 +48,21 @@ class EventServiceProvider extends ServiceProvider
             CreateSalarySchedule::class,
             NotifyMaidOfAssignment::class,
             UpdateMaidAvailabilityOnAccept::class,
+            DispatchWebhook::class,
         ],
 
         AssignmentRejected::class => [
             ProcessRefund::class,
             TriggerReplacementSearch::class,
             NotifyAdminOfRejection::class,
+            DispatchWebhook::class,
         ],
 
         AssignmentCompleted::class => [
             FinalizeSalary::class,
             UpdateMaidAvailabilityOnComplete::class,
             NotifyBothPartiesOfCompletion::class,
+            DispatchWebhook::class,
         ],
 
             // Salary Events
@@ -63,27 +70,45 @@ class EventServiceProvider extends ServiceProvider
             NotifyMaidOfPayment::class,
             NotifyEmployerOfPayment::class,
             UpdateScheduleAfterPayment::class,
+            DispatchWebhook::class,
         ],
 
         SalaryOverdue::class => [
             EscalateOverdueToAdmin::class,
             NotifyEmployerOfOverdue::class,
+            DispatchWebhook::class,
         ],
 
             // Withdrawal Events
         WithdrawalRequested::class => [
             NotifyAdminOfWithdrawalRequest::class,
+            DispatchWebhook::class,
         ],
 
         WithdrawalApproved::class => [
             ProcessBankTransfer::class,
             NotifyMaidOfWithdrawalApproval::class,
+            DispatchWebhook::class,
         ],
 
             // AI Matching Events
         MatchingJobCompleted::class => [
             CreateAssignmentFromMatch::class,
             NotifyEmployerOfMatching::class,
+            DispatchWebhook::class,
+        ],
+
+        // Outbound Webhook-only Events
+        BookingCreated::class => [
+            DispatchWebhook::class,
+        ],
+
+        PaymentConfirmed::class => [
+            DispatchWebhook::class,
+        ],
+
+        WithdrawalRejected::class => [
+            DispatchWebhook::class,
         ],
     ];
 

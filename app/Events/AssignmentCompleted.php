@@ -3,57 +3,45 @@
 namespace App\Events;
 
 use App\Models\MaidAssignment;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class AssignmentCompleted
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, SerializesModels;
 
-    public MaidAssignment $assignment;
-    public int $employerId;
-    public int $maidId;
-    public array $context;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(MaidAssignment $assignment, array $context = [])
-    {
-        $this->assignment = $assignment;
-        $this->employerId = $assignment->employer_id;
-        $this->maidId = $assignment->maid_id;
-        $this->context = $context;
+    public function __construct(
+        public readonly MaidAssignment $assignment,
+    ) {
     }
 
     /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * Get the event type for webhooks.
      */
-    public function broadcastOn(): array
+    public function getEventType(): string
     {
-        return [
-            new PrivateChannel('employer.' . $this->employerId),
-            new PrivateChannel('maid.' . $this->maidId),
-            new PrivateChannel('admin.notifications'),
-        ];
+        return 'assignment.completed';
     }
 
     /**
-     * Get the data to broadcast.
+     * Get the payload for webhooks.
      */
-    public function broadcastWith(): array
+    public function getPayload(): array
     {
         return [
             'assignment_id' => $this->assignment->id,
-            'employer_id' => $this->employerId,
-            'maid_id' => $this->maidId,
+            'employer_id' => $this->assignment->employer_id,
+            'maid_id' => $this->assignment->maid_id,
             'status' => 'completed',
-            'completed_at' => $this->assignment->completed_at?->toIso8601String(),
             'message' => 'Assignment has been completed',
+            'assignment' => [
+                'id' => $this->assignment->id,
+                'employer_id' => $this->assignment->employer_id,
+                'maid_id' => $this->assignment->maid_id,
+                'status' => $this->assignment->status,
+                'created_at' => $this->assignment->created_at?->toIso8601String(),
+                'completed_at' => $this->assignment->completed_at?->toIso8601String(),
+            ],
         ];
     }
 }

@@ -76,4 +76,37 @@ class WithdrawalRequested
             'message' => 'Withdrawal request submitted for processing',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'withdrawal.requested';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'wallet_id' => $this->wallet->id,
+            'maid_id' => $this->wallet->maid_id,
+            'amount' => $this->amount,
+            'bank_code' => $this->bankCode,
+            'account_number' => $this->accountNumber,
+            'account_name' => $this->accountName,
+            'reference' => $this->reference,
+            'available_balance' => $this->wallet->available_balance,
+            'message' => 'Withdrawal request submitted for processing',
+            'wallet' => [
+                'id' => $this->wallet->id,
+                'maid_id' => $this->wallet->maid_id,
+                'balance' => $this->wallet->balance,
+                'available_balance' => $this->wallet->available_balance,
+                'pending_withdrawal' => $this->wallet->pending_withdrawal,
+            ],
+        ];
+    }
 }

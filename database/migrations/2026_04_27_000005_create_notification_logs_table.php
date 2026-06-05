@@ -13,10 +13,10 @@ return new class extends Migration {
             $table->string('user_type', 20); // 'employer' or 'maid'
             $table->string('channel', 20); // 'sms', 'email', 'push'
             $table->string('type', 50); // 'match', 'reminder', 'payment', 'acceptance', etc.
-            $table->text('content');
+            $table->text('content')->nullable();
             $table->json('context_json')->nullable()->comment('Full context for AI follow-ups');
-            $table->timestamp('sent_at');
-            $table->string('timezone', 50)->default('Africa/Lagos');
+            $table->timestamp('sent_at')->nullable();
+            $table->string('timezone', 50)->nullable()->default('Africa/Lagos');
             $table->time('local_time_sent')->nullable();
             $table->string('delivery_status', 20)->default('pending'); // pending, delivered, failed
             $table->string('provider_response', 255)->nullable();

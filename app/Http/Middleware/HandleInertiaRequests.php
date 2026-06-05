@@ -46,6 +46,28 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'message' => fn () => $request->session()->get('message'),
             ],
+            'meta' => [
+                'title'       => 'Maids.ng — Find Verified Domestic Staff in Nigeria',
+                'description' => 'Nigeria\'s leading platform for finding verified housekeepers, nannies, cooks, and drivers. AI-matched. NIN-verified. 10-day guarantee.',
+                'canonical'   => url()->current(),
+            ],
+            // Public app settings shared with ALL Inertia pages automatically.
+            // Update rates in the Admin → Settings panel; no code changes needed.
+            'appSettings' => fn () => [
+                'matchingFee'          => (int) \App\Models\Setting::get('matching_fee_amount', 5000),
+                'matchingFeeFormatted' => '₦' . number_format((int) \App\Models\Setting::get('matching_fee_amount', 5000)),
+            ],
+            'controlRoom' => function () {
+                if (!auth()->check() || !auth()->user()->hasRole('admin')) {
+                    return null;
+                }
+                return [
+                    'pendingHitl' => \App\Models\HumanTask::pending()->count(),
+                    'agentErrors' => \App\Models\AgentEvent::where('severity', 'error')
+                        ->where('created_at', '>=', now()->subHour())
+                        ->count(),
+                ];
+            },
         ];
     }
 }

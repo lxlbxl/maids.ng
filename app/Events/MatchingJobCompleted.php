@@ -79,4 +79,42 @@ class MatchingJobCompleted
                 : 'AI matching job completed',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'matching.completed';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'job_id' => $this->job->id,
+            'employer_id' => $this->job->employer_id,
+            'job_type' => $this->job->job_type,
+            'status' => $this->job->status,
+            'results' => $this->results,
+            'matches_found' => $this->matchesFound,
+            'processing_time' => $this->processingTime,
+            'processed_at' => $this->job->processed_at?->toIso8601String(),
+            'message' => $this->matchesFound !== null
+                ? "AI matching completed with {$this->matchesFound} matches found"
+                : 'AI matching job completed',
+            'job' => [
+                'id' => $this->job->id,
+                'job_id' => $this->job->job_id,
+                'employer_id' => $this->job->employer_id,
+                'job_type' => $this->job->job_type,
+                'status' => $this->job->status,
+                'priority' => $this->job->priority,
+                'processed_at' => $this->job->processed_at?->toIso8601String(),
+                'processing_duration_ms' => $this->job->processing_duration_ms,
+            ],
+        ];
+    }
 }

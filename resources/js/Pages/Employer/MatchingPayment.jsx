@@ -113,7 +113,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                                         <span className="font-mono font-medium text-espresso">₦{matchingFee.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted">Background Verification</span>
+                                        <span className="text-muted">Identity Verification (NIN)</span>
                                         <span className="text-success text-xs font-medium">Included</span>
                                     </div>
                                     <div className="flex justify-between text-sm">

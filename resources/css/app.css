@@ -20,6 +20,13 @@
     --muted: #6B7280;
 }
 
+.dark {
+    --ivory: #0f0f10;
+    --linen: #1a1a1c;
+    --espresso: #f0ede8;
+    --muted: #a1a1aa;
+}
+
 /* ── Base typography ── */
 body {
     font-family: 'DM Sans', system-ui, sans-serif;
@@ -33,8 +40,16 @@ body {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Smooth theme transition for colors and backgrounds */
+body, .transition-theme {
+    transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
 /* ── Scrollbar styling ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--teal-pale); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--teal-light); }
+
+.dark ::-webkit-scrollbar-thumb { background: var(--teal-dark); }
+.dark ::-webkit-scrollbar-thumb:hover { background: var(--teal-mid); }

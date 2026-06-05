@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index(\App\Services\Agents\SentinelAgent $sentinel)
+    public function index()
     {
         $user = Auth::user();
         $profile = $user->maidProfile;
@@ -20,8 +20,34 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Get AI generated profile tips and strength score from Sentinel Agent
-        $profileInsights = $profile ? $sentinel->generateProfileTips($profile) : ['score' => 0, 'tips' => []];
+        // Resolve SentinelAgent from container with graceful degradation
+        $profileInsights = ['score' => 0, 'tips' => []];
+        if ($profile) {
+            try {
+                $sentinel = app(\App\Services\Agents\SentinelAgent::class);
+                $profileInsights = $sentinel->generateProfileTips($profile);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('SentinelAgent profile insights failed, using fallback: ' . $e->getMessage());
+
+                // Fallback: rule-based profile scoring when AI is unavailable
+                $score = 0;
+                $tips = [];
+
+                if (!empty($profile->bio)) { $score += 15; } else { $tips[] = 'Add a short bio to stand out to employers.'; }
+                if (!empty($profile->skills)) { $score += 20; } else { $tips[] = 'Select the services you can offer.'; }
+                if (!empty($profile->nin)) { $score += 10; } else { $tips[] = 'Submit your NIN for identity verification.'; }
+                if ($profile->nin_verified) { $score += 15; } else { $tips[] = 'Complete NIN verification to get the "Verified" badge.'; }
+                if ($profile->background_verified) { $score += 15; }
+                if ($profile->expected_salary) { $score += 10; } else { $tips[] = 'Set your expected monthly salary.'; }
+                if ($profile->availability_status === 'available') { $score += 15; } else { $tips[] = 'Mark yourself as available to receive job offers.'; }
+
+                if (empty($tips)) {
+                    $tips[] = 'Great job! Your profile is complete. Keep your availability updated.';
+                }
+
+                $profileInsights = ['score' => min($score, 100), 'tips' => $tips];
+            }
+        }
 
         return Inertia::render('Maid/Dashboard', [
             'profile' => $profile ? [

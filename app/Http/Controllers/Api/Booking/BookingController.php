@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Booking;
 
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Requests\Api\Booking\{StoreBookingRequest, CancelBookingRequest};
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\EmployerPreference;
@@ -10,7 +11,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * API Booking Controller
@@ -119,39 +119,22 @@ class BookingController extends ApiController
      * @bodyParam agreed_salary integer required Agreed salary. Example: 50000
      * @bodyParam notes string optional Additional notes. Example: "Start at 8 AM daily"
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreBookingRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        if (!$user->hasRole('employer')) {
-            return $this->forbidden('Only employers can create bookings');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'preference_id' => 'required|integer|exists:employer_preferences,id',
-            'maid_id' => 'required|integer|exists:users,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'schedule_type' => 'required|string|in:full-time,part-time,weekends,flexible',
-            'agreed_salary' => 'required|integer|min:10000|max:500000',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
+        $validated = $request->validated();
 
         // Verify preference belongs to employer
-        $preference = EmployerPreference::where('id', $request->preference_id)
+        $preference = EmployerPreference::where('id', $validated['preference_id'])
             ->where('employer_id', $user->id)
             ->first();
 
         if (!$preference) {
-            return $this->forbidden('Preference not found or does not belong to you');
+            return $this->error('Preference not found or does not belong to you', Response::HTTP_FORBIDDEN);
         }
 
         // Verify maid exists and is available
-        $maid = User::where('id', $request->maid_id)
+        $maid = User::where('id', $validated['maid_id'])
             ->whereHas('maidProfile', function ($q) {
                 $q->where('availability_status', 'available');
             })
@@ -167,11 +150,11 @@ class BookingController extends ApiController
         }
 
         // Check if maid already has conflicting bookings
-        $conflictingBooking = Booking::where('maid_id', $request->maid_id)
+        $conflictingBooking = Booking::where('maid_id', $validated['maid_id'])
             ->whereIn('status', ['pending', 'confirmed', 'active'])
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_date', [$request->start_date, $request->end_date ?? $request->start_date])
-                    ->orWhereBetween('end_date', [$request->start_date, $request->end_date ?? $request->start_date]);
+            ->where(function ($q) use ($validated) {
+                $q->whereBetween('start_date', [$validated['start_date'], $validated['end_date'] ?? $validated['start_date']])
+                    ->orWhereBetween('end_date', [$validated['start_date'], $validated['end_date'] ?? $validated['start_date']]);
             })
             ->first();
 
@@ -184,18 +167,11 @@ class BookingController extends ApiController
             );
         }
 
-        $booking = Booking::create([
+        $booking = Booking::create(array_merge($validated, [
             'employer_id' => $user->id,
-            'maid_id' => $request->maid_id,
-            'preference_id' => $request->preference_id,
             'status' => 'pending',
             'payment_status' => 'pending',
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'schedule_type' => $request->schedule_type,
-            'agreed_salary' => $request->agreed_salary,
-            'notes' => $request->notes,
-        ]);
+        ]));
 
         // Update maid availability
         $maid->maidProfile->update(['availability_status' => 'busy']);
@@ -362,9 +338,10 @@ class BookingController extends ApiController
      * 
      * @bodyParam reason string optional Cancellation reason. Example: "Change of plans"
      */
-    public function cancel(Request $request, int $id): JsonResponse
+    public function cancel(CancelBookingRequest $request, int $id): JsonResponse
     {
         $user = $request->user();
+        $validated = $request->validated();
 
         $booking = Booking::find($id);
 
@@ -390,17 +367,9 @@ class BookingController extends ApiController
             );
         }
 
-        $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
-
         $booking->update([
             'status' => 'cancelled',
-            'cancellation_reason' => $request->reason,
+            'cancellation_reason' => $validated['reason'] ?? null,
         ]);
 
         // Update maid availability back to available

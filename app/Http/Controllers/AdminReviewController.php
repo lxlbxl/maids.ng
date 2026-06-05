@@ -29,12 +29,40 @@ class AdminReviewController extends Controller
     { 
         $review = \App\Models\Review::findOrFail($id);
         $review->update(['is_flagged' => !$review->is_flagged]);
+
+        try {
+            if ($review->is_flagged) {
+                \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
+                    'agent_type' => 'admin_manual',
+                    'action' => 'review_flagged',
+                    'description' => "Review #{$id} flagged for moderation",
+                    'metadata' => json_encode(['review_id' => $id, 'admin_id' => auth()->id()]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+        }
+
         return back()->with('success', $review->is_flagged ? 'Review flagged.' : 'Flag removed.'); 
     }
 
     public function destroy($id) 
     { 
         \App\Models\Review::findOrFail($id)->delete();
+
+        try {
+            \Illuminate\Support\Facades\DB::table('agent_activity_logs')->insert([
+                'agent_type' => 'admin_manual',
+                'action' => 'review_deleted',
+                'description' => "Review #{$id} deleted by admin",
+                'metadata' => json_encode(['review_id' => $id, 'admin_id' => auth()->id()]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+        }
+
         return back()->with('success', 'Review deleted.'); 
     }
 }

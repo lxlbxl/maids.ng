@@ -42,6 +42,11 @@ class User extends Authenticatable
         return $this->hasOne(MaidProfile::class);
     }
 
+    public function ninVerification()
+    {
+        return $this->hasOne(\App\Models\NinVerification::class);
+    }
+
     public function employerPreferences()
     {
         return $this->hasMany(EmployerPreference::class, 'employer_id');
@@ -92,5 +97,10 @@ class User extends Authenticatable
     public function getAverageRating(): float
     {
         return $this->reviewsReceived()->avg('rating') ?? 0;
+    }
+
+    public function getRoleAttribute(): ?string
+    {
+        return $this->getRoleNames()->first();
     }
 }

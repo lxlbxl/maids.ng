@@ -178,7 +178,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                                         <span className="text-success text-xs font-medium">Included</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted">Background Verification</span>
+                                        <span className="text-muted">Identity Verification (NIN)</span>
                                         <span className="text-success text-xs font-medium">Included</span>
                                     </div>
                                     <div className="flex justify-between text-sm">

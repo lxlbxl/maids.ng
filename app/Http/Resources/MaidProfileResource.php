@@ -34,11 +34,13 @@ class MaidProfileResource extends JsonResource
             'role' => $this->getMaidRole(),
             'skills' => $this->skills ?? [],
             'languages' => $this->languages ?? [],
+            'gender' => $this->gender,
 
             // Work Preferences
             'work_type' => $this->work_type,
             'schedule_preference' => $this->schedule_preference,
             'availability_status' => $this->availability_status,
+            'willing_states' => $this->willing_states ?? [],
 
             // Location
             'location' => $this->location,
@@ -66,8 +68,8 @@ class MaidProfileResource extends JsonResource
             ],
 
             // Documents
-            'nin_number' => $this->when($request->user()?->hasRole('admin'), $this->nin_number),
-            'documents' => $this->when($request->user()?->hasRole('admin'), $this->documents),
+            'nin' => $this->nin,
+            'nin_report' => $this->nin_report,
 
             // AI Matching Score (if available)
             'match_score' => $this->when(isset($this->match_score), $this->match_score),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Requests\Api\Auth\{LoginRequest, RegisterRequest, UpdateProfileRequest, ChangePasswordRequest};
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -35,17 +36,13 @@ class AuthController extends ApiController
      * @bodyParam password string required User password. Example: password123
      * @bodyParam device_name string optional Device identifier for token. Example: Mobile App
      */
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_name' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $validated['email'])->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return $this->error(
                 'Invalid credentials',
                 Response::HTTP_UNAUTHORIZED,
@@ -65,7 +62,7 @@ class AuthController extends ApiController
         }
 
         // Create token
-        $deviceName = $request->device_name ?? 'API Client';
+        $deviceName = $validated['device_name'] ?? 'API Client';
         $token = $user->createToken($deviceName)->plainTextToken;
 
         return $this->success([
@@ -91,31 +88,24 @@ class AuthController extends ApiController
      * @bodyParam role string required Either 'employer' or 'maid'. Example: employer
      * @bodyParam location string optional Location. Example: Lagos
      */
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:employer,maid',
-            'location' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'location' => $request->location,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'password' => Hash::make($validated['password']),
+            'location' => $validated['location'] ?? null,
             'status' => 'active',
         ]);
 
         // Assign role
-        $user->assignRole($request->role);
+        $user->assignRole($validated['role']);
 
         // Create profile based on role
-        if ($request->role === 'maid') {
+        if ($validated['role'] === 'maid') {
             $user->maidProfile()->create([
                 'availability_status' => 'available',
             ]);
@@ -212,18 +202,12 @@ class AuthController extends ApiController
      * @param Request $request
      * @return JsonResponse
      */
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
+        $validated = $request->validated();
 
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20|unique:users,phone,' . $user->id,
-            'location' => 'nullable|string|max:255',
-            'avatar' => 'nullable|string|max:255',
-        ]);
-
-        $user->update($request->only(['name', 'phone', 'location', 'avatar']));
+        $user->update($validated);
 
         return $this->success(
             new UserResource($user->fresh()),
@@ -239,16 +223,13 @@ class AuthController extends ApiController
      * @param Request $request
      * @return JsonResponse
      */
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (!Hash::check($validated['current_password'], $user->password)) {
             return $this->error(
                 'Current password is incorrect',
                 Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -258,7 +239,7 @@ class AuthController extends ApiController
         }
 
         $user->update([
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($validated['password']),
         ]);
 
         return $this->success(null, 'Password changed successfully');
