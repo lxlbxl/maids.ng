@@ -8,6 +8,7 @@ use App\Models\MaidAssignment;
 use App\Models\User;
 use App\Services\WalletService;
 use App\Services\SmartNotificationService;
+use App\Services\WebhookService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -80,6 +81,14 @@ class AssignmentService
             $this->notificationService->sendMaidAssignmentNotification($assignment);
 
             DB::commit();
+
+            // Fire webhook event
+            WebhookService::dispatch('maid.hired', [
+                'assignment_id' => $assignment->id,
+                'employer_id'   => $employerId,
+                'maid_id'       => $maidId,
+                'type'          => 'direct_selection',
+            ]);
 
             Log::info('Direct selection assignment created and auto-accepted', [
                 'assignment_id' => $assignment->id,
@@ -299,6 +308,13 @@ class AssignmentService
 
             DB::commit();
 
+            // Fire webhook event
+            WebhookService::dispatch('assignment.completed', [
+                'assignment_id' => $assignmentId,
+                'employer_id'   => $assignment->employer_id,
+                'maid_id'       => $assignment->maid_id,
+            ]);
+
             Log::info('Assignment completed', [
                 'assignment_id' => $assignmentId,
             ]);
@@ -338,6 +354,14 @@ class AssignmentService
             $this->notificationService->sendAssignmentCancellationNotification($assignment, $reason);
 
             DB::commit();
+
+            // Fire webhook event
+            WebhookService::dispatch('assignment.cancelled', [
+                'assignment_id' => $assignmentId,
+                'employer_id'   => $assignment->employer_id,
+                'maid_id'       => $assignment->maid_id,
+                'reason'        => $reason,
+            ]);
 
             Log::info('Assignment cancelled', [
                 'assignment_id' => $assignmentId,
@@ -418,6 +442,14 @@ class AssignmentService
             );
 
             if ($replacementAssignment) {
+                // Fire webhook event
+                WebhookService::dispatch('maid.replaced', [
+                    'original_assignment_id' => $assignmentId,
+                    'new_assignment_id'      => $replacementAssignment->id,
+                    'employer_id'            => $originalAssignment->employer_id,
+                    'new_maid_id'            => $bestMatch['maid_id'],
+                ]);
+
                 Log::info('Replacement maid found and assigned', [
                     'original_assignment_id' => $assignmentId,
                     'new_assignment_id' => $replacementAssignment->id,

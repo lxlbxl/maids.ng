@@ -228,6 +228,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit', [AdminAuditLogController::class, 'index'])->name('audit');
         Route::delete('/audit/purge', [AdminAuditLogController::class, 'destroyAll'])->name('audit.purge');
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
+        
+        // Webhooks
+        Route::get('/webhooks', [App\Http\Controllers\Admin\AdminWebhookController::class, 'index'])->name('webhooks');
+        Route::get('/webhooks/events', [App\Http\Controllers\Admin\AdminWebhookController::class, 'events'])->name('webhooks.events');
+        Route::post('/webhooks', [App\Http\Controllers\Admin\AdminWebhookController::class, 'store'])->name('webhooks.store');
+        Route::put('/webhooks/{webhook}', [App\Http\Controllers\Admin\AdminWebhookController::class, 'update'])->name('webhooks.update');
+        Route::delete('/webhooks/{webhook}', [App\Http\Controllers\Admin\AdminWebhookController::class, 'destroy'])->name('webhooks.destroy');
+        Route::post('/webhooks/{webhook}/toggle', [App\Http\Controllers\Admin\AdminWebhookController::class, 'toggle'])->name('webhooks.toggle');
 
         // AI Matching & Salary Ops
         Route::get('/matching', function () {
