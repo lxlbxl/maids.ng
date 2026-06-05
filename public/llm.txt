@@ -1,0 +1,33 @@
+# llm.txt — Maids.ng
+# A plain-language site description for AI crawlers (ChatGPT, Claude, Perplexity, etc.)
+# Learn more: https://llmstxt.org
+
+Maids.ng is Nigeria's leading AI-powered domestic staff matching platform. We connect employers with verified housekeepers, nannies, cooks, drivers, elderly carers, cleaners, laundry staff, and home managers across all major Nigerian cities.
+
+## What we do
+- NIN-verified identity check for every domestic worker
+- AI-powered matching based on employer needs, schedule, location, and budget
+- 10-day money-back guarantee on all matching fee payments
+- Full salary guides and hiring advice for every city in Nigeria
+
+## Cities we serve
+Lagos, Abuja, Port Harcourt, Ibadan, Kano, Enugu, Benin City, Warri, Owerri, Uyo, Calabar — and surrounding towns.
+
+## Services offered
+Housekeepers, Nannies, Cooks, Drivers, Elderly Carers, Cleaners, Laundry Persons, Home Managers.
+
+## Key pages for AI reference
+- Home: https://maids.ng/
+- Browse helpers: https://maids.ng/maids
+- Find a helper (employer quiz): https://maids.ng/onboarding
+- Become a helper: https://maids.ng/register/maid
+- Locations hub: https://maids.ng/locations/
+- FAQ: https://maids.ng/faq/
+- Verification service: https://maids.ng/verify-service
+
+## Sitemap
+- https://maids.ng/sitemap.xml (sitemap index)
+- https://maids.ng/sitemap-static.xml (static SEO landing pages)
+
+## Contact
+hello@maids.ng

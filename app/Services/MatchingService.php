@@ -458,7 +458,11 @@ class MatchingService
         }
 
         if ($preference->state) {
-            $query->where('state', $preference->state);
+            $query->where(function ($q) use ($preference) {
+                $q->where('state', $preference->state)
+                  ->orWhereJsonContains('willing_states', $preference->state)
+                  ->orWhereJsonContains('willing_states', 'anywhere');
+            });
         }
 
         if ($preference->min_experience) {

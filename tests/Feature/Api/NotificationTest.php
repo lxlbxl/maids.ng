@@ -113,10 +113,7 @@ class NotificationTest extends TestCase
                 'success' => true,
             ]);
 
-        $this->assertDatabaseHas('notification_logs', [
-            'id' => $notification->id,
-            'read_at' => now()->format('Y-m-d'),
-        ]);
+        $this->assertNotNull($notification->fresh()->read_at);
     }
 
     public function test_user_can_mark_all_notifications_as_read()

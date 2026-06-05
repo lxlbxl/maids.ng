@@ -62,4 +62,37 @@ class SalaryPaymentProcessed
             'message' => 'Salary payment has been processed',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'salary.paid';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'payment_id' => $this->payment->id,
+            'schedule_id' => $this->schedule->id,
+            'employer_id' => $this->employerId,
+            'maid_id' => $this->maidId,
+            'amount' => $this->amount,
+            'status' => 'paid',
+            'message' => 'Salary payment has been processed',
+            'payment' => [
+                'id' => $this->payment->id,
+                'employer_id' => $this->payment->employer_id,
+                'maid_id' => $this->payment->maid_id,
+                'amount' => $this->payment->amount,
+                'status' => $this->payment->status,
+                'due_date' => $this->payment->due_date?->toIso8601String(),
+                'paid_at' => $this->payment->paid_at?->toIso8601String(),
+            ],
+        ];
+    }
 }

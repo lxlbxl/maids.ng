@@ -20,7 +20,14 @@ class Setting extends Model
     public static function get($key, $default = null)
     {
         $settings = self::getAllCached();
-        return $settings[$key] ?? $default;
+        $val = $settings[$key] ?? null;
+        
+        // Fall back to default if the setting is genuinely missing or completely empty
+        if ($val === null || $val === '') {
+            return $default;
+        }
+        
+        return $val;
     }
 
     /**
@@ -53,7 +60,10 @@ class Setting extends Model
                         ? Crypt::decryptString($setting->value) 
                         : $setting->value;
                 } catch (\Exception $e) {
-                    $mapped[$setting->key] = null;
+                    // Log decryption failure — likely double-encrypted or corrupt value
+                    \Illuminate\Support\Facades\Log::error("Setting decryption failed for key '{$setting->key}': " . $e->getMessage());
+                    // Return raw value as fallback instead of null (may still work if not actually encrypted)
+                    $mapped[$setting->key] = $setting->value;
                 }
             }
             return $mapped;

@@ -31,20 +31,23 @@ class NotifyMaidOfAssignment implements ShouldQueue
         $employer = $assignment->employer;
 
         // Send notification to maid
+        $startDate = $assignment->started_at ?? $assignment->start_date ?? now()->addDays(7);
+        $salary = $assignment->salary_amount ?? $assignment->monthly_salary ?? 0;
+
         $this->notificationService->send([
             'recipient_id' => $maid->id,
             'recipient_type' => 'maid',
             'type' => 'assignment_accepted',
             'channel' => 'sms',
             'message' => "Congratulations! {$employer->name} has accepted your assignment. " .
-                "Monthly salary: ₦" . number_format($assignment->monthly_salary) . ". " .
-                "Start date: " . $assignment->start_date->format('M d, Y'),
+                "Monthly salary: ₦" . number_format($salary) . ". " .
+                "Start date: " . (is_object($startDate) ? $startDate->format('M d, Y') : $startDate),
             'context' => [
                 'assignment_id' => $assignment->id,
                 'employer_id' => $employer->id,
                 'employer_name' => $employer->name,
-                'monthly_salary' => $assignment->monthly_salary,
-                'start_date' => $assignment->start_date->toDateString(),
+                'monthly_salary' => $salary,
+                'start_date' => is_object($startDate) ? $startDate->toDateString() : $startDate,
                 'event' => 'assignment_accepted',
             ],
             'ai_generated' => false,

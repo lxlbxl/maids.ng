@@ -28,8 +28,8 @@ class SalaryScheduleFactory extends Factory
             'current_period_end' => now()->endOfMonth(),
             'next_salary_due_date' => now()->day(28),
             'payment_status' => 'pending',
-            'escrow_amount' => 50000.00,
-            'escrow_funded_at' => now()->subDays(5),
+            'escrow_amount' => 0,
+            'escrow_funded' => false,
             'is_active' => true,
         ];
     }

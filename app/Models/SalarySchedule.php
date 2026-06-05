@@ -160,7 +160,7 @@ class SalarySchedule extends Model
             return false;
         }
 
-        return $this->next_salary_due_date->diffInDays(now(), false) <= $days;
+        return now()->startOfDay()->diffInDays($this->next_salary_due_date->copy()->startOfDay(), false) <= $days;
     }
 
     /**
@@ -252,6 +252,7 @@ class SalarySchedule extends Model
         $this->escrow_amount += $amount;
         $this->escrow_funded_at = now();
         $this->payment_status = 'payment_initiated';
+        $this->escrow_funded = true;
         $this->save();
 
         return true;
@@ -323,6 +324,6 @@ class SalarySchedule extends Model
             return null;
         }
 
-        return now()->diffInDays($this->next_salary_due_date, false);
+        return now()->startOfDay()->diffInDays($this->next_salary_due_date->copy()->startOfDay(), false);
     }
 }

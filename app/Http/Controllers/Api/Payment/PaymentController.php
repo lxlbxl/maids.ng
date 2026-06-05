@@ -274,6 +274,15 @@ class PaymentController extends ApiController
         $booking = $payment->booking;
         if ($booking) {
             $booking->update(['payment_status' => $newStatus === 'completed' ? 'paid' : $newStatus]);
+            
+            if ($newStatus === 'completed' && $booking->employer) {
+                \App\Events\PaymentConfirmed::dispatch(
+                    $booking->employer,
+                    $payment->reference,
+                    (int) $payment->amount,
+                    $payment->payment_type ?? 'booking_fee'
+                );
+            }
         }
 
         return $this->success(

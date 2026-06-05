@@ -22,6 +22,23 @@ class SmartNotificationService
     ];
 
     /**
+     * Send/schedule notification from a structured data array.
+     */
+    public function send(array $data): NotificationLog
+    {
+        return $this->scheduleNotification(
+            recipientId: $data['recipient_id'] ?? $data['user_id'],
+            recipientType: $data['recipient_type'] ?? $data['user_type'] ?? 'employer',
+            channel: $data['channel'] ?? 'sms',
+            notificationType: $data['type'] ?? $data['notification_type'] ?? 'general',
+            message: $data['message'] ?? $data['content'] ?? '',
+            referenceId: $data['reference_id'] ?? null,
+            referenceType: $data['reference_type'] ?? '',
+            context: $data['context'] ?? $data['context_json'] ?? []
+        );
+    }
+
+    /**
      * Send notification to maid when assigned (via direct selection or acceptance).
      */
     public function sendMaidAssignmentNotification(MaidAssignment $assignment): ?NotificationLog

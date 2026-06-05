@@ -2,6 +2,7 @@
 
 namespace App\Services\Sms;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,14 +19,15 @@ class TermiiProvider implements SmsProviderInterface
 
     public function __construct()
     {
-        $this->apiKey   = config('services.termii.api_key', '');
-        $this->senderId = config('services.termii.sender_id', 'MaidsNG');
-        $this->baseUrl  = config('services.termii.url', 'https://api.ng.termii.com/api');
+        // Read from Admin Settings (database) — falls back to .env
+        $this->apiKey = Setting::get('termii_api_key', config('services.termii.api_key', ''));
+        $this->senderId = Setting::get('termii_sender_id', config('services.termii.sender_id', 'MaidsNG'));
+        $this->baseUrl = Setting::get('termii_url', config('services.termii.url', 'https://api.ng.termii.com/api'));
     }
 
     public function send(string $phone, string $message): array
     {
-        if (! $this->apiKey) {
+        if (!$this->apiKey) {
             return ['success' => false, 'error' => 'Termii API key not configured'];
         }
 
@@ -33,10 +35,10 @@ class TermiiProvider implements SmsProviderInterface
 
         try {
             $response = Http::timeout(15)->post("{$this->baseUrl}/sms/send", [
-                'to'      => $phone,
-                'from'    => $this->senderId,
-                'sms'     => $message,
-                'type'    => 'plain',
+                'to' => $phone,
+                'from' => $this->senderId,
+                'sms' => $message,
+                'type' => 'plain',
                 'channel' => 'generic',
                 'api_key' => $this->apiKey,
             ]);
@@ -45,9 +47,9 @@ class TermiiProvider implements SmsProviderInterface
 
             if ($response->successful() && isset($data['message_id'])) {
                 return [
-                    'success'    => true,
+                    'success' => true,
                     'message_id' => $data['message_id'],
-                    'response'   => $data,
+                    'response' => $data,
                 ];
             }
 
@@ -55,7 +57,7 @@ class TermiiProvider implements SmsProviderInterface
 
             return [
                 'success' => false,
-                'error'   => $data['message'] ?? 'Termii API error',
+                'error' => $data['message'] ?? 'Termii API error',
             ];
         } catch (\Exception $e) {
             Log::error('Termii SMS exception', ['error' => $e->getMessage(), 'phone' => $phone]);
@@ -65,7 +67,7 @@ class TermiiProvider implements SmsProviderInterface
 
     public function getBalance(): array
     {
-        if (! $this->apiKey) {
+        if (!$this->apiKey) {
             return ['success' => false, 'error' => 'Termii API key not configured'];
         }
 
@@ -78,8 +80,8 @@ class TermiiProvider implements SmsProviderInterface
 
             if ($response->successful()) {
                 return [
-                    'success'  => true,
-                    'balance'  => (float) ($data['balance'] ?? 0),
+                    'success' => true,
+                    'balance' => (float) ($data['balance'] ?? 0),
                     'currency' => $data['currency'] ?? 'NGN',
                 ];
             }
@@ -92,13 +94,13 @@ class TermiiProvider implements SmsProviderInterface
 
     public function getDeliveryStatus(string $messageId): array
     {
-        if (! $this->apiKey) {
+        if (!$this->apiKey) {
             return ['success' => false, 'error' => 'Termii API key not configured'];
         }
 
         try {
             $response = Http::timeout(10)->get("{$this->baseUrl}/sms/inbox", [
-                'api_key'    => $this->apiKey,
+                'api_key' => $this->apiKey,
                 'message_id' => $messageId,
             ]);
 
@@ -106,7 +108,7 @@ class TermiiProvider implements SmsProviderInterface
 
             return [
                 'success' => $response->successful(),
-                'status'  => $data['status'] ?? 'unknown',
+                'status' => $data['status'] ?? 'unknown',
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];

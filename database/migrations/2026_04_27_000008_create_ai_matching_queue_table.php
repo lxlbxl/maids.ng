@@ -25,7 +25,7 @@ return new class extends Migration {
 
             // Job priority and scheduling
             $table->integer('priority')->default(5); // 1-10, 1 = highest
-            $table->timestamp('scheduled_at'); // When job should run (timezone-aware)
+            $table->timestamp('scheduled_at')->nullable(); // When job should run (null = immediate)
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
 

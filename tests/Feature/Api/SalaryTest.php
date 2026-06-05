@@ -53,38 +53,41 @@ class SalaryTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'status',
+                'success',
                 'data' => [
-                    'schedules'
+                    'schedules',
+                    'summary'
                 ]
             ]);
     }
 
     public function test_maid_can_view_own_salary_history()
     {
-        $schedule = SalarySchedule::create([
+        $schedule = SalarySchedule::factory()->create([
             'assignment_id' => $this->assignment->id,
             'employer_id' => $this->employer->id,
             'maid_id' => $this->maid->id,
-            'amount' => 50000,
-            'due_date' => now()->subDays(5),
-            'status' => 'paid'
+            'monthly_salary' => 50000,
+            'next_salary_due_date' => now()->subDays(5),
+            'payment_status' => 'paid'
         ]);
 
-        SalaryPayment::create([
-            'schedule_id' => $schedule->id,
+        SalaryPayment::factory()->create([
+            'salary_schedule_id' => $schedule->id,
             'maid_id' => $this->maid->id,
-            'amount' => 50000,
-            'status' => 'completed',
-            'payment_date' => now()->subDays(5)
+            'employer_id' => $this->employer->id,
+            'gross_amount' => 50000,
+            'net_amount' => 50000,
+            'status' => 'paid_to_maid',
+            'paid_date' => now()->subDays(5)
         ]);
 
         $response = $this->actingAs($this->maid)
-            ->getJson('/api/v1/salary/history');
+            ->getJson('/api/v1/salary/payments');
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'status',
+                'success',
                 'data' => [
                     'payments'
                 ]

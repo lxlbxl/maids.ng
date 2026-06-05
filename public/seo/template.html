@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en-NG">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{META_TITLE}}</title>
+    <meta name="description" content="{{META_DESCRIPTION}}">
+    <link rel="canonical" href="{{CANONICAL_URL}}">
+    <meta property="og:title" content="{{META_TITLE}}">
+    <meta property="og:description" content="{{META_DESCRIPTION}}">
+    <meta property="og:url" content="{{CANONICAL_URL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{{OG_IMAGE}}">
+    <meta property="og:site_name" content="Maids.ng">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{META_TITLE}}">
+    <meta name="twitter:description" content="{{META_DESCRIPTION}}">
+    <link rel="alternate" hreflang="en-NG" href="{{CANONICAL_URL}}">
+    <link rel="alternate" hreflang="en" href="{{CANONICAL_URL}}">
+    <link rel="stylesheet" href="/seo/styles.css">
+    <script type="application/ld+json">{{SCHEMAS}}</script>
+</head>
+<body>
+
+<header class="seo-header">
+    <div class="container">
+        <a href="https://maids.ng/" class="logo">
+            <img src="https://maids.ng/maids-logo.png" alt="Maids.ng">
+        </a>
+        <nav class="nav-links">
+            <a href="https://maids.ng/locations/">Locations</a>
+            <a href="https://maids.ng/find/housekeeper/">Services</a>
+            <a href="https://maids.ng/faq/">FAQ</a>
+            <a href="https://maids.ng/onboarding" class="cta-btn">Find a Helper</a>
+        </nav>
+    </div>
+</header>
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <div class="container">
+        <a href="https://maids.ng/">Home</a>
+        <span>›</span>
+        <a href="{{SERVICE_HUB_URL}}">{{SERVICE_NAME}}s</a>
+        <span>›</span>
+        <span>{{H1}}</span>
+    </div>
+</nav>
+
+<main>
+    <section class="seo-hero">
+        <div class="container">
+            <h1>{{H1}}</h1>
+            <div class="answer-block">
+                <p>{{INTRO}}</p>
+            </div>
+            <div class="trust-bar">
+                <span>&#10003; NIN-Verified Staff</span>
+                <span>&#10003; Background Checked</span>
+                <span>&#10003; 10-Day Money-Back Guarantee</span>
+                <span>&#10003; AI-Matched in Minutes</span>
+            </div>
+            <a href="{{QUIZ_URL}}" class="btn-primary cta-quiz">
+                Find a {{SERVICE_NAME}} in {{CITY_NAME}} &rarr;
+            </a>
+            <p class="price-anchor">
+                From <strong>&#8358;{{SALARY_MIN}}</strong> per month.
+                Salary range: &#8358;{{SALARY_MIN}} &#8211; &#8358;{{SALARY_MAX}}.
+            </p>
+        </div>
+    </section>
+
+    <section class="seo-section">
+        <div class="container">
+            <h2>What Does a {{SERVICE_NAME}} in {{CITY_NAME}} Do?</h2>
+            <p>{{SHORT_DESC}}</p>
+            <p>{{DUTIES}}</p>
+        </div>
+    </section>
+
+    <section class="seo-section">
+        <div class="container">
+            <h2>Hiring a {{SERVICE_NAME}} in {{CITY_NAME}}</h2>
+            <p>{{LOCAL_CONTEXT}}</p>
+        </div>
+    </section>
+
+    {{PILLAR_ONE}}
+
+    <section class="seo-section" id="salary">
+        <div class="container">
+            <h2>{{SERVICE_NAME}} Salary in {{CITY_FULL_NAME}} (2025)</h2>
+            <p>{{SALARY_SECTION}}</p>
+            <table class="salary-table" itemscope itemtype="https://schema.org/PriceSpecification">
+                <thead>
+                    <tr>
+                        <th>Employment Type</th>
+                        <th>Monthly Salary Range</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Full-time (Live-in)</td>
+                        <td itemprop="price">&#8358;{{SALARY_MIN}} &#8211; &#8358;{{SALARY_MAX_LIVE_IN}}</td>
+                    </tr>
+                    <tr>
+                        <td>Full-time (Live-out)</td>
+                        <td>&#8358;{{SALARY_MIN_LIVE_OUT}} &#8211; &#8358;{{SALARY_MAX}}</td>
+                    </tr>
+                    {{PART_TIME_ROW}}
+                </tbody>
+            </table>
+            <p class="salary-note"><em>Salary ranges reflect market rates in {{CITY_FULL_NAME}} as of 2025. Exact pay depends on experience, duties, and working hours.</em></p>
+        </div>
+    </section>
+
+    <section class="seo-section seo-how-it-works">
+        <div class="container">
+            <h2>How to Find a {{SERVICE_NAME}} in {{CITY_NAME}} with Maids.ng</h2>
+            <ol class="steps-list">
+                <li><strong>Take the 5-minute quiz</strong> &#8212; Tell us what kind of help you need, your schedule, location, and budget.</li>
+                <li><strong>See your top matches</strong> &#8212; Our AI matches you with verified {{SERVICE_PLURAL}} in {{CITY_NAME}}.</li>
+                <li><strong>Pay the matching fee</strong> &#8212; &#8358;{{MATCHING_FEE}} one-time fee, covered by our 10-day guarantee.</li>
+                <li><strong>Connect and hire</strong> &#8212; Get the {{SERVICE_NAME}}'s contact details and arrange a start date.</li>
+            </ol>
+            <p>{{WHY_MAIDS_NG}}</p>
+            <a href="https://maids.ng/onboarding" class="btn-secondary">Tell Us What You Need &rarr;</a>
+        </div>
+    </section>
+
+    <section class="seo-section seo-verification">
+        <div class="container">
+            <h2>Why Verification Matters When Hiring {{SERVICE_PLURAL}} in {{CITY_NAME}}</h2>
+            <p>{{VERIFICATION_CONTENT}}</p>
+            <p>All {{SERVICE_PLURAL}} on Maids.ng are required to complete NIN (National Identification Number) verification before their profile appears in search results. This means you can see a government-verified identity for every match.</p>
+        </div>
+    </section>
+
+    {{PILLAR_TWO}}
+
+    <section class="seo-section">
+        <div class="container">
+            <div class="eeat-block">
+                <h3>About This Information</h3>
+                <p>This hiring and salary guide is prepared by the Maids.ng team based on:</p>
+                <ul>
+                    <li>Live platform data from employer-maid matches on Maids.ng</li>
+                    <li>Market research conducted across Lagos, Abuja, and Port Harcourt (2025)</li>
+                    <li>Salary data reported by domestic workers and employers on our platform</li>
+                </ul>
+                <p>All pricing figures reflect market conditions as of May 2025. We update this guide quarterly.</p>
+            </div>
+        </div>
+    </section>
+
+    {{PILLAR_THREE}}
+
+    {{NEARBY_SECTION}}
+
+    <section class="seo-cta-final">
+        <div class="container">
+            <h2>Ready to Find a {{SERVICE_NAME}} in {{CITY_NAME}}?</h2>
+            <p>{{CTA_TEXT}}</p>
+            <a href="{{QUIZ_URL}}" class="btn-primary btn-large">
+                Find Your {{SERVICE_NAME}} Now &rarr;
+            </a>
+            <p class="guarantee-note">Protected by our 10-day money-back guarantee.</p>
+        </div>
+    </section>
+</main>
+
+<footer class="seo-footer">
+    <div class="container">
+        <div class="seo-footer-grid">
+            <div>
+                <img src="https://maids.ng/maids-logo.png" alt="Maids.ng" style="height:32px;filter:brightness(0) invert(1);margin-bottom:12px;">
+                <p style="font-size:13px;">Nigeria's most trusted platform for verified domestic helpers.</p>
+            </div>
+            <div>
+                <h4>Platform</h4>
+                <ul class="footer-links">
+                    <li><a href="https://maids.ng/onboarding">Find a Helper</a></li>
+                    <li><a href="https://maids.ng/register/maid">Become a Helper</a></li>
+                    <li><a href="https://maids.ng/maids">Browse Helpers</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Company</h4>
+                <ul class="footer-links">
+                    <li><a href="https://maids.ng/about">About Us</a></li>
+                    <li><a href="https://maids.ng/contact">Contact</a></li>
+                    <li><a href="https://maids.ng/terms">Terms</a></li>
+                    <li><a href="https://maids.ng/privacy">Privacy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="seo-footer-bottom">
+            <p>&copy; 2025 Maids.ng. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

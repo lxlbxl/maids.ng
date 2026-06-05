@@ -22,10 +22,28 @@ class AiService
 
     /**
      * Centralized chat method that handles the routing to the active provider.
+     *
+     * Supports two calling conventions:
+     * 1. Simple: chat("user message", ['system_prompt' => '...'])
+     * 2. Full payload: chat(['messages' => [...], 'model' => 'gpt-4o', 'tools' => [...], ...])
      */
-    public function chat(string $prompt, array $options = []): array
+    public function chat(string|array $prompt, array $options = []): array
     {
         try {
+            // If $prompt is a full payload array (has 'messages' key), extract options from it
+            if (is_array($prompt) && isset($prompt['messages'])) {
+                $fullPayload = $prompt;
+                $messages = $fullPayload['messages'];
+                $extractedOptions = [];
+                foreach (['model', 'temperature', 'tools', 'tool_choice', 'max_tokens'] as $key) {
+                    if (isset($fullPayload[$key])) {
+                        $extractedOptions[$key] = $fullPayload[$key];
+                    }
+                }
+                $options = array_merge($extractedOptions, $options);
+                $prompt = $messages;
+            }
+
             return $this->getProvider()->chat($prompt, $options);
         } catch (\Exception $e) {
             Log::error("AiService Error: " . $e->getMessage());

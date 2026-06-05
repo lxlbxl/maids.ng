@@ -9,7 +9,6 @@ use App\Http\Controllers\Api\Maid\MaidController as LegacyMaidController;
 use App\Http\Controllers\Api\Employer\EmployerController as LegacyEmployerController;
 use App\Http\Controllers\Api\Booking\BookingController;
 use App\Http\Controllers\Api\Payment\PaymentController;
-use App\Http\Controllers\Api\Admin\AdminController as LegacyAdminController;
 
 // New AI-Native System Controllers
 use App\Http\Controllers\Api\AssignmentController;
@@ -20,6 +19,12 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MaidController;
 use App\Http\Controllers\Api\EmployerController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AmbassadorChatController;
+use App\Http\Controllers\Api\AgentChannelWebhookController;
+use App\Http\Controllers\Api\UserEventController;
+use App\Http\Controllers\Api\VerificationController;
+use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\CliAgentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,11 +61,9 @@ Route::prefix('v1')->group(function () {
     });
 
     // Public Maid Discovery
-    Route::get('/maids', [MaidController::class, 'index']);
-    Route::get('/maids/search', [MaidController::class, 'search']);
-    Route::get('/maids/top-rated', [MaidController::class, 'getTopRated']);
-    Route::get('/maids/verified', [MaidController::class, 'getVerified']);
-    Route::get('/maids/{id}', [MaidController::class, 'show']);
+    Route::get('/maids', [MaidController::class, 'listAvailable']);
+    // Removed unimplemented /search, /top-rated, /verified. Use query params on /maids instead (e.g. ?location=... &verified_only=true)
+    Route::get('/maids/{id}', [MaidController::class, 'publicProfile']);
 
     // Reference Data
     Route::get('/reference/skills', [MaidController::class, 'getSkills']);
@@ -68,7 +71,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/reference/payment-methods', [PaymentController::class, 'getPaymentMethods']);
 
     // Public Matching API
-    Route::post('/matching/find', [ApiMatchingController::class, 'findMatches']);
+    Route::post('/matching/find', [\App\Http\Controllers\MatchingController::class, 'findMatches']);
 
     /*
     |--------------------------------------------------------------------------
@@ -227,8 +230,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [PaymentController::class, 'show']);
         });
 
-        // Payment Webhook (Public but protected by signature)
-        Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
+        // Payment Webhook (Public but protected by signature - moved outside auth group)
+        Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->withoutMiddleware(['auth:sanctum']);
 
         /*
         |--------------------------------------------------------------------------
@@ -238,13 +241,11 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('assignments')->group(function () {
             Route::get('/', [AssignmentController::class, 'index']);
-            Route::post('/', [AssignmentController::class, 'store']);
             Route::get('/statistics', [AssignmentController::class, 'statistics']);
             Route::get('/{id}', [AssignmentController::class, 'show']);
             Route::post('/{id}/accept', [AssignmentController::class, 'accept']);
             Route::post('/{id}/reject', [AssignmentController::class, 'reject']);
             Route::post('/{id}/complete', [AssignmentController::class, 'complete']);
-            Route::post('/{id}/cancel', [AssignmentController::class, 'cancel']);
         });
 
         /*
@@ -283,11 +284,11 @@ Route::prefix('v1')->group(function () {
         */
 
         Route::prefix('matching')->group(function () {
-            Route::post('/request', [MatchingController::class, 'requestMatch']);
-            Route::get('/status/{jobId}', [MatchingController::class, 'status']);
-            Route::get('/results/{jobId}', [MatchingController::class, 'results']);
-            Route::post('/manual-assign', [MatchingController::class, 'review']);
-            Route::get('/queue', [MatchingController::class, 'statistics']);
+            Route::post('/request', [ApiMatchingController::class, 'requestMatch']);
+            Route::get('/status/{jobId}', [ApiMatchingController::class, 'status']);
+            Route::get('/results/{jobId}', [ApiMatchingController::class, 'results']);
+            Route::post('/manual-assign', [ApiMatchingController::class, 'review']);
+            Route::get('/queue', [ApiMatchingController::class, 'statistics']);
         });
 
         /*
@@ -299,6 +300,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'index']);
             Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::get('/{id}', [NotificationController::class, 'show']);
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
             Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
             Route::delete('/{id}', [NotificationController::class, 'destroy']);
@@ -317,7 +319,7 @@ Route::prefix('v1')->group(function () {
 
             // Users
             Route::get('/users', [AdminController::class, 'users']);
-            Route::get('/users/{id}', [AdminController::class, 'userDetail']);
+            Route::get('/users/{id}', [AdminController::class, 'userDetails']);
             Route::put('/users/{id}/status', [AdminController::class, 'updateUserStatus']);
             Route::post('/users/{id}/verify-maid', [AdminController::class, 'verifyMaid']);
 
@@ -349,9 +351,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/reports/ai-matching', [ReportController::class, 'aiMatchingReport']);
             Route::get('/reports/notifications', [ReportController::class, 'notificationReport']);
             Route::get('/reports/agent-logs', [ReportController::class, 'agentActivityLogs']);
-            
+
             // New AI-Native Stats & Controls
-            Route::get('/matching/queue', [ApiMatchingController::class, 'getQueueStatus']);
+            Route::get('/matching/queue', [ApiMatchingController::class, 'pendingReview']);
             Route::get('/matching/statistics', [ApiMatchingController::class, 'statistics']);
 
             // Salary Management Oversight
@@ -373,43 +375,29 @@ Route::prefix('v1')->group(function () {
             // Wallet Oversight
             Route::get('/wallets/overview', [AdminController::class, 'walletOverview']);
             Route::post('/wallets/{walletId}/adjust', [AdminController::class, 'adjustWalletBalance']);
-            
+
             Route::post('/reports/export', [ReportController::class, 'export']);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Webhook Management Routes
+            |--------------------------------------------------------------------------
+            */
+
+            Route::prefix('webhooks')->group(function () {
+                Route::get('', [WebhookController::class, 'index']);
+                Route::post('', [WebhookController::class, 'store']);
+                Route::get('/statistics', [WebhookController::class, 'statistics']);
+                Route::get('/events', [WebhookController::class, 'availableEvents']);
+                Route::get('/{id}', [WebhookController::class, 'show']);
+                Route::put('/{id}', [WebhookController::class, 'update']);
+                Route::delete('/{id}', [WebhookController::class, 'destroy']);
+                Route::post('/{id}/test', [WebhookController::class, 'test']);
+                Route::get('/{id}/deliveries', [WebhookController::class, 'deliveries']);
+                Route::post('/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery']);
+            });
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Legacy Admin Routes (Backward Compatibility)
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('admin-legacy')->middleware(['role:admin'])->group(function () {
-            // Dashboard
-            Route::get('/dashboard', [LegacyAdminController::class, 'getDashboardStats']);
-            Route::get('/system-health', [LegacyAdminController::class, 'getSystemHealth']);
-
-            // Users
-            Route::get('/users', [LegacyAdminController::class, 'listUsers']);
-            Route::get('/users/{id}', [LegacyAdminController::class, 'getUser']);
-            Route::put('/users/{id}/status', [LegacyAdminController::class, 'updateUserStatus']);
-
-            // Maids
-            Route::get('/maids', [LegacyAdminController::class, 'listMaids']);
-            Route::put('/maids/{id}/verify', [LegacyAdminController::class, 'verifyMaid']);
-
-            // Bookings
-            Route::get('/bookings', [LegacyAdminController::class, 'listBookings']);
-
-            // Payments
-            Route::get('/payments', [LegacyAdminController::class, 'listPayments']);
-            Route::get('/revenue-report', [LegacyAdminController::class, 'getRevenueReport']);
-
-            // Reviews
-            Route::get('/reviews', [LegacyAdminController::class, 'listReviews']);
-
-            // AI Settings - Fetch models from provider API
-            Route::get('/ai/models/{provider}', [LegacyAdminController::class, 'fetchAiModels']);
-        });
     });
 });
 
@@ -424,5 +412,130 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Public matching API - no authentication required
-Route::post('/matching/find', [ApiMatchingController::class, 'findMatches']);
+/*
+|--------------------------------------------------------------------------
+| Verification Routes (Public — NIN verification via QoreID)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('verification')->group(function () {
+    // Verify NIN (public, no auth required)
+    Route::post('/nin', [VerificationController::class, 'verifyNin']);
+
+    // Get verification status by reference
+    Route::get('/nin/{reference}', [VerificationController::class, 'getStatus']);
+
+    // Batch verify multiple NINs
+    Route::post('/nin/batch', [VerificationController::class, 'batchVerify']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| User Events (Public — sendBeacon from frontend)
+|--------------------------------------------------------------------------
+*/
+Route::post('/user-events', [UserEventController::class, 'store']);
+
+/*
+|--------------------------------------------------------------------------
+| Ambassador Agent Chat (Moved to web.php for session state)
+|--------------------------------------------------------------------------
+*/
+
+/*
+|--------------------------------------------------------------------------
+| Agent Channel Webhooks (Public — Inbound from external channels)
+|--------------------------------------------------------------------------
+*/
+Route::post('/agent/webhook/email', [AgentChannelWebhookController::class, 'emailWebhook']);
+Route::post('/agent/webhook/whatsapp', [AgentChannelWebhookController::class, 'whatsappWebhook']);
+Route::post('/agent/webhook/instagram', [AgentChannelWebhookController::class, 'instagramWebhook']);
+Route::post('/agent/webhook/facebook', [AgentChannelWebhookController::class, 'facebookWebhook']);
+Route::get('/agent/webhook/facebook/verify', [AgentChannelWebhookController::class, 'facebookVerify']);
+
+/*
+|--------------------------------------------------------------------------
+| Dedicated MCP Agent Routes (Option B)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/mcp')->middleware(['mcp.auth'])->group(function () {
+    // Maid Management
+    Route::get('/maids/{maid_id}', [\App\Http\Controllers\Api\McpAgentController::class, 'getMaidProfile']);
+    Route::patch('/maids/{maid_id}/availability', [\App\Http\Controllers\Api\McpAgentController::class, 'updateMaidAvailability']);
+    Route::get('/maids/{maid_id}/earnings', [\App\Http\Controllers\Api\McpAgentController::class, 'getMaidEarnings']);
+
+    // Employer Management
+    Route::get('/employers/{employer_id}/preferences', [\App\Http\Controllers\Api\McpAgentController::class, 'getEmployerPreferences']);
+    Route::patch('/employers/{employer_id}/preferences', [\App\Http\Controllers\Api\McpAgentController::class, 'updateEmployerPreferences']);
+
+    // Booking & Assignment
+    Route::post('/bookings/create', [\App\Http\Controllers\Api\McpAgentController::class, 'createBooking']);
+    Route::post('/bookings/{booking_id}/cancel', [\App\Http\Controllers\Api\McpAgentController::class, 'cancelBooking']);
+    Route::get('/bookings', [\App\Http\Controllers\Api\McpAgentController::class, 'getUserBookings']);
+    Route::post('/matching/trigger', [\App\Http\Controllers\Api\McpAgentController::class, 'triggerAiMatching']);
+
+    // Support
+    Route::post('/reviews', [\App\Http\Controllers\Api\McpAgentController::class, 'createReview']);
+    Route::post('/disputes', [\App\Http\Controllers\Api\McpAgentController::class, 'fileDispute']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Dedicated CLI Agent Routes (with Audit Logging)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
+    // System Status & Health
+    Route::get('/status', [CliAgentController::class, 'status']);
+    Route::get('/health', [CliAgentController::class, 'health']);
+
+    // Maid Management
+    Route::get('/maids', [CliAgentController::class, 'listMaids']);
+    Route::get('/maids/{maid_id}', [CliAgentController::class, 'getMaidProfile']);
+    Route::patch('/maids/{maid_id}/availability', [CliAgentController::class, 'updateMaidAvailability']);
+    Route::get('/maids/{maid_id}/earnings', [CliAgentController::class, 'getMaidEarnings']);
+
+    // Employer Management
+    Route::get('/employers/{employer_id}/preferences', [CliAgentController::class, 'getEmployerPreferences']);
+    Route::patch('/employers/{employer_id}/preferences', [CliAgentController::class, 'updateEmployerPreferences']);
+
+    // Booking Management
+    Route::get('/bookings', [CliAgentController::class, 'listBookings']);
+    Route::get('/bookings/user', [CliAgentController::class, 'getUserBookings']);
+    Route::post('/bookings/create', [CliAgentController::class, 'createBooking']);
+    Route::post('/bookings/{booking_id}/cancel', [CliAgentController::class, 'cancelBooking']);
+
+    // Assignment Management
+    Route::get('/assignments', [CliAgentController::class, 'listAssignments']);
+    Route::get('/assignments/{id}', [CliAgentController::class, 'getAssignment']);
+    Route::post('/assignments/{id}/accept', [CliAgentController::class, 'acceptAssignment']);
+    Route::post('/assignments/{id}/reject', [CliAgentController::class, 'rejectAssignment']);
+    Route::post('/assignments/{id}/complete', [CliAgentController::class, 'completeAssignment']);
+    Route::get('/assignments/statistics', [CliAgentController::class, 'getAssignmentStatistics']);
+
+    // Wallet & Payments
+    Route::get('/wallet', [CliAgentController::class, 'getWallet']);
+    Route::get('/wallet/transactions', [CliAgentController::class, 'getWalletTransactions']);
+
+    // Notifications
+    Route::get('/notifications', [CliAgentController::class, 'listNotifications']);
+    Route::get('/notifications/unread-count', [CliAgentController::class, 'getUnreadCount']);
+    Route::post('/notifications/{id}/read', [CliAgentController::class, 'markNotificationAsRead']);
+    Route::post('/notifications/mark-all-read', [CliAgentController::class, 'markAllNotificationsAsRead']);
+    Route::delete('/notifications/{id}', [CliAgentController::class, 'deleteNotification']);
+
+    // User Management
+    Route::get('/users', [CliAgentController::class, 'listUsers']);
+    Route::get('/users/{id}', [CliAgentController::class, 'getUser']);
+    Route::put('/users/{id}/status', [CliAgentController::class, 'updateUserStatus']);
+
+    // Reference Data
+    Route::get('/reference/skills', [CliAgentController::class, 'getSkills']);
+    Route::get('/reference/help-types', [CliAgentController::class, 'getHelpTypes']);
+
+    // Matching Management
+    Route::post('/matching/request', [CliAgentController::class, 'requestMatch']);
+    Route::get('/matching/status/{jobId}', [CliAgentController::class, 'matchingStatus']);
+    Route::get('/matching/results/{jobId}', [CliAgentController::class, 'matchingResults']);
+    Route::post('/matching/manual-assign', [CliAgentController::class, 'manualAssign']);
+    Route::get('/matching/queue', [CliAgentController::class, 'matchingQueue']);
+});

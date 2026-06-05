@@ -22,6 +22,8 @@ return new class extends Migration {
             $table->string('account_name')->nullable();
             $table->string('currency', 3)->default('NGN');
             $table->string('timezone', 50)->default('Africa/Lagos');
+            $table->date('next_salary_due_date')->nullable();
+            $table->timestamp('last_activity_at')->nullable();
             $table->timestamps();
 
             $table->unique('maid_id');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Employer;
 
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Requests\Api\Employer\{CreatePreferenceRequest, UpdatePreferenceRequest, CreateReviewRequest};
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\EmployerPreferenceResource;
 use App\Http\Resources\ReviewResource;
@@ -13,7 +14,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * API Employer Controller
@@ -74,54 +74,18 @@ class EmployerController extends ApiController
      * @bodyParam start_date date optional Preferred start date. Example: "2024-02-01"
      * @bodyParam urgency string optional Urgency level. Example: "immediate"
      */
-    public function createPreference(Request $request): JsonResponse
+    public function createPreference(CreatePreferenceRequest $request): JsonResponse
     {
         $user = $request->user();
+        $validated = $request->validated();
 
-        if (!$user->hasRole('employer')) {
-            return $this->forbidden('Only employers can access this endpoint');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'help_type' => 'required|string|in:live-in,nanny,cooking,elderly-care,driver,cleaning,laundry',
-            'location' => 'required|string|max:255',
-            'state' => 'required|string|max:100',
-            'lga' => 'nullable|string|max:100',
-            'schedule_type' => 'required|string|in:full-time,part-time,weekends,flexible',
-            'salary_budget' => 'required|integer|min:10000|max:500000',
-            'required_skills' => 'nullable|array',
-            'required_skills.*' => 'string|max:50',
-            'num_children' => 'nullable|integer|min:0|max:10',
-            'children_ages' => 'nullable|array',
-            'children_ages.*' => 'integer|min:0|max:18',
-            'has_elderly' => 'nullable|boolean',
-            'elderly_condition' => 'nullable|string|max:500',
-            'special_requirements' => 'nullable|string|max:1000',
-            'start_date' => 'nullable|date|after_or_equal:today',
-            'urgency' => 'nullable|string|in:immediate,within_week,within_month,flexible',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
-
-        $preference = $user->employerPreferences()->create([
-            'help_type' => $request->help_type,
-            'location' => $request->location,
-            'state' => $request->state,
-            'lga' => $request->lga,
-            'schedule_type' => $request->schedule_type,
-            'salary_budget' => $request->salary_budget,
-            'required_skills' => $request->required_skills ?? [],
-            'num_children' => $request->num_children,
-            'children_ages' => $request->children_ages ?? [],
-            'has_elderly' => $request->has_elderly ?? false,
-            'elderly_condition' => $request->elderly_condition,
-            'special_requirements' => $request->special_requirements,
-            'start_date' => $request->start_date,
-            'urgency' => $request->urgency ?? 'flexible',
+        $preference = $user->employerPreferences()->create(array_merge($validated, [
+            'required_skills' => $validated['required_skills'] ?? [],
+            'children_ages' => $validated['children_ages'] ?? [],
+            'has_elderly' => $validated['has_elderly'] ?? false,
+            'urgency' => $validated['urgency'] ?? 'flexible',
             'status' => 'active',
-        ]);
+        ]));
 
         return $this->success(
             new EmployerPreferenceResource($preference),
@@ -136,48 +100,22 @@ class EmployerController extends ApiController
      * 
      * Update an existing job preference.
      * 
-     * @param Request $request
+     * @param UpdatePreferenceRequest $request
      * @param int $id
      * @return JsonResponse
      */
-    public function updatePreference(Request $request, int $id): JsonResponse
+    public function updatePreference(UpdatePreferenceRequest $request, int $id): JsonResponse
     {
         $user = $request->user();
-
-        if (!$user->hasRole('employer')) {
-            return $this->forbidden('Only employers can access this endpoint');
-        }
-
+        $validated = $request->validated();
+ 
         $preference = $user->employerPreferences()->find($id);
-
+ 
         if (!$preference) {
             return $this->notFound('Preference not found');
         }
-
-        $validator = Validator::make($request->all(), [
-            'help_type' => 'sometimes|string|in:live-in,nanny,cooking,elderly-care,driver,cleaning,laundry',
-            'location' => 'sometimes|string|max:255',
-            'state' => 'sometimes|string|max:100',
-            'lga' => 'nullable|string|max:100',
-            'schedule_type' => 'sometimes|string|in:full-time,part-time,weekends,flexible',
-            'salary_budget' => 'sometimes|integer|min:10000|max:500000',
-            'required_skills' => 'nullable|array',
-            'required_skills.*' => 'string|max:50',
-            'num_children' => 'nullable|integer|min:0|max:10',
-            'children_ages' => 'nullable|array',
-            'has_elderly' => 'nullable|boolean',
-            'elderly_condition' => 'nullable|string|max:500',
-            'special_requirements' => 'nullable|string|max:1000',
-            'start_date' => 'nullable|date|after_or_equal:today',
-            'urgency' => 'nullable|string|in:immediate,within_week,within_month,flexible',
-            'status' => 'sometimes|string|in:active,paused,closed',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
-
-        $preference->update($request->all());
+ 
+        $preference->update($validated);
 
         return $this->success(
             new EmployerPreferenceResource($preference->fresh()),
@@ -297,7 +235,7 @@ class EmployerController extends ApiController
      * 
      * Create a review for a completed booking.
      * 
-     * @param Request $request
+     * @param CreateReviewRequest $request
      * @return JsonResponse
      * 
      * @bodyParam booking_id integer required Booking ID. Example: 123
@@ -305,31 +243,13 @@ class EmployerController extends ApiController
      * @bodyParam comment string optional Review comment. Example: "Excellent service!"
      * @bodyParam categories array optional Category ratings. Example: {"punctuality": 5, "cleanliness": 4}
      */
-    public function createReview(Request $request): JsonResponse
+    public function createReview(CreateReviewRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        if (!$user->hasRole('employer')) {
-            return $this->forbidden('Only employers can access this endpoint');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'booking_id' => 'required|integer|exists:bookings,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-            'categories' => 'nullable|array',
-            'categories.punctuality' => 'nullable|integer|min:1|max:5',
-            'categories.cleanliness' => 'nullable|integer|min:1|max:5',
-            'categories.communication' => 'nullable|integer|min:1|max:5',
-            'categories.professionalism' => 'nullable|integer|min:1|max:5',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors()->toArray());
-        }
+        $validated = $request->validated();
 
         // Verify the booking belongs to this employer and is completed
-        $booking = Booking::where('id', $request->booking_id)
+        $booking = Booking::where('id', $validated['booking_id'])
             ->where('employer_id', $user->id)
             ->where('status', 'completed')
             ->first();
@@ -357,9 +277,9 @@ class EmployerController extends ApiController
             'booking_id' => $booking->id,
             'employer_id' => $user->id,
             'maid_id' => $booking->maid_id,
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-            'categories' => $request->categories ?? [],
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? null,
+            'categories' => $validated['categories'] ?? [],
         ]);
 
         // Update maid's rating

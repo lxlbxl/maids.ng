@@ -48,6 +48,11 @@ class MaidAssignment extends Model
         'notes',
         'refund_amount',
         'refund_transaction_id',
+        'start_date',
+        'end_date',
+        'termination_reason',
+        'satisfaction_score',
+        'review_submitted',
     ];
 
     protected $casts = [
@@ -72,6 +77,10 @@ class MaidAssignment extends Model
         'refund_amount' => 'decimal:2',
         'salary_amount' => 'decimal:2',
         'special_requirements' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'satisfaction_score' => 'integer',
+        'review_submitted' => 'boolean',
     ];
 
     /**

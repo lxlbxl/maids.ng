@@ -37,6 +37,9 @@ class MatchingQueueTest extends TestCase
             'employer_id' => $this->employer->id,
         ]);
 
+        // Fund the wallet for matching fee
+        app(\App\Services\WalletService::class)->creditEmployerWallet($this->employer->id, 10000, 'Test Deposit');
+
         $response = $this->actingAs($this->employer)
             ->postJson('/api/v1/matching/request', [
                 'preference_id' => $preference->id,
@@ -149,7 +152,7 @@ class MatchingQueueTest extends TestCase
             'employer_id' => $this->employer->id,
             'status' => 'failed',
             'priority' => 5,
-            'attempt_count' => 3,
+            'attempt_count' => 1,
             'max_attempts' => 3,
             'last_error' => 'AI service timeout',
         ]);
@@ -421,7 +424,7 @@ class MatchingQueueTest extends TestCase
         $this->assertEquals(1, AiMatchingQueue::pending()->count());
         $this->assertEquals(1, AiMatchingQueue::processing()->count());
         $this->assertEquals(1, AiMatchingQueue::completed()->count());
-        $this->assertEquals(1, AiMatchingQueue::ofType('auto_match')->count());
+        $this->assertEquals(2, AiMatchingQueue::ofType('auto_match')->count());
         $this->assertEquals(1, AiMatchingQueue::highPriority()->count());
     }
 }

@@ -1,305 +1,716 @@
-# Maids.ng API Documentation
+# Maids.ng REST API Documentation
+
+> **API Version:** 1.0.0 | **Base URL:** `https://maids.ng/api/v1`
 
 ## Overview
 
-Welcome to the Maids.ng API - a comprehensive REST API designed for the "Agentic Era". This API provides full access to the Maids.ng platform for domestic help matching and management, optimized for both human developers and AI agents.
+The Maids.ng REST API provides full access to the domestic help marketplace platform. Built for AI agents and third-party integrations with standardized JSON responses and token-based authentication.
 
-## Documentation Structure
+## Base URL
 
 ```
-docs/api/
-├── README.md              # This file - Getting started guide
-├── openapi.yaml           # OpenAPI 3.0 specification
-├── AGENTIC_GUIDE.md       # AI agent integration guide
-└── examples/              # Code examples (coming soon)
-    ├── python/
-    ├── javascript/
-    └── php/
+https://maids.ng/api/v1
 ```
 
-## Quick Start
+## Authentication
 
-### 1. Authentication
-
-Obtain an access token:
+All protected endpoints require a Bearer token obtained via `/auth/login`:
 
 ```bash
-curl -X POST https://api.maids.ng/v1/auth/login \
+curl -X POST https://maids.ng/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "yourpassword",
-    "device_name": "My App"
-  }'
+  -H "Accept: application/json" \
+  -d '{"email":"user@example.com","password":"password","device_name":"My App"}'
 ```
 
-Response:
+**Response:**
 ```json
 {
   "success": true,
   "message": "Login successful",
   "data": {
-    "user": { ... },
-    "token": "your-api-token",
+    "user": { "id": 1, "name": "John Doe", "email": "user@example.com", "role": "employer" },
+    "token": "1|abc123...",
     "token_type": "Bearer"
-  },
-  "meta": {
-    "timestamp": "2024-01-15T10:30:00Z",
-    "request_id": "uuid-v4",
-    "api_version": "1.0.0"
   }
 }
 ```
 
-### 2. Make Authenticated Requests
-
-```bash
-curl -X GET https://api.maids.ng/v1/maids \
-  -H "Authorization: Bearer your-api-token"
-```
-
-## API Features
-
-### 🎯 Core Functionality
-
-- **Authentication**: Token-based authentication with Laravel Sanctum
-- **Maid Discovery**: Search and filter available maids
-- **AI Matching**: Intelligent matching based on preferences
-- **Booking Management**: Full booking lifecycle (create, confirm, complete, cancel)
-- **Payment Processing**: Initialize, verify, and manage payments
-- **Reviews & Ratings**: Rate and review completed bookings
-- **Admin Operations**: Comprehensive admin dashboard and management
-
-### 🤖 AI-Optimized
-
-- **Standardized Responses**: Consistent JSON envelope across all endpoints
-- **Machine-Readable Errors**: Structured error codes for automated handling
-- **Request Tracking**: UUID-based request IDs for debugging
-- **Pagination**: Standardized pagination with metadata
-- **Rate Limiting**: Clear rate limit headers
-
-## API Endpoints
-
-### Public Endpoints (No Authentication)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/health` | GET | Health check |
-| `/v1/maids` | GET | List maids |
-| `/v1/maids/search` | GET | Search maids |
-| `/v1/maids/{id}` | GET | Get maid profile |
-| `/v1/maids/top-rated` | GET | Top rated maids |
-| `/v1/maids/verified` | GET | Verified maids |
-| `/v1/reference/skills` | GET | Available skills |
-| `/v1/reference/help-types` | GET | Help types |
-| `/v1/reference/payment-methods` | GET | Payment methods |
-| `/v1/matching/find` | POST | AI matching |
-
-### Authentication
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/auth/register` | POST | Register new user |
-| `/v1/auth/login` | POST | Login |
-| `/v1/auth/me` | GET | Get current user |
-| `/v1/auth/logout` | POST | Logout |
-| `/v1/auth/logout-all` | POST | Logout all sessions |
-| `/v1/auth/refresh` | POST | Refresh token |
-| `/v1/auth/profile` | PUT | Update profile |
-| `/v1/auth/password` | PUT | Change password |
-
-### Maid Endpoints (Requires: maid role)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/maid/profile` | GET | Get profile |
-| `/v1/maid/profile` | PUT | Update profile |
-| `/v1/maid/bank-details` | PUT | Update bank details |
-| `/v1/maid/bookings` | GET | List bookings |
-| `/v1/maid/bookings/{id}/confirm` | POST | Confirm booking |
-
-### Employer Endpoints (Requires: employer role)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/employer/preferences` | GET | List preferences |
-| `/v1/employer/preferences` | POST | Create preference |
-| `/v1/employer/preferences/{id}` | PUT | Update preference |
-| `/v1/employer/preferences/{id}` | DELETE | Delete preference |
-| `/v1/employer/bookings` | GET | List bookings |
-| `/v1/employer/reviews` | GET | List reviews |
-| `/v1/employer/reviews` | POST | Create review |
-| `/v1/employer/dashboard` | GET | Dashboard stats |
-
-### Booking Endpoints (Authenticated)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/bookings` | GET | List bookings |
-| `/v1/bookings` | POST | Create booking |
-| `/v1/bookings/{id}` | GET | Get booking |
-| `/v1/bookings/{id}/start` | POST | Start booking |
-| `/v1/bookings/{id}/complete` | POST | Complete booking |
-| `/v1/bookings/{id}/cancel` | POST | Cancel booking |
-| `/v1/bookings/statistics` | GET | Booking stats |
-
-### Payment Endpoints (Authenticated)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/payments` | GET | List payments |
-| `/v1/payments/initialize` | POST | Initialize payment |
-| `/v1/payments/verify/{reference}` | GET | Verify payment |
-| `/v1/payments/{id}` | GET | Get payment |
-| `/v1/payments/{id}/retry` | POST | Retry payment |
-| `/v1/payments/statistics` | GET | Payment stats |
-| `/v1/payments/webhook` | POST | Payment webhook |
-
-### Admin Endpoints (Requires: admin role)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/admin/dashboard` | GET | Dashboard stats |
-| `/v1/admin/system-health` | GET | System health |
-| `/v1/admin/users` | GET | List users |
-| `/v1/admin/users/{id}` | GET | Get user |
-| `/v1/admin/users/{id}/status` | PUT | Update user status |
-| `/v1/admin/maids` | GET | List maids |
-| `/v1/admin/maids/{id}/verify` | PUT | Verify maid |
-| `/v1/admin/bookings` | GET | List bookings |
-| `/v1/admin/payments` | GET | List payments |
-| `/v1/admin/revenue-report` | GET | Revenue report |
-| `/v1/admin/reviews` | GET | List reviews |
-
 ## Response Format
 
-All responses follow this standardized structure:
+All endpoints return JSON with standardized envelope:
 
 ```json
 {
   "success": true,
-  "message": "Operation completed successfully",
+  "message": "Operation description",
   "data": { ... },
   "meta": {
-    "timestamp": "2024-01-15T10:30:00Z",
-    "request_id": "550e8400-e29b-41d4-a716-446655440000",
-    "api_version": "1.0.0",
-    "pagination": {
-      "current_page": 1,
-      "last_page": 10,
-      "per_page": 15,
-      "total": 150,
-      "from": 1,
-      "to": 15
-    }
+    "timestamp": "2026-05-11T10:00:00+00:00",
+    "request_id": "req_abc123",
+    "api_version": "v1",
+    "pagination": { ... }
   }
 }
 ```
 
-## Error Handling
-
-Errors include structured information:
+**Success:** `success: true`, data in `data` field
+**Error:** `success: false`, error details in `code`, `message`, and `errors` fields
 
 ```json
 {
   "success": false,
   "message": "Validation failed",
-  "data": null,
+  "code": "VALIDATION_ERROR",
+  "errors": { "email": ["The email field is required."] }
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 204 | No Content |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 403 | Forbidden |
+| 404 | Not Found |
+| 422 | Validation Error |
+| 429 | Rate Limited |
+| 500 | Server Error |
+
+---
+
+## Public Endpoints
+
+No authentication required.
+
+### Health Check
+
+```
+GET /health
+```
+
+```bash
+curl https://maids.ng/api/v1/health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "service": "Maids.ng API",
+  "version": "1.0.0",
+  "timestamp": "2026-05-11T10:00:00+00:00"
+}
+```
+
+---
+
+## Authentication Endpoints
+
+### Register
+
+```
+POST /auth/register
+```
+
+```bash
+curl -X POST https://maids.ng/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"name":"John Doe","email":"john@example.com","phone":"+2348012345678","password":"password123","password_confirmation":"password123","role":"employer"}'
+```
+
+### Login
+
+```
+POST /auth/login
+```
+
+```bash
+curl -X POST https://maids.ng/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"email":"user@example.com","password":"password"}'
+```
+
+### Get Current User
+
+```
+GET /auth/me
+Authorization: Bearer {token}
+```
+
+```bash
+curl https://maids.ng/api/v1/auth/me \
+  -H "Authorization: Bearer {token}" \
+  -H "Accept: application/json"
+```
+
+### Logout
+
+```
+POST /auth/logout
+Authorization: Bearer {token}
+```
+
+### Update Profile
+
+```
+PUT /auth/profile
+Authorization: Bearer {token}
+```
+
+### Change Password
+
+```
+PUT /auth/password
+Authorization: Bearer {token}
+```
+
+---
+
+## Public Maid Discovery
+
+### List Available Maids
+
+```
+GET /maids
+```
+
+Query parameters for filtering:
+- `location` - City or area name (partial match)
+- `state` - State name (exact match)
+- `lga` - Local Government Area
+- `help_types[]` - Array: `live-in`, `nanny`, `cooking`, `elderly-care`, `driver`, `cleaning`, `laundry`
+- `min_experience` - Minimum years of experience
+- `max_salary` - Maximum expected salary
+- `schedule_preference` - `live-in`, `part-time`, `full-time`, `weekends-only`, `flexible`
+- `verified_only` - Boolean, show only fully verified maids
+- `per_page` - Results per page (1-100, default 15)
+
+```bash
+curl "https://maids.ng/api/v1/maids?location=Lagos&verified_only=true&per_page=10" \
+  -H "Accept: application/json"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Available maids retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "user_id": 5,
+      "bio": "Experienced housekeeper...",
+      "role": "Housekeeper",
+      "skills": ["cooking", "cleaning", "laundry"],
+      "languages": ["English", "Yoruba"],
+      "schedule_preference": "live-in",
+      "availability_status": "available",
+      "location": "Lagos",
+      "state": "Lagos",
+      "expected_salary": 150000,
+      "experience_years": 5,
+      "rating": 4.8,
+      "total_reviews": 23,
+      "verification": {
+        "nin_verified": true,
+        "background_verified": true,
+        "fully_verified": true
+      },
+      "user": {
+        "id": 5,
+        "name": "Comfort Johnson",
+        "avatar": "https://...",
+        "location": "Lagos"
+      }
+    }
+  ],
   "meta": {
-    "timestamp": "2024-01-15T10:30:00Z",
-    "request_id": "550e8400-e29b-41d4-a716-446655440000",
-    "api_version": "1.0.0"
-  },
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "errors": {
-      "email": ["The email field is required."],
-      "password": ["The password must be at least 8 characters."]
+    "pagination": {
+      "current_page": 1,
+      "last_page": 3,
+      "per_page": 15,
+      "total": 42
     }
   }
 }
 ```
 
-### HTTP Status Codes
+### Get Maid Profile
 
-- `200` - Success
-- `201` - Created
-- `204` - No Content
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `409` - Conflict
-- `422` - Validation Error
-- `429` - Rate Limited
-- `500` - Server Error
-
-## Rate Limiting
-
-- **Public endpoints**: 60 requests/minute
-- **Authenticated endpoints**: 1000 requests/minute
-
-Rate limit headers:
 ```
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1640995200
+GET /maids/{id}
 ```
 
-## For AI Agents
-
-See [AGENTIC_GUIDE.md](./AGENTIC_GUIDE.md) for:
-- AI-optimized integration patterns
-- Machine-readable error handling
-- Automated retry strategies
-- Webhook processing
-- Best practices for automated systems
-
-## OpenAPI Specification
-
-The complete API specification is available in [openapi.yaml](./openapi.yaml). You can:
-
-1. **Import into Postman**: Import the YAML file for interactive testing
-2. **Generate Client SDKs**: Use OpenAPI generators for your language
-3. **View Documentation**: Use Swagger UI or Redoc for visual documentation
-
-## SDKs and Libraries
-
-### Official SDKs (Coming Soon)
-
-- Python: `maidsng-python`
-- JavaScript/Node.js: `maidsng-js`
-- PHP: `maidsng-php`
-
-### Community SDKs
-
-Community SDKs are welcome! Please submit a PR to add yours to this list.
-
-## Support
-
-- **API Support**: api-support@maids.ng
-- **Documentation**: https://docs.maids.ng
-- **Status Page**: https://status.maids.ng
-
-## Changelog
-
-### v1.0.0 (2024-01-15)
-- Initial API release
-- Full CRUD operations for all entities
-- AI-optimized response formats
-- Comprehensive error codes
-- Role-based access control
-- OpenAPI 3.0 specification
-- Agentic AI integration guide
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
-
-## License
-
-This API is proprietary software. See [LICENSE](../../LICENSE) for details.
+```bash
+curl https://maids.ng/api/v1/maids/5 \
+  -H "Accept: application/json"
+```
 
 ---
 
-**Built with ❤️ by the Maids.ng Team**
+## Reference Data
+
+### Get Skills
+
+```
+GET /reference/skills
+```
+
+### Get Help Types
+
+```
+GET /reference/help-types
+```
+
+### Get Payment Methods
+
+```
+GET /reference/payment-methods
+```
+
+---
+
+## Public Matching
+
+### Find Matches
+
+```
+POST /matching/find
+```
+
+```bash
+curl -X POST https://maids.ng/api/v1/matching/find \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "help_types": ["nanny", "cleaning"],
+    "schedule": "full-time",
+    "urgency": "immediate",
+    "location": "Lagos, NG",
+    "budget_max": 50000
+  }'
+```
+
+---
+
+## Maid Endpoints (Requires: maid role)
+
+### Profile
+
+```
+GET /maid/profile
+POST /maid/profile
+PUT /maid/availability
+```
+
+### Assignments
+
+```
+GET /maid/assignments
+GET /maid/assignments/{id}
+```
+
+### Earnings & Payments
+
+```
+GET /maid/earnings
+GET /maid/payments
+GET /maid/upcoming-payments
+```
+
+### Dashboard
+
+```
+GET /maid/dashboard
+```
+
+---
+
+## Employer Endpoints (Requires: employer role)
+
+### Profile
+
+```
+GET /employer/profile
+PUT /employer/profile
+```
+
+### Preferences
+
+```
+GET /employer/preferences
+POST /employer/preferences
+GET /employer/preferences/{id}
+PUT /employer/preferences/{id}
+POST /employer/preferences/{id}/cancel
+```
+
+### Assignments
+
+```
+GET /employer/assignments
+GET /employer/assignments/{id}
+```
+
+### Spending & Payments
+
+```
+GET /employer/spending
+GET /employer/payments
+GET /employer/upcoming-payments
+```
+
+### Reviews
+
+```
+POST /employer/reviews
+GET /employer/my-reviews
+```
+
+### Dashboard
+
+```
+GET /employer/dashboard
+```
+
+---
+
+## Booking Endpoints (Authenticated)
+
+```
+GET /bookings
+POST /bookings
+GET /bookings/{id}
+POST /bookings/{id}/start
+POST /bookings/{id}/complete
+POST /bookings/{id}/cancel
+GET /bookings/statistics
+```
+
+---
+
+## Payment Endpoints (Authenticated)
+
+```
+GET /payments
+POST /payments/initialize
+GET /payments/verify/{reference}
+GET /payments/statistics
+POST /payments/{id}/retry
+GET /payments/{id}
+```
+
+### Payment Webhook
+
+```
+POST /payments/webhook
+```
+
+Public endpoint protected by Paystack signature verification.
+
+---
+
+## Assignment Endpoints (Authenticated)
+
+```
+GET /assignments
+POST /assignments
+GET /assignments/{id}
+POST /assignments/{id}/accept
+POST /assignments/{id}/reject
+POST /assignments/{id}/complete
+POST /assignments/{id}/cancel
+GET /assignments/statistics
+```
+
+---
+
+## Wallet Endpoints (Authenticated)
+
+```
+GET /wallets
+GET /wallets/transactions
+POST /wallets/deposit
+POST /wallets/withdraw
+GET /wallets/withdrawals/pending
+```
+
+---
+
+## Salary Endpoints (Authenticated)
+
+```
+GET /salary/schedules
+GET /salary/schedules/{id}
+POST /salary/schedules/{id}/pay
+GET /salary/payments
+GET /salary/overdue
+GET /salary/statistics
+```
+
+---
+
+## Matching Endpoints (Authenticated)
+
+```
+POST /matching/request
+GET /matching/status/{jobId}
+GET /matching/results/{jobId}
+POST /matching/manual-assign
+GET /matching/queue
+```
+
+---
+
+## Notification Endpoints (Authenticated)
+
+```
+GET /notifications
+GET /notifications/unread-count
+POST /notifications/{id}/read
+POST /notifications/mark-all-read
+DELETE /notifications/{id}
+```
+
+---
+
+## Admin Endpoints (Requires: admin role)
+
+### Dashboard & Health
+
+```
+GET /admin/dashboard
+GET /admin/system-health
+```
+
+### Users
+
+```
+GET /admin/users
+GET /admin/users/{id}
+PUT /admin/users/{id}/status
+POST /admin/users/{id}/verify-maid
+```
+
+### Assignments
+
+```
+GET /admin/assignments
+GET /admin/assignments/{id}
+POST /admin/assignments/{id}/cancel
+```
+
+### Withdrawals
+
+```
+GET /admin/withdrawals
+GET /admin/withdrawals/pending
+POST /admin/withdrawals/{id}/approve
+POST /admin/withdrawals/{id}/reject
+```
+
+### Settings
+
+```
+GET /admin/settings
+PUT /admin/settings
+```
+
+### AI Configuration
+
+```
+GET /admin/ai/config
+PUT /admin/ai/config
+POST /admin/ai/test-connection
+```
+
+### Reports
+
+```
+GET /admin/reports/platform-overview
+GET /admin/reports/financial
+GET /admin/reports/user-activity
+GET /admin/reports/assignment-analytics
+GET /admin/reports/ai-matching
+GET /admin/reports/notifications
+GET /admin/reports/agent-logs
+POST /admin/reports/export
+```
+
+### Matching Queue
+
+```
+GET /admin/matching/queue
+GET /admin/matching/statistics
+GET /admin/ai-matching/monitor
+GET /admin/ai-matching/jobs/{jobId}
+POST /admin/ai-matching/jobs/{jobId}/retry
+POST /admin/ai-matching/jobs/{jobId}/cancel
+```
+
+### Salary Management
+
+```
+GET /admin/salary/schedules
+GET /admin/salary/overdue
+POST /admin/salary/{id}/escalate
+POST /admin/salary/{id}/remind
+POST /admin/salary/batch-pay
+POST /admin/salary/{id}/mark-paid
+GET /admin/salary/payments
+GET /admin/salary/statistics
+```
+
+### Wallet Oversight
+
+```
+GET /admin/wallets/overview
+POST /admin/wallets/{walletId}/adjust
+```
+
+---
+
+## Legacy Routes (Backward Compatibility)
+
+These routes exist for backward compatibility with older integrations:
+
+```
+GET  /maid-legacy/profile
+PUT  /maid-legacy/profile
+PUT  /maid-legacy/bank-details
+GET  /maid-legacy/bookings
+POST /maid-legacy/bookings/{id}/confirm
+
+GET  /employer-legacy/preferences
+POST /employer-legacy/preferences
+PUT  /employer-legacy/preferences/{id}
+DELETE /employer-legacy/preferences/{id}
+GET  /employer-legacy/bookings
+GET  /employer-legacy/reviews
+POST /employer-legacy/reviews
+GET  /employer-legacy/dashboard
+```
+
+---
+
+## Verification Endpoints (Public)
+
+```
+POST /verification/nin
+GET  /verification/nin/{reference}
+POST /verification/nin/batch
+```
+
+---
+
+## Agent Channel Webhooks (Public)
+
+```
+POST /agent/webhook/email
+POST /agent/webhook/whatsapp
+POST /agent/webhook/instagram
+POST /agent/webhook/facebook
+GET  /agent/webhook/facebook/verify
+```
+
+---
+
+## User Events (Public)
+
+```
+POST /user-events
+```
+
+---
+
+## Filter Examples
+
+### Find Verified Maids in Lagos
+
+```bash
+curl "https://maids.ng/api/v1/maids?location=Lagos&verified_only=true" \
+  -H "Accept: application/json"
+```
+
+### Find Nannies with 3+ Years Experience
+
+```bash
+curl "https://maids.ng/api/v1/maids?help_types[]=nanny&min_experience=3" \
+  -H "Accept: application/json"
+```
+
+### Find Full-Time Maids Under 100k
+
+```bash
+curl "https://maids.ng/api/v1/maids?schedule_preference=full-time&max_salary=100000" \
+  -H "Accept: application/json"
+```
+
+---
+
+## Error Response Format
+
+```json
+{
+  "success": false,
+  "message": "Human-readable error message",
+  "code": "MACHINE_READABLE_CODE",
+  "errors": {
+    "field": ["Validation error message"]
+  }
+}
+```
+
+### Error Codes
+
+| Code | Meaning |
+|------|---------|
+| `VALIDATION_ERROR` | Request validation failed |
+| `NOT_FOUND` | Resource not found |
+| `UNAUTHORIZED` | Authentication required |
+| `FORBIDDEN` | Insufficient permissions |
+| `INTERNAL_ERROR` | Server error |
+| `INVALID_CREDENTIALS` | Wrong email/password |
+
+---
+
+## Pagination Format
+
+List endpoints return paginated results:
+
+```json
+{
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "last_page": 5,
+      "per_page": 15,
+      "total": 72,
+      "from": 1,
+      "to": 15,
+      "has_more": true
+    },
+    "links": {
+      "first": "https://maids.ng/api/v1/maids?page=1",
+      "last": "https://maids.ng/api/v1/maids?page=5",
+      "prev": null,
+      "next": "https://maids.ng/api/v1/maids?page=2"
+    }
+  }
+}
+```
+
+---
+
+## Support
+
+- **API Support:** api-support@maids.ng
+- **Documentation:** https://docs.maids.ng
+- **Status Page:** https://status.maids.ng

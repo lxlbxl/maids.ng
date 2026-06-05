@@ -128,23 +128,7 @@ class MaidController extends ApiController
         return $this->paginated(
             MaidProfileResource::collection($maids),
             $maids,
-            'Maids retrieved successfully',
-            [
-                'filters_applied' => $request->only([
-                    'location',
-                    'state',
-                    'lga',
-                    'skills',
-                    'help_types',
-                    'availability_status',
-                    'min_rating',
-                    'verified_only',
-                    'min_salary',
-                    'max_salary',
-                    'min_experience',
-                    'sort_by'
-                ])
-            ]
+            'Maids retrieved successfully'
         );
     }
 
@@ -217,8 +201,7 @@ class MaidController extends ApiController
         return $this->paginated(
             MaidProfileResource::collection($maids),
             $maids,
-            'Search results retrieved successfully',
-            ['search_query' => $searchTerm]
+            'Search results retrieved successfully'
         );
     }
 
@@ -504,8 +487,7 @@ class MaidController extends ApiController
         return $this->paginated(
             MaidProfileResource::collection($maids),
             $maids,
-            'Verified maids retrieved successfully',
-            ['verification_required' => ['nin_verified', 'background_verified']]
+            'Verified maids retrieved successfully'
         );
     }
 }

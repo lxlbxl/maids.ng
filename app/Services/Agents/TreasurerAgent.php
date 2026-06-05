@@ -9,6 +9,8 @@ use App\Services\AgentService;
 
 class TreasurerAgent extends AgentService
 {
+    protected string $agentName = 'treasurer';
+
     public function getName(): string
     {
         return 'Treasurer';

@@ -9,25 +9,28 @@ return new class extends Migration {
     {
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('wallet_id');
             $table->string('wallet_type', 20); // 'employer' or 'maid'
-            $table->enum('type', ['credit', 'debit']);
+            $table->foreignId('employer_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('maid_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('transaction_type');
             $table->decimal('amount', 12, 2);
             $table->decimal('balance_before', 12, 2);
             $table->decimal('balance_after', 12, 2);
-            $table->string('reference')->unique();
             $table->string('description');
-            $table->string('source_type')->nullable(); // 'matching_fee', 'refund', 'salary', 'withdrawal'
-            $table->foreignId('source_id')->nullable();
-            $table->foreignId('related_preference_id')->nullable()->constrained('employer_preferences')->nullOnDelete();
-            $table->foreignId('related_assignment_id')->nullable();
+            $table->string('reference_id')->nullable();
+            $table->string('reference_type')->nullable();
+            $table->string('payment_method')->nullable();
+            $table->string('payment_reference')->nullable();
             $table->json('metadata')->nullable();
-            $table->string('status', 20)->default('completed'); // pending, completed, failed
+            $table->string('status', 20)->default('completed'); // pending, processing, completed, failed, cancelled
             $table->timestamp('processed_at')->nullable();
+            $table->foreignId('processed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('failure_reason')->nullable();
             $table->timestamps();
 
-            $table->index(['wallet_id', 'wallet_type']);
-            $table->index('reference');
+            $table->index(['wallet_type', 'employer_id']);
+            $table->index(['wallet_type', 'maid_id']);
+            $table->index(['reference_id', 'reference_type']);
             $table->index('created_at');
         });
     }

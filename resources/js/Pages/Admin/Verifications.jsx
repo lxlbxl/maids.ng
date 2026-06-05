@@ -44,6 +44,7 @@ export default function Verifications({ auth, pendingVerifications }) {
                                             <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl">👤</div>
                                             <div>
                                                 <p className="font-bold text-white leading-tight">{user.name}</p>
+                                                <p className="text-[10px] font-mono text-teal/60 uppercase tracking-widest mt-0.5">NIN: {user.maid_profile?.nin || '—'}</p>
                                                 <p className="text-[10px] font-mono text-white/30 truncate max-w-[150px]">{user.email}</p>
                                             </div>
                                         </div>

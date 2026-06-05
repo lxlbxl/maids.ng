@@ -54,4 +54,34 @@ class AssignmentAccepted
             'message' => 'Assignment has been accepted',
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'assignment.accepted';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'assignment_id' => $this->assignment->id,
+            'employer_id' => $this->employerId,
+            'maid_id' => $this->maidId,
+            'status' => 'accepted',
+            'message' => 'Assignment has been accepted',
+            'assignment' => [
+                'id' => $this->assignment->id,
+                'employer_id' => $this->assignment->employer_id,
+                'maid_id' => $this->assignment->maid_id,
+                'status' => $this->assignment->status,
+                'created_at' => $this->assignment->created_at?->toIso8601String(),
+                'accepted_at' => $this->assignment->accepted_at?->toIso8601String(),
+            ],
+        ];
+    }
 }

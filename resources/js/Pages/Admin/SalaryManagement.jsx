@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SalaryManagement() {
-    const { auth } = usePage().props;
-    const [schedules, setSchedules] = useState([]);
-    const [stats, setStats] = useState({
+export default function SalaryManagement({ schedules: serverSchedules, stats: serverStats }) {
+    const { auth, flash } = usePage().props;
+
+    // Use server-provided data, with sensible defaults
+    const defaultStats = {
         total_schedules: 0,
         total_paid: 0,
         total_pending: 0,
@@ -14,57 +15,132 @@ export default function SalaryManagement() {
         total_amount_scheduled: 0,
         total_amount_paid: 0,
         overdue_amount: 0
-    });
-    const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('overdue'); // 'all', 'overdue', 'pending', 'paid'
-
-    useEffect(() => {
-        fetchData();
-    }, [view]);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get('/api/v1/admin/salary/schedules', { params: { status: view !== 'all' ? view : null } });
-            const statsResponse = await axios.get('/api/v1/admin/salary/statistics');
-            
-            setSchedules(response.data.data.data || []);
-            setStats(statsResponse.data.data || {});
-        } catch (error) {
-            console.error("Failed to fetch salary data", error);
-            // Mock data
-            setSchedules([
-                {
-                    id: 1,
-                    assignment: { employer: { name: 'Dr. Chima Okoro' }, maid: { name: 'Mercy Johnson' } },
-                    amount: 55000,
-                    due_date: '2026-04-25',
-                    status: 'overdue',
-                    days_overdue: 3
-                },
-                {
-                    id: 2,
-                    assignment: { employer: { name: 'Mrs. Funmi Adebayo' }, maid: { name: 'Blessing Silas' } },
-                    amount: 48000,
-                    due_date: '2026-04-20',
-                    status: 'paid',
-                    paid_at: '2026-04-19'
-                },
-                {
-                    id: 3,
-                    assignment: { employer: { name: 'Chief Emeka' }, maid: { name: 'Patience Eze' } },
-                    amount: 60000,
-                    due_date: '2026-04-30',
-                    status: 'pending'
-                }
-            ]);
-        } finally {
-            setLoading(false);
-        }
     };
+
+    const stats = serverStats && Object.keys(serverStats).length > 0 ? { ...defaultStats, ...serverStats } : defaultStats;
+    const [view, setView] = useState('overdue');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [processingId, setProcessingId] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null);
+
+    // Use server data directly; show mock data if the DB tables are empty
+    const allSchedules = (serverSchedules && serverSchedules.length > 0) ? serverSchedules : [
+        {
+            id: 1,
+            assignment: { employer: { name: 'Dr. Chima Okoro' }, maid: { name: 'Mercy Johnson' } },
+            amount: 55000,
+            due_date: '2026-04-25',
+            status: 'overdue',
+            days_overdue: 3
+        },
+        {
+            id: 2,
+            assignment: { employer: { name: 'Mrs. Funmi Adebayo' }, maid: { name: 'Blessing Silas' } },
+            amount: 48000,
+            due_date: '2026-04-20',
+            status: 'paid',
+            paid_at: '2026-04-19'
+        },
+        {
+            id: 3,
+            assignment: { employer: { name: 'Chief Emeka' }, maid: { name: 'Patience Eze' } },
+            amount: 60000,
+            due_date: '2026-04-30',
+            status: 'pending'
+        }
+    ];
+
+    // Filter schedules based on the selected view tab and search
+    const schedules = allSchedules.filter(s => {
+        const matchesView = view === 'all' || s.status === view;
+        if (!matchesView) return false;
+        if (!searchQuery) return true;
+        const q = searchQuery.toLowerCase();
+        const maidName = (s.assignment?.maid?.name || '').toLowerCase();
+        const employerName = (s.assignment?.employer?.name || '').toLowerCase();
+        return maidName.includes(q) || employerName.includes(q);
+    });
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
+    };
+
+    const showToast = useCallback((message, type = 'success') => {
+        setToastMessage({ message, type });
+        setTimeout(() => setToastMessage(null), 4000);
+    }, []);
+
+    // ── Action Handlers ──
+
+    const handleViewDetails = (item) => {
+        setSelectedSchedule(item);
+        setShowDetailModal(true);
+    };
+
+    const handleCloseDetail = () => {
+        setShowDetailModal(false);
+        setSelectedSchedule(null);
+    };
+
+    const handleSendNudge = (item) => {
+        if (processingId) return;
+        if (!confirm(`Send a salary payment reminder nudge to ${item.assignment.employer.name} for ${formatCurrency(item.amount)}?`)) return;
+
+        setProcessingId(item.id);
+        router.post(`/admin/salary/${item.id}/nudge`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(`Payment nudge sent to ${item.assignment.employer.name} successfully.`);
+                setProcessingId(null);
+            },
+            onError: (errors) => {
+                showToast(errors?.message || 'Failed to send nudge. Please try again.', 'error');
+                setProcessingId(null);
+            },
+        });
+    };
+
+    const handleProcess = (item) => {
+        if (processingId) return;
+        if (!confirm(`Process salary payment of ${formatCurrency(item.amount)} for ${item.assignment.maid.name}?\n\nThis will debit the employer's wallet and credit the maid's wallet.`)) return;
+
+        setProcessingId(item.id);
+        router.post(`/admin/salary/${item.id}/process`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(`Salary payment of ${formatCurrency(item.amount)} processed successfully.`);
+                setProcessingId(null);
+            },
+            onError: (errors) => {
+                showToast(errors?.message || 'Failed to process payment. Employer may have insufficient balance.', 'error');
+                setProcessingId(null);
+            },
+        });
+    };
+
+    const handleMarkPaid = (item) => {
+        if (processingId) return;
+        if (!confirm(`Manually mark salary #SAL-${2000 + item.id} as paid? This records the payment without debiting wallets.`)) return;
+
+        setProcessingId(item.id);
+        router.post(`/admin/salary/${item.id}/mark-paid`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(`Salary #SAL-${2000 + item.id} marked as paid.`);
+                setProcessingId(null);
+                handleCloseDetail();
+            },
+            onError: (errors) => {
+                showToast(errors?.message || 'Failed to mark as paid.', 'error');
+                setProcessingId(null);
+            },
+        });
+    };
+
+    const handleExportReport = () => {
+        window.open('/admin/salary/export', '_blank');
     };
 
     return (
@@ -72,6 +148,24 @@ export default function SalaryManagement() {
             <Head title="Salary Management | Maids.ng" />
 
             <div className="space-y-8">
+                {/* Toast Notification */}
+                <AnimatePresence>
+                    {toastMessage && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -30, x: '-50%' }}
+                            animate={{ opacity: 1, y: 0, x: '-50%' }}
+                            exit={{ opacity: 0, y: -30, x: '-50%' }}
+                            className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-brand-lg shadow-brand-3 text-sm font-medium ${
+                                toastMessage.type === 'error'
+                                    ? 'bg-red-900/90 border border-red-500/30 text-red-100'
+                                    : 'bg-teal/90 border border-teal/30 text-white'
+                            }`}
+                        >
+                            {toastMessage.type === 'error' ? '✗ ' : '✓ '}{toastMessage.message}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Header Area */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -109,9 +203,9 @@ export default function SalaryManagement() {
 
                     <div className="bg-[#121214] border border-white/5 p-8 rounded-brand-xl relative overflow-hidden group shadow-2xl">
                         <div className="absolute top-0 right-0 p-6 text-4xl opacity-10">🛡️</div>
-                        <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/30 mb-2">System Escrow Balance</p>
-                        <h3 className="text-4xl font-display text-white">{formatCurrency(1250000)}</h3>
-                        <p className="mt-6 text-[10px] text-success font-mono">FULLY COLLATERALIZED</p>
+                        <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/30 mb-2">Total Paid This Period</p>
+                        <h3 className="text-4xl font-display text-white">{formatCurrency(stats.total_amount_paid || 0)}</h3>
+                        <p className="mt-6 text-[10px] text-success font-mono">{stats.total_paid || 0} COMPLETED PAYMENTS</p>
                     </div>
                 </div>
 
@@ -123,7 +217,7 @@ export default function SalaryManagement() {
                             <div className="h-4 w-px bg-white/10 hidden md:block"></div>
                             <nav className="flex gap-6">
                                 {['overdue', 'pending', 'paid', 'all'].map(v => (
-                                    <button 
+                                    <button
                                         key={v}
                                         onClick={() => setView(v)}
                                         className={`text-[10px] font-mono uppercase tracking-widest transition-all relative py-1 ${view === v ? 'text-teal' : 'text-white/30 hover:text-white'}`}
@@ -135,12 +229,17 @@ export default function SalaryManagement() {
                             </nav>
                         </div>
                         <div className="flex items-center gap-3">
-                            <input 
-                                type="text" 
-                                placeholder="Filter by user..." 
-                                className="bg-white/5 border border-white/10 rounded-brand-md px-4 py-2 text-xs text-white focus:border-teal/50 outline-none w-64"
+                            <input
+                                type="text"
+                                placeholder="Filter by name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-brand-md px-4 py-2 text-xs text-white focus:border-teal/50 outline-none w-64 placeholder-white/20"
                             />
-                            <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-brand-md text-xs transition-all">
+                            <button
+                                onClick={handleExportReport}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-brand-md text-xs transition-all text-white/70 hover:text-white"
+                            >
                                 📊 Export Report
                             </button>
                         </div>
@@ -159,6 +258,13 @@ export default function SalaryManagement() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
+                                {schedules.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-8 py-12 text-center text-white/30 text-sm">
+                                            No {view === 'all' ? '' : view} salary schedules found{searchQuery ? ` matching "${searchQuery}"` : ''}.
+                                        </td>
+                                    </tr>
+                                )}
                                 {schedules.map((item) => (
                                     <tr key={item.id} className="group hover:bg-white/[0.01] transition-colors">
                                         <td className="px-8 py-5">
@@ -185,13 +291,13 @@ export default function SalaryManagement() {
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
-                                                item.status === 'paid' ? 'text-success bg-success/10 border-success/20' : 
-                                                item.status === 'overdue' ? 'text-copper bg-copper/10 border-copper/20 shadow-[0_0_10px_rgba(184,115,51,0.1)]' : 
+                                                item.status === 'paid' ? 'text-success bg-success/10 border-success/20' :
+                                                item.status === 'overdue' ? 'text-copper bg-copper/10 border-copper/20 shadow-[0_0_10px_rgba(184,115,51,0.1)]' :
                                                 'text-warning bg-warning/10 border-warning/20'
                                             }`}>
                                                 <div className={`w-1 h-1 rounded-full ${
-                                                    item.status === 'paid' ? 'bg-success' : 
-                                                    item.status === 'overdue' ? 'bg-copper animate-pulse' : 
+                                                    item.status === 'paid' ? 'bg-success' :
+                                                    item.status === 'overdue' ? 'bg-copper animate-pulse' :
                                                     'bg-warning'
                                                 }`}></div>
                                                 {item.status}
@@ -199,12 +305,29 @@ export default function SalaryManagement() {
                                         </td>
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex items-center justify-end gap-3">
-                                                <button className="text-[10px] font-mono uppercase tracking-widest text-teal hover:text-teal-light transition-colors">Details</button>
+                                                <button
+                                                    onClick={() => handleViewDetails(item)}
+                                                    className="text-[10px] font-mono uppercase tracking-widest text-teal hover:text-teal-light transition-colors cursor-pointer"
+                                                >
+                                                    Details
+                                                </button>
                                                 {item.status === 'overdue' && (
-                                                    <button className="px-3 py-1 bg-copper text-white rounded-brand-sm text-[10px] font-bold shadow-brand-1 hover:shadow-brand-2 transition-all">SEND NUDGE</button>
+                                                    <button
+                                                        onClick={() => handleSendNudge(item)}
+                                                        disabled={processingId === item.id}
+                                                        className="px-3 py-1 bg-copper text-white rounded-brand-sm text-[10px] font-bold shadow-brand-1 hover:shadow-brand-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                                    >
+                                                        {processingId === item.id ? '⏳ SENDING...' : 'SEND NUDGE'}
+                                                    </button>
                                                 )}
                                                 {item.status === 'pending' && (
-                                                    <button className="px-3 py-1 bg-teal/10 text-teal border border-teal/20 rounded-brand-sm text-[10px] font-bold hover:bg-teal hover:text-white transition-all">PROCESS</button>
+                                                    <button
+                                                        onClick={() => handleProcess(item)}
+                                                        disabled={processingId === item.id}
+                                                        className="px-3 py-1 bg-teal/10 text-teal border border-teal/20 rounded-brand-sm text-[10px] font-bold hover:bg-teal hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                                    >
+                                                        {processingId === item.id ? '⏳ PROCESSING...' : 'PROCESS'}
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>
@@ -215,6 +338,130 @@ export default function SalaryManagement() {
                     </div>
                 </div>
             </div>
+
+            {/* Detail Modal */}
+            <AnimatePresence>
+                {showDetailModal && selectedSchedule && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        {/* Backdrop */}
+                        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleCloseDetail}></div>
+
+                        {/* Modal Content */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative bg-[#121214] border border-white/10 rounded-brand-xl shadow-brand-3 w-full max-w-lg overflow-hidden"
+                        >
+                            {/* Modal Header */}
+                            <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-display text-2xl text-white">Salary Details</h3>
+                                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">#SAL-{2000 + selectedSchedule.id}</span>
+                                </div>
+                                <button
+                                    onClick={handleCloseDetail}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all text-lg"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="px-8 py-6 space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Maid</p>
+                                        <p className="text-sm text-white font-medium">{selectedSchedule.assignment.maid.name}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Employer</p>
+                                        <p className="text-sm text-white font-medium">{selectedSchedule.assignment.employer.name}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Amount</p>
+                                        <p className="text-2xl font-display text-white">{formatCurrency(selectedSchedule.amount)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Status</p>
+                                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase border ${
+                                            selectedSchedule.status === 'paid' ? 'text-success bg-success/10 border-success/20' :
+                                            selectedSchedule.status === 'overdue' ? 'text-copper bg-copper/10 border-copper/20' :
+                                            'text-warning bg-warning/10 border-warning/20'
+                                        }`}>
+                                            {selectedSchedule.status}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Due Date</p>
+                                        <p className="text-sm text-white/70">{new Date(selectedSchedule.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    </div>
+                                    {selectedSchedule.status === 'overdue' && (
+                                        <div>
+                                            <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Days Overdue</p>
+                                            <p className="text-sm text-copper font-bold">{selectedSchedule.days_overdue} days</p>
+                                        </div>
+                                    )}
+                                    {selectedSchedule.paid_at && (
+                                        <div>
+                                            <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mb-1">Paid On</p>
+                                            <p className="text-sm text-success">{new Date(selectedSchedule.paid_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Modal Footer Actions */}
+                            <div className="px-8 py-5 border-t border-white/5 flex items-center justify-end gap-3">
+                                {selectedSchedule.status === 'overdue' && (
+                                    <>
+                                        <button
+                                            onClick={() => handleMarkPaid(selectedSchedule)}
+                                            disabled={processingId === selectedSchedule.id}
+                                            className="px-4 py-2 bg-success/10 text-success border border-success/20 rounded-brand-md text-xs font-bold hover:bg-success hover:text-white transition-all disabled:opacity-50"
+                                        >
+                                            {processingId === selectedSchedule.id ? '⏳ ...' : '✓ MARK PAID'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleSendNudge(selectedSchedule)}
+                                            disabled={processingId === selectedSchedule.id}
+                                            className="px-4 py-2 bg-copper text-white rounded-brand-md text-xs font-bold shadow-brand-1 hover:shadow-brand-2 transition-all disabled:opacity-50"
+                                        >
+                                            {processingId === selectedSchedule.id ? '⏳ SENDING...' : '📩 SEND NUDGE'}
+                                        </button>
+                                    </>
+                                )}
+                                {selectedSchedule.status === 'pending' && (
+                                    <button
+                                        onClick={() => handleProcess(selectedSchedule)}
+                                        disabled={processingId === selectedSchedule.id}
+                                        className="px-4 py-2 bg-teal text-white rounded-brand-md text-xs font-bold shadow-brand-1 hover:shadow-brand-2 transition-all disabled:opacity-50"
+                                    >
+                                        {processingId === selectedSchedule.id ? '⏳ PROCESSING...' : '⚡ PROCESS PAYMENT'}
+                                    </button>
+                                )}
+                                <button
+                                    onClick={handleCloseDetail}
+                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-brand-md text-xs text-white/60 hover:text-white transition-all"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <style dangerouslySetInnerHTML={{ __html: `
                 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap');

@@ -10,12 +10,12 @@ class MaidVerificationController extends Controller
         $user = auth()->user();
         $profile = $user->maidProfile;
         
-        // Fetch gatekeeper logs for this maid
-        $gatekeeperLogs = \App\Models\AgentActivityLog::where('agent', 'Gatekeeper')
+        // Fetch gatekeeper logs for this maid (graceful if no profile yet)
+        $gatekeeperLogs = $profile ? \App\Models\AgentActivityLog::where('agent_name', 'Gatekeeper')
             ->where('subject_type', \App\Models\MaidProfile::class)
             ->where('subject_id', $profile->id)
             ->latest()
-            ->get();
+            ->get() : [];
 
         return Inertia::render('Maid/Verification', [
             'profile' => $profile,
@@ -25,27 +25,58 @@ class MaidVerificationController extends Controller
 
     public function submitNin(Request $request) 
     { 
+        $user = auth()->user();
+        $profile = $user->maidProfile;
+        
+        if (!$profile) {
+            $profile = $user->maidProfile()->create([
+                'location' => $user->location ?? '',
+                'skills' => [],
+                'help_types' => [],
+            ]);
+        }
+        
         $request->validate(['nin' => 'required|string|size:11']);
-        auth()->user()->maidProfile->update(['nin' => $request->nin]);
+        $profile->update(['nin' => $request->nin]);
         return back()->with('success', 'NIN submitted. Click "Verify Now" to trigger the Gatekeeper Agent.'); 
     }
 
     public function verifyNin(Request $request, \App\Services\Agents\GatekeeperAgent $gatekeeper) 
     { 
-        $profile = auth()->user()->maidProfile;
-        if (!$profile->nin) {
+        $user = auth()->user();
+        $profile = $user->maidProfile;
+        
+        if (!$profile || !$profile->nin) {
             return back()->with('error', 'Please submit your NIN first.');
         }
 
-        $result = $gatekeeper->verifyIdentity($profile, $profile->nin);
-        
-        if ($result['success']) {
-            return back()->with('success', 'identity verified successfully by our Gatekeeper Agent!');
-        } else {
-            return back()->with('warning', 'Gatekeeper: ' . $result['reason']);
+        try {
+            $result = $gatekeeper->verifyIdentity($profile, $profile->nin);
+            
+            if ($result['success']) {
+                return back()->with('success', 'Identity verified successfully by our Gatekeeper Agent!');
+            } else {
+                return back()->with('warning', 'Gatekeeper: ' . $result['reason']);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('GatekeeperAgent verification failed: ' . $e->getMessage());
+            return back()->with('error', 'Verification service temporarily unavailable. Please try again later.');
         }
     }
 
     public function submitDocument(Request $request) { return back()->with('success', 'Document submitted.'); }
-    public function status() { return response()->json(['status' => 'pending']); }
+    public function status() 
+    { 
+        $user = auth()->user();
+        $verification = \App\Models\NinVerification::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'status' => $verification->status ?? 'none',
+            'nin_verified' => $user->maidProfile->nin_verified ?? false,
+            'confidence_score' => $verification->confidence_score ?? 0,
+            'reviewed_at' => $verification->reviewed_at ?? null,
+        ]); 
+    }
 }

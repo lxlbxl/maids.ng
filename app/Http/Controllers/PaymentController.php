@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PaymentController extends Controller
@@ -27,7 +28,7 @@ class PaymentController extends Controller
         
         // Fetch payouts processed by our Treasurer Agent
         // For now using AgentActivityLog to show the history of processing
-        $payoutLogs = \App\Models\AgentActivityLog::where('agent', 'Treasurer')
+        $payoutLogs = \App\Models\AgentActivityLog::where('agent_name', 'Treasurer')
             ->where('reasoning', 'like', "%Maid ID: {$user->id}%")
             ->latest()
             ->paginate(10);
@@ -41,8 +42,14 @@ class PaymentController extends Controller
         ]); 
     }
     public function initialize(Request $request) { return response()->json(['status' => 'initialized']); }
-    public function verify(Request $request) { return back()->with('success', 'Payment verified.'); }
-    public function webhook(Request $request) { return response()->json(['status' => 'ok']); }
+    public function verify(Request $request) { 
+        return redirect()->route('employer.dashboard')
+            ->with('warning', 'General payment verification is currently handled via specialized controllers.'); 
+    }
+    public function webhook(Request $request) { 
+        Log::info('General payment webhook received', ['payload' => $request->all()]);
+        return response()->json(['status' => 'received']); 
+    }
     public function stats() { return response()->json([]); }
     public function requestPayout(Request $request) { return back()->with('success', 'Payout request submitted.'); }
 }

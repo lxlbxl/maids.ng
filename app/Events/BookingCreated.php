@@ -42,4 +42,34 @@ class BookingCreated implements ShouldBroadcast
     {
         return 'booking.created';
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'booking.created';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'booking_id' => $this->booking->id,
+            'employer_id' => $this->booking->employer_id,
+            'maid_id' => $this->booking->maid_id,
+            'status' => $this->booking->status,
+            'amount' => $this->booking->amount,
+            'booking' => [
+                'id' => $this->booking->id,
+                'employer_id' => $this->booking->employer_id,
+                'maid_id' => $this->booking->maid_id,
+                'status' => $this->booking->status,
+                'amount' => $this->booking->amount,
+                'created_at' => $this->booking->created_at?->toIso8601String(),
+            ],
+        ];
+    }
 }

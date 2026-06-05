@@ -67,4 +67,38 @@ class SalaryOverdue
             'message' => "Salary payment is {$this->daysOverdue} days overdue",
         ];
     }
+
+    /**
+     * Get the event type for webhooks.
+     */
+    public function getEventType(): string
+    {
+        return 'salary.overdue';
+    }
+
+    /**
+     * Get the payload for webhooks.
+     */
+    public function getPayload(): array
+    {
+        return [
+            'schedule_id' => $this->schedule->id,
+            'assignment_id' => $this->schedule->assignment_id,
+            'employer_id' => $this->schedule->assignment->employer_id,
+            'maid_id' => $this->schedule->assignment->maid_id,
+            'amount' => $this->schedule->amount,
+            'due_date' => $this->schedule->due_date?->toIso8601String(),
+            'days_overdue' => $this->daysOverdue,
+            'last_reminder_type' => $this->lastReminderType,
+            'message' => "Salary payment is {$this->daysOverdue} days overdue",
+            'schedule' => [
+                'id' => $this->schedule->id,
+                'assignment_id' => $this->schedule->assignment_id,
+                'amount' => $this->schedule->amount,
+                'payment_status' => $this->schedule->payment_status,
+                'escalation_level' => $this->schedule->escalation_level,
+                'next_salary_due_date' => $this->schedule->next_salary_due_date?->toIso8601String(),
+            ],
+        ];
+    }
 }

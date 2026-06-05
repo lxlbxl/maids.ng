@@ -5,13 +5,13 @@ export default function Financials({ auth, payments, stats }) {
     return (
         <AdminLayout>
             <Head title="Financial Control | Mission Control" />
-            
+
             <div className="mb-10">
                 <h1 className="font-display text-4xl font-light tracking-tight text-white mb-2">Financial Control</h1>
                 <p className="text-white/40 text-sm italic">Real-time ledger of platform revenue and Treasurer-supervised escrow flows.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <div className="bg-[#121214] border border-white/5 rounded-brand-lg p-8 space-y-2">
                     <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/30">Total Revenue (Match Fees)</p>
                     <p className="text-3xl font-bold text-teal">₦{stats.total_revenue.toLocaleString()}</p>
@@ -27,13 +27,18 @@ export default function Financials({ auth, payments, stats }) {
                     <p className="text-3xl font-bold text-copper">{stats.pending_payouts}</p>
                     <p className="text-[10px] text-copper/40 italic">Awaiting completion of employment contracts</p>
                 </div>
+                <div className="bg-success/5 border border-success/20 rounded-brand-lg p-8 space-y-2">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-success/60 font-bold">Verification Revenue</p>
+                    <p className="text-3xl font-bold text-success">₦{(stats.verification_revenue || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-success/40 italic">{stats.verification_count || 0} transactions · {stats.verification_pending || 0} pending</p>
+                </div>
             </div>
 
             <div className="bg-[#121214] border border-white/5 rounded-brand-xl overflow-hidden shadow-2xl">
                 <div className="p-8 border-b border-white/5 flex items-center justify-between bg-[#0a0a0b]">
                     <h2 className="font-mono text-[10px] uppercase tracking-widest text-white/40 font-bold">Match Fee Ledger</h2>
-                    <a 
-                        href={route('admin.export.financials')} 
+                    <a
+                        href={route('admin.export.financials')}
                         className="text-[10px] font-mono uppercase text-teal hover:underline tracking-widest font-bold"
                     >
                         Export CSV →

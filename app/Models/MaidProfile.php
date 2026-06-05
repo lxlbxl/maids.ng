@@ -8,6 +8,8 @@ class MaidProfile extends Model
 {
     protected $fillable = [
         'user_id',
+        'nin',
+        'gender',
         'bio',
         'skills',
         'experience_years',
@@ -15,6 +17,7 @@ class MaidProfile extends Model
         'schedule_preference',
         'expected_salary',
         'location',
+        'willing_states',
         'state',
         'lga',
         'nin_verified',
@@ -25,19 +28,27 @@ class MaidProfile extends Model
         'bank_name',
         'account_number',
         'account_name',
+        'profile_completeness',
+        'nin_report',
+        'languages',
+        'is_foreigner',
     ];
 
     protected function casts(): array
     {
         return [
             'skills' => 'array',
+            'languages' => 'array',
             'help_types' => 'array',
+            'willing_states' => 'array',
             'nin_verified' => 'boolean',
             'background_verified' => 'boolean',
+            'is_foreigner' => 'boolean',
             'expected_salary' => 'integer',
             'experience_years' => 'integer',
             'rating' => 'float',
             'total_reviews' => 'integer',
+            'profile_completeness' => 'integer',
         ];
     }
 

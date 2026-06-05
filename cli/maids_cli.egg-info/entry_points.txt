@@ -1,0 +1,2 @@
+[console_scripts]
+maids = maids_cli.main:app

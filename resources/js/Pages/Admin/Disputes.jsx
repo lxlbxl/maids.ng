@@ -1,12 +1,20 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Disputes({ auth, disputes }) {
     const [selectedDispute, setSelectedDispute] = useState(null);
+    const [refundProcessing, setRefundProcessing] = useState(false);
+    const [toastMessage, setToastMessage] = useState(null);
     const { data, setData, post, processing } = useForm({
         notes: ''
     });
+
+    const showToast = useCallback((message, type = 'success') => {
+        setToastMessage({ message, type });
+        setTimeout(() => setToastMessage(null), 4000);
+    }, []);
 
     const handleResolve = (e) => {
         e.preventDefault();
@@ -14,13 +22,35 @@ export default function Disputes({ auth, disputes }) {
             onSuccess: () => {
                 setSelectedDispute(null);
                 setData('notes', '');
-            }
+                showToast('Dispute resolved successfully.');
+            },
+            onError: () => showToast('Failed to resolve dispute.', 'error'),
+        });
+    };
+
+    const handleRefund = () => {
+        if (!selectedDispute) return;
+        if (!confirm(`Initiate refund for dispute #DISP-${selectedDispute.id}? This will refund the employer's matching fee.`)) return;
+        setRefundProcessing(true);
+        router.post(`/admin/disputes/${selectedDispute.id}/refund`, {}, {
+            preserveScroll: true,
+            onSuccess: () => { showToast('Refund initiated successfully.'); setRefundProcessing(false); },
+            onError: (e) => { showToast(e?.message || 'Failed to initiate refund.', 'error'); setRefundProcessing(false); },
         });
     };
 
     return (
         <AdminLayout>
             <Head title="Dispute Management | Mission Control" />
+
+            {/* Toast */}
+            <AnimatePresence>
+                {toastMessage && (
+                    <motion.div initial={{ opacity: 0, y: -30, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -30, x: '-50%' }}
+                        className={`fixed top-6 left-1/2 z-50 px-6 py-3 rounded-brand-lg shadow-brand-3 text-sm font-medium ${toastMessage.type === 'error' ? 'bg-red-900/90 border border-red-500/30 text-red-100' : 'bg-teal/90 border border-teal/30 text-white'}`}
+                    >{toastMessage.type === 'error' ? '✗ ' : '✓ '}{toastMessage.message}</motion.div>
+                )}
+            </AnimatePresence>
             
             <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -73,7 +103,7 @@ export default function Disputes({ auth, disputes }) {
                                             <p className="text-xs text-white/60 line-clamp-1 italic">"{dispute.reason}"</p>
                                         </td>
                                         <td className="px-8 py-5 text-right">
-                                            <button className="text-[10px] font-mono uppercase tracking-widest text-teal hover:underline font-bold">Investigate →</button>
+                                            <button onClick={(e) => { e.stopPropagation(); setSelectedDispute(dispute); }} className="text-[10px] font-mono uppercase tracking-widest text-teal hover:underline font-bold cursor-pointer">Investigate →</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -140,8 +170,13 @@ export default function Disputes({ auth, disputes }) {
                                             >
                                                 {processing ? 'Processing...' : '✅ Resolve & Close Case'}
                                             </button>
-                                            <button type="button" className="w-full bg-danger/10 text-danger border border-danger/20 py-3 rounded-brand-lg text-[10px] font-mono tracking-widest uppercase hover:bg-danger/20 transition-all">
-                                                🚨 Initiate Refund Protocol
+                                            <button
+                                                type="button"
+                                                onClick={handleRefund}
+                                                disabled={refundProcessing}
+                                                className="w-full bg-danger/10 text-danger border border-danger/20 py-3 rounded-brand-lg text-[10px] font-mono tracking-widest uppercase hover:bg-danger/20 transition-all disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {refundProcessing ? '⏳ Processing...' : '🚨 Initiate Refund Protocol'}
                                             </button>
                                         </div>
                                     </form>

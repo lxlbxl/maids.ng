@@ -36,7 +36,63 @@ Schedule::command('ai:process-salary-reminders')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/ai-salary-reminders.log'));
 
+// Background sweep for pending NIN verifications every 30 minutes
+Schedule::command('ai:verify-pending-nins')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/ai-nin-verifications.log'));
+
 // Daily cleanup of old logs (keep last 30 days)
 Schedule::command('log:clear-old')
     ->dailyAt('02:00')
     ->withoutOverlapping();
+
+// Refresh SEO content monthly for pages older than 90 days
+Schedule::job(new \App\Jobs\RefreshSeoContent)
+    ->monthly()
+    ->name('refresh-seo-content')
+    ->withoutOverlapping();
+
+// ============================================
+// CONTROL ROOM SCHEDULES
+// ============================================
+
+// Reset agent daily spend counter at midnight
+Schedule::call(function () {
+    \App\Models\AgentOverride::query()->update([
+        'current_daily_spend_usd' => 0,
+        'spend_reset_at' => now(),
+    ]);
+    \Illuminate\Support\Facades\Cache::flush();
+})->dailyAt('00:00')->name('reset-agent-daily-spend');
+
+// Check AI provider health every 5 minutes
+Schedule::job(new \App\Jobs\CheckAiProviderHealth)
+    ->everyFiveMinutes()
+    ->name('check-ai-health');
+
+// Check QoreID NIN Premium availability every 30 minutes
+Schedule::command('qoreid:health')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->name('check-qoreid-health');
+
+// ============================================
+// WEBHOOK SCHEDULES
+// ============================================
+
+// Process pending webhook deliveries every minute
+Schedule::command('webhooks:process')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/webhooks.log'));
+
+// ============================================
+// AUDIT LOG RETENTION PURGE
+// ============================================
+
+// Purge API audit logs older than the admin-configured retention period (daily at 03:00)
+Schedule::call(function () {
+    \App\Http\Controllers\AdminAuditLogController::purgeOldLogs();
+})->dailyAt('03:00')->name('purge-audit-logs');
+

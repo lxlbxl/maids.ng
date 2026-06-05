@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\Wallet\{DepositRequest, WithdrawalRequest};
 use App\Models\EmployerWallet;
 use App\Models\MaidWallet;
 use App\Models\WalletTransaction;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
-class WalletController extends Controller
+class WalletController extends ApiController
 {
     protected WalletService $walletService;
 
@@ -39,22 +39,16 @@ class WalletController extends Controller
             $escrow = 0;
             $available = $wallet->getAvailableBalance();
         } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'Wallet not available for this user type.',
-            ], 403);
+            return $this->forbidden('Wallet not available for this user type.');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'wallet' => $wallet,
-                'balance' => $balance,
-                'escrow_balance' => $escrow,
-                'available_balance' => $available,
-                'balance_formatted' => '₦' . number_format($balance, 2),
-            ],
-        ]);
+        return $this->success([
+            'wallet' => $wallet,
+            'balance' => $balance,
+            'escrow_balance' => $escrow,
+            'available_balance' => $available,
+            'balance_formatted' => '₦' . number_format($balance, 2),
+        ], 'Wallet details retrieved successfully');
     }
 
     /**
@@ -71,10 +65,7 @@ class WalletController extends Controller
             $wallet = $this->walletService->getOrCreateMaidWallet($user->id);
             $query = WalletTransaction::forMaid($user->id);
         } else {
-            return response()->json([
-                'success' => true,
-                'data' => [],
-            ]);
+            return $this->success([], 'No transactions found for this user type');
         }
 
         if ($request->has('type')) {
@@ -88,123 +79,65 @@ class WalletController extends Controller
         $transactions = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $transactions,
-        ]);
+        return $this->paginated($transactions, 'Transactions retrieved successfully');
     }
 
     /**
      * Credit wallet (deposit).
      */
-    public function credit(Request $request): JsonResponse
+    public function credit(DepositRequest $request): JsonResponse
     {
         $user = Auth::user();
-
-        if ($user->role !== 'employer') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only employers can deposit funds.',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:100',
-            'payment_method' => 'required|string|in:bank_transfer,card,ussd',
-            'reference' => 'nullable|string|max:255',
-            'metadata' => 'nullable|array',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+        $validated = $request->validated();
 
         $result = $this->walletService->creditEmployerWallet(
             $user->id,
-            $request->amount,
-            'Deposit via ' . $request->payment_method,
-            null,
-            $request->payment_method
+            $validated['amount'],
+            'Deposit via ' . $validated['payment_method'],
+            $validated['reference'] ?? null,
+            $validated['payment_method']
         );
 
         if ($result) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Wallet credited successfully.',
-                'data' => [
-                    'transaction' => $result,
-                    'new_balance' => $this->walletService->getEmployerBalance($user->id),
-                ],
-            ]);
+            return $this->success([
+                'transaction' => $result,
+                'new_balance' => $this->walletService->getEmployerBalance($user->id),
+            ], 'Wallet credited successfully.');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to credit wallet.',
-        ], 400);
+        return $this->error('Failed to credit wallet.', Response::HTTP_BAD_REQUEST);
     }
 
     /**
      * Request withdrawal.
      */
-    public function withdraw(Request $request): JsonResponse
+    public function withdraw(WithdrawalRequest $request): JsonResponse
     {
         $user = Auth::user();
-
-        if ($user->role !== 'maid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only maids can request withdrawals.',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
+        $validated = $request->validated();
 
         $maidWallet = $this->walletService->getOrCreateMaidWallet($user->id);
 
-        if (!$maidWallet->hasSufficientBalance($request->amount)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Insufficient balance.',
-                'data' => [
-                    'requested' => $request->amount,
-                    'available' => $maidWallet->balance,
-                ],
-            ], 422);
+        if (!$maidWallet->hasSufficientBalance($validated['amount'])) {
+            return $this->error('Insufficient balance.', Response::HTTP_UNPROCESSABLE_ENTITY, [
+                'requested' => $validated['amount'],
+                'available' => $maidWallet->balance,
+            ], 'INSUFFICIENT_BALANCE');
         }
 
         $result = $this->walletService->requestMaidWithdrawal(
             $user->id,
-            $request->amount,
+            $validated['amount'],
             'Withdrawal request'
         );
 
         if ($result) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Withdrawal request submitted successfully. Pending admin approval.',
-                'data' => [
-                    'transaction' => $result,
-                ],
-            ]);
+            return $this->success([
+                'transaction' => $result,
+            ], 'Withdrawal request submitted successfully. Pending admin approval.');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to process withdrawal request.',
-        ], 400);
+        return $this->error('Failed to process withdrawal request.', Response::HTTP_BAD_REQUEST);
     }
 
     /**
@@ -215,10 +148,7 @@ class WalletController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'maid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized.',
-            ], 403);
+            return $this->forbidden();
         }
 
         $query = WalletTransaction::forMaid($user->id)
@@ -231,10 +161,7 @@ class WalletController extends Controller
         $withdrawals = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $withdrawals,
-        ]);
+        return $this->paginated($withdrawals, 'Withdrawals retrieved successfully');
     }
 
     /**
@@ -245,18 +172,12 @@ class WalletController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'employer') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only employers have escrow accounts.',
-            ], 403);
+            return $this->forbidden('Only employers have escrow accounts.');
         }
 
         $balance = $this->walletService->getEmployerBalance($user->id);
 
-        return response()->json([
-            'success' => true,
-            'data' => $balance,
-        ]);
+        return $this->success($balance, 'Escrow balance retrieved successfully');
     }
 
     /**
@@ -267,10 +188,7 @@ class WalletController extends Controller
         $user = Auth::user();
 
         if ($user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Admin access required.',
-            ], 403);
+            return $this->forbidden('Unauthorized. Admin access required.');
         }
 
         $stats = [
@@ -294,9 +212,6 @@ class WalletController extends Controller
                 ->sum('amount'),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats,
-        ]);
+        return $this->success($stats, 'Wallet statistics retrieved successfully');
     }
 }
