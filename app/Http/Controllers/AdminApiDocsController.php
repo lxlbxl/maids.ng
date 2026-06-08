@@ -349,53 +349,6 @@ class AdminApiDocsController extends Controller
                     ]
                 ]
             ],
-                    [
-                        'name' => 'Transaction History',
-                        'method' => 'GET',
-                        'path' => '/api/v1/wallets/transactions',
-                        'description' => 'List all financial transactions.',
-                        'auth' => true,
-                        'curl' => "curl {$baseUrl}/api/v1/wallets/transactions \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
-                    ]
-                ]
-            ],
-            [
-                'group' => 'Assignments & Bookings',
-                'description' => 'Manage active engagements.',
-                'routes' => [
-                    [
-                        'name' => 'List Assignments',
-                        'method' => 'GET',
-                        'path' => '/api/v1/assignments',
-                        'description' => 'View all current maid-employer assignments.',
-                        'auth' => true,
-                        'curl' => "curl {$baseUrl}/api/v1/assignments \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
-                    ],
-                    [
-                        'name' => 'Accept Assignment',
-                        'method' => 'POST',
-                        'path' => '/api/v1/assignments/{id}/accept',
-                        'description' => 'Accept a pending maid assignment.',
-                        'auth' => true,
-                        'curl' => "curl -X POST {$baseUrl}/api/v1/assignments/42/accept \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
-                    ]
-                ]
-            ],
-            [
-                'group' => 'Administrative (Agents Only)',
-                'description' => 'High-level platform monitoring.',
-                'routes' => [
-                    [
-                        'name' => 'Platform Overview',
-                        'method' => 'GET',
-                        'path' => '/api/v1/reports/platform-overview',
-                        'description' => 'Get global system health and metrics.',
-                        'auth' => true,
-                        'role' => 'admin',
-                        'curl' => "curl {$baseUrl}/api/v1/reports/platform-overview \\\n  -H \"Authorization: Bearer YOUR_TOKEN\""
-                    ]
-                ]
-            ]
         ];
 
         return Inertia::render('Admin/ApiDocs', [
