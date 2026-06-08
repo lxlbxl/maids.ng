@@ -123,334 +123,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/dashboard', [MaidController::class, 'dashboard']);
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | Legacy Maid Routes (Backward Compatibility)
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('maid-legacy')->middleware(['role:maid'])->group(function () {
-            // Profile Management
-            Route::get('/profile', [LegacyMaidController::class, 'myProfile']);
-            Route::put('/profile', [LegacyMaidController::class, 'updateProfile']);
-            Route::put('/bank-details', [LegacyMaidController::class, 'updateBankDetails']);
-
-            // Bookings
-            Route::get('/bookings', [BookingController::class, 'getMaidBookings']);
-            Route::post('/bookings/{id}/confirm', [BookingController::class, 'confirm']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Employer Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('employer')->middleware(['role:employer'])->group(function () {
-            // Profile
-            Route::get('/profile', [EmployerController::class, 'profile']);
-            Route::put('/profile', [EmployerController::class, 'updateProfile']);
-
-            // Preferences
-            Route::get('/preferences', [EmployerController::class, 'preferences']);
-            Route::post('/preferences', [EmployerController::class, 'createPreference']);
-            Route::get('/preferences/{id}', [EmployerController::class, 'preferenceDetail']);
-            Route::put('/preferences/{id}', [EmployerController::class, 'updatePreference']);
-            Route::post('/preferences/{id}/cancel', [EmployerController::class, 'cancelPreference']);
-
-            // Assignments
-            Route::get('/assignments', [EmployerController::class, 'assignments']);
-            Route::get('/assignments/{id}', [EmployerController::class, 'assignmentDetail']);
-
-            // Spending & Payments
-            Route::get('/spending', [EmployerController::class, 'spending']);
-            Route::get('/payments', [EmployerController::class, 'paymentHistory']);
-            Route::get('/upcoming-payments', [EmployerController::class, 'upcomingPayments']);
-
-            // Reviews
-            Route::post('/reviews', [EmployerController::class, 'submitReview']);
-            Route::get('/my-reviews', [EmployerController::class, 'myReviews']);
-
-            // Dashboard
-            Route::get('/dashboard', [EmployerController::class, 'dashboard']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Legacy Employer Routes (Backward Compatibility)
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('employer-legacy')->middleware(['role:employer'])->group(function () {
-            // Preferences
-            Route::get('/preferences', [LegacyEmployerController::class, 'getPreferences']);
-            Route::post('/preferences', [LegacyEmployerController::class, 'createPreference']);
-            Route::put('/preferences/{id}', [LegacyEmployerController::class, 'updatePreference']);
-            Route::delete('/preferences/{id}', [LegacyEmployerController::class, 'deletePreference']);
-
-            // Bookings
-            Route::get('/bookings', [LegacyEmployerController::class, 'getBookings']);
-
-            // Reviews
-            Route::get('/reviews', [LegacyEmployerController::class, 'getReviews']);
-            Route::post('/reviews', [LegacyEmployerController::class, 'createReview']);
-
-            // Dashboard
-            Route::get('/dashboard', [LegacyEmployerController::class, 'getDashboardStats']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Booking Routes (All Authenticated Users)
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('bookings')->group(function () {
-            Route::get('/', [BookingController::class, 'index']);
-            Route::post('/', [BookingController::class, 'store']);
-            Route::get('/statistics', [BookingController::class, 'getStatistics']);
-            Route::get('/{id}', [BookingController::class, 'show']);
-            Route::post('/{id}/start', [BookingController::class, 'start']);
-            Route::post('/{id}/complete', [BookingController::class, 'complete']);
-            Route::post('/{id}/cancel', [BookingController::class, 'cancel']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Payment Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('payments')->group(function () {
-            Route::get('/', [PaymentController::class, 'index']);
-            Route::post('/initialize', [PaymentController::class, 'initialize']);
-            Route::get('/verify/{reference}', [PaymentController::class, 'verify']);
-            Route::get('/statistics', [PaymentController::class, 'getStatistics']);
-            Route::post('/{id}/retry', [PaymentController::class, 'retry']);
-            Route::get('/{id}', [PaymentController::class, 'show']);
-        });
-
-        // Payment Webhook (Public but protected by signature - moved outside auth group)
-        Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->withoutMiddleware(['auth:sanctum']);
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Assignment Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('assignments')->group(function () {
-            Route::get('/', [AssignmentController::class, 'index']);
-            Route::get('/statistics', [AssignmentController::class, 'statistics']);
-            Route::get('/{id}', [AssignmentController::class, 'show']);
-            Route::post('/{id}/accept', [AssignmentController::class, 'accept']);
-            Route::post('/{id}/reject', [AssignmentController::class, 'reject']);
-            Route::post('/{id}/complete', [AssignmentController::class, 'complete']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Wallet Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('wallets')->group(function () {
-            Route::get('/', [WalletController::class, 'show']);
-            Route::get('/transactions', [WalletController::class, 'transactions']);
-            Route::post('/deposit', [WalletController::class, 'credit']);
-            Route::post('/withdraw', [WalletController::class, 'withdraw']);
-            Route::get('/withdrawals/pending', [WalletController::class, 'withdrawals']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Salary Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('salary')->group(function () {
-            Route::get('/schedules', [SalaryController::class, 'index']);
-            Route::get('/schedules/{id}', [SalaryController::class, 'show']);
-            Route::post('/schedules/{id}/pay', [SalaryController::class, 'pay']);
-            Route::get('/payments', [SalaryController::class, 'history']);
-            Route::get('/overdue', [SalaryController::class, 'overdue']);
-            Route::get('/statistics', [SalaryController::class, 'statistics']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Matching Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('matching')->group(function () {
-            Route::post('/request', [ApiMatchingController::class, 'requestMatch']);
-            Route::get('/status/{jobId}', [ApiMatchingController::class, 'status']);
-            Route::get('/results/{jobId}', [ApiMatchingController::class, 'results']);
-            Route::post('/manual-assign', [ApiMatchingController::class, 'review']);
-            Route::get('/queue', [ApiMatchingController::class, 'statistics']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Notification Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'index']);
-            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
-            Route::get('/{id}', [NotificationController::class, 'show']);
-            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
-            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-            Route::delete('/{id}', [NotificationController::class, 'destroy']);
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AI-Native Admin Routes
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('admin')->middleware(['role:admin'])->group(function () {
-            // Dashboard
-            Route::get('/dashboard', [AdminController::class, 'dashboard']);
-            Route::get('/system-health', [AdminController::class, 'systemHealth']);
-
-            // Users
-            Route::get('/users', [AdminController::class, 'users']);
-            Route::get('/users/{id}', [AdminController::class, 'userDetails']);
-            Route::put('/users/{id}/status', [AdminController::class, 'updateUserStatus']);
-            Route::post('/users/{id}/verify-maid', [AdminController::class, 'verifyMaid']);
-
-            // Assignments
-            Route::get('/assignments', [AdminController::class, 'assignments']);
-            Route::get('/assignments/{id}', [AdminController::class, 'assignmentDetail']);
-            Route::post('/assignments/{id}/cancel', [AdminController::class, 'cancelAssignment']);
-
-            // Withdrawals
-            Route::get('/withdrawals', [AdminController::class, 'withdrawals']);
-            Route::get('/withdrawals/pending', [AdminController::class, 'pendingWithdrawals']);
-            Route::post('/withdrawals/{id}/approve', [AdminController::class, 'approveWithdrawal']);
-            Route::post('/withdrawals/{id}/reject', [AdminController::class, 'rejectWithdrawal']);
-
-            // Settings
-            Route::get('/settings', [AdminController::class, 'settings']);
-            Route::put('/settings', [AdminController::class, 'updateSettings']);
-
-            // AI Configuration
-            Route::get('/ai/config', [AdminController::class, 'aiConfig']);
-            Route::put('/ai/config', [AdminController::class, 'updateAiConfig']);
-            Route::post('/ai/test-connection', [AdminController::class, 'testAiConnection']);
-
-            // Reports
-            Route::get('/reports/platform-overview', [ReportController::class, 'platformOverview']);
-            Route::get('/reports/financial', [ReportController::class, 'financialReport']);
-            Route::get('/reports/user-activity', [ReportController::class, 'userActivityReport']);
-            Route::get('/reports/assignment-analytics', [ReportController::class, 'assignmentAnalytics']);
-            Route::get('/reports/ai-matching', [ReportController::class, 'aiMatchingReport']);
-            Route::get('/reports/notifications', [ReportController::class, 'notificationReport']);
-            Route::get('/reports/agent-logs', [ReportController::class, 'agentActivityLogs']);
-
-            // New AI-Native Stats & Controls
-            Route::get('/matching/queue', [ApiMatchingController::class, 'pendingReview']);
-            Route::get('/matching/statistics', [ApiMatchingController::class, 'statistics']);
-
-            // Salary Management Oversight
-            Route::get('/salary/schedules', [AdminController::class, 'salarySchedules']);
-            Route::get('/salary/overdue', [AdminController::class, 'overdueSalaries']);
-            Route::post('/salary/{id}/escalate', [AdminController::class, 'escalateSalary']);
-            Route::post('/salary/{id}/remind', [AdminController::class, 'sendSalaryReminder']);
-            Route::post('/salary/batch-pay', [AdminController::class, 'processBatchPayment']);
-            Route::post('/salary/{id}/mark-paid', [AdminController::class, 'markSchedulePaid']);
-            Route::get('/salary/payments', [AdminController::class, 'salaryPaymentHistory']);
-            Route::get('/salary/statistics', [SalaryController::class, 'statistics']);
-
-            // AI Matching Engine Monitor
-            Route::get('/ai-matching/monitor', [AdminController::class, 'aiMatchingMonitor']);
-            Route::get('/ai-matching/jobs/{jobId}', [AdminController::class, 'aiMatchingJobDetail']);
-            Route::post('/ai-matching/jobs/{jobId}/retry', [AdminController::class, 'retryMatchingJob']);
-            Route::post('/ai-matching/jobs/{jobId}/cancel', [AdminController::class, 'cancelMatchingJob']);
-
-            // Wallet Oversight
-            Route::get('/wallets/overview', [AdminController::class, 'walletOverview']);
-            Route::post('/wallets/{walletId}/adjust', [AdminController::class, 'adjustWalletBalance']);
-
-            Route::post('/reports/export', [ReportController::class, 'export']);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Webhook Management Routes
-            |--------------------------------------------------------------------------
-            */
-
-            Route::prefix('webhooks')->group(function () {
-                Route::get('', [WebhookController::class, 'index']);
-                Route::post('', [WebhookController::class, 'store']);
-                Route::get('/statistics', [WebhookController::class, 'statistics']);
-                Route::get('/events', [WebhookController::class, 'availableEvents']);
-                Route::get('/{id}', [WebhookController::class, 'show']);
-                Route::put('/{id}', [WebhookController::class, 'update']);
-                Route::delete('/{id}', [WebhookController::class, 'destroy']);
-                Route::post('/{id}/test', [WebhookController::class, 'test']);
-                Route::get('/{id}/deliveries', [WebhookController::class, 'deliveries']);
-                Route::post('/deliveries/{deliveryId}/retry', [WebhookController::class, 'retryDelivery']);
-            });
-        });
-
-    });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Legacy Routes (Backward Compatibility)
-|--------------------------------------------------------------------------
-*/
-
-// Keep existing routes for backward compatibility
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-/*
-|--------------------------------------------------------------------------
-| Verification Routes (Public — NIN verification via QoreID)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('verification')->group(function () {
-    // Verify NIN (public, no auth required)
-    Route::post('/nin', [VerificationController::class, 'verifyNin']);
-
-    // Get verification status by reference
-    Route::get('/nin/{reference}', [VerificationController::class, 'getStatus']);
-
-    // Batch verify multiple NINs
-    Route::post('/nin/batch', [VerificationController::class, 'batchVerify']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| User Events (Public — sendBeacon from frontend)
-|--------------------------------------------------------------------------
-*/
-Route::post('/user-events', [UserEventController::class, 'store']);
-
-/*
-|--------------------------------------------------------------------------
-| Ambassador Agent Chat (Moved to web.php for session state)
-|--------------------------------------------------------------------------
-*/
-
-/*
-|--------------------------------------------------------------------------
-| Agent Channel Webhooks (Public — Inbound from external channels)
-|--------------------------------------------------------------------------
-*/
-Route::post('/agent/webhook/email', [AgentChannelWebhookController::class, 'emailWebhook']);
-Route::post('/agent/webhook/whatsapp', [AgentChannelWebhookController::class, 'whatsappWebhook']);
-Route::post('/agent/webhook/instagram', [AgentChannelWebhookController::class, 'instagramWebhook']);
-Route::post('/agent/webhook/facebook', [AgentChannelWebhookController::class, 'facebookWebhook']);
-Route::get('/agent/webhook/facebook/verify', [AgentChannelWebhookController::class, 'facebookVerify']);
 
 /*
 |--------------------------------------------------------------------------
@@ -538,4 +210,143 @@ Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
     Route::get('/matching/results/{jobId}', [CliAgentController::class, 'matchingResults']);
     Route::post('/matching/manual-assign', [CliAgentController::class, 'manualAssign']);
     Route::get('/matching/queue', [CliAgentController::class, 'matchingQueue']);
+});
+
+    }); // closes auth:sanctum
+
+}); // closes v1 prefix
+
+/*
+|--------------------------------------------------------------------------
+| Agent API Routes — External Agent Operations
+|--------------------------------------------------------------------------
+|
+| Endpoints for external agents (OpenClaw, n8n, Hermes, Claude Code).
+| Auth via Bearer mng_sk_{key} stored in agent_api_keys table.
+|
+*/
+Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
+
+    Route::post('/users/lookup', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'lookup']);
+    Route::post('/users', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'store']);
+    Route::get('/users/{id}/summary', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'summary']);
+    Route::patch('/users/{id}', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'update']);
+    Route::get('/users/{id}/conversation-history', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'conversationHistory']);
+    Route::get('/users/scan/inactive', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanInactive']);
+    Route::get('/users/scan/incomplete-maids', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanIncompleteMaids']);
+
+    Route::post('/notes', [\App\Http\Controllers\Api\AgentApi\NoteController::class, 'store']);
+    Route::get('/notes/{entityType}/{entityId}', [\App\Http\Controllers\Api\AgentApi\NoteController::class, 'index']);
+
+    Route::post('/messages/send', [\App\Http\Controllers\Api\AgentApi\MessageController::class, 'send']);
+    Route::post('/messages/sms', [\App\Http\Controllers\Api\AgentApi\MessageController::class, 'sms']);
+    Route::post('/messages/call', [\App\Http\Controllers\Api\AgentApi\MessageController::class, 'call']);
+    Route::post('/messages/ambassador', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'ambassadorMessage']);
+
+    Route::post('/conversations/message', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'message']);
+    Route::get('/conversations', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'index']);
+    Route::get('/conversations/{id}', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'show']);
+    Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'messages']);
+    Route::get('/agent/identity/lookup', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'identityLookup']);
+
+    Route::post('/campaigns/send-direct', [\App\Http\Controllers\Api\AgentApi\CampaignController::class, 'sendDirect']);
+    Route::get('/campaigns/check-cooldown/{channelIdentityId}', [\App\Http\Controllers\Api\AgentApi\CampaignController::class, 'checkCooldown']);
+
+    // ── Metrics ──
+    Route::get('/metrics/platform', [\App\Http\Controllers\Api\AgentApi\MetricsController::class, 'platform']);
+    Route::get('/metrics/agent-health', [\App\Http\Controllers\Api\AgentApi\MetricsController::class, 'agentHealth']);
+    Route::get('/metrics/revenue', [\App\Http\Controllers\Api\AgentApi\MetricsController::class, 'revenue']);
+    Route::get('/metrics/funnel', [\App\Http\Controllers\Api\AgentApi\MetricsController::class, 'funnel']);
+
+    // ── Onboarding ──
+    Route::get('/onboarding/{userId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'show']);
+    Route::get('/onboarding/scan/needs-welcome-call', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanNeedsWelcomeCall']);
+    Route::get('/onboarding/scan/quiz-abandoned', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanQuizAbandoned']);
+    Route::get('/onboarding/scan/awaiting-payment', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanAwaitingPayment']);
+    Route::get('/onboarding/scan/maid-profile-incomplete', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanMaidProfileIncomplete']);
+    Route::get('/onboarding/scan/nin-pending', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanNinPending']);
+    Route::get('/onboarding/scan/abandoned', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanAbandoned']);
+    Route::get('/onboarding/touchpoints/{journeyId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'touchpoints']);
+    Route::post('/onboarding/touchpoints', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'createTouchpoint']);
+    Route::patch('/onboarding/{userId}/milestone', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'milestone']);
+    Route::patch('/onboarding/{journeyId}/status', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateStatus']);
+    Route::post('/onboarding/{journeyId}/note', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'addNote']);
+
+    // ── Fulfillment ──
+    Route::post('/fulfillment/open', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'open']);
+    Route::get('/fulfillment/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'show']);
+    Route::get('/fulfillment/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'byEmployer']);
+    Route::get('/fulfillment/scan/all-active', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanAllActive']);
+    Route::get('/fulfillment/scan/stalled', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanStalled']);
+    Route::get('/fulfillment/scan/awaiting-first-day', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanAwaitingFirstDay']);
+    Route::get('/fulfillment/scan/day-one-not-confirmed', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanDayOneNotConfirmed']);
+    Route::get('/fulfillment/scan/ready-to-activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanReadyToActivate']);
+    Route::patch('/fulfillment/{id}/stage', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'updateStage']);
+    Route::post('/fulfillment/{id}/record-salary', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'recordSalary']);
+    Route::post('/fulfillment/{id}/set-start-date', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'setStartDate']);
+    Route::post('/fulfillment/{id}/confirm-arrival', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'confirmArrival']);
+    Route::post('/fulfillment/{id}/note', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'addNote']);
+    Route::post('/fulfillment/{id}/activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'activate']);
+    Route::post('/fulfillment/{id}/fail', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'fail']);
+    Route::get('/fulfillment/events/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'events']);
+
+    // ── Sales ──
+    Route::get('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'pipeline']);
+    Route::get('/sales/scan/hot-leads', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanHotLeads']);
+    Route::get('/sales/scan/warm-leads', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWarmLeads']);
+    Route::get('/sales/scan/payment-pending', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanPaymentPending']);
+    Route::get('/sales/scan/winback-recent', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWinbackRecent']);
+    Route::get('/sales/scan/winback-lapsed', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWinbackLapsed']);
+    Route::get('/sales/scan/upsell-candidates', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanUpsellCandidates']);
+    Route::patch('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'updatePipeline']);
+    Route::post('/sales/pipeline/{userId}/event', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'logEvent']);
+    Route::post('/sales/pipeline/{userId}/action-taken', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'actionTaken']);
+
+    // ── Customer Success ──
+    Route::get('/cs/cases/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'show']);
+    Route::get('/cs/cases/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'byEmployer']);
+    Route::get('/cs/cases/scan/at-risk', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanAtRisk']);
+    Route::get('/cs/cases/scan/appraisal-due', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanAppraisalDue']);
+    Route::get('/cs/cases/scan/no-contact-30d', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanNoContact30d']);
+    Route::patch('/cs/cases/{id}/health', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateHealth']);
+    Route::post('/cs/cases/{id}/appraisal', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'appraisal']);
+    Route::post('/cs/cases/{id}/note', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'addNote']);
+    Route::get('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'listTickets']);
+    Route::get('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'showTicket']);
+    Route::get('/cs/tickets/scan/sla-breached', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanSlaBreached']);
+    Route::get('/cs/tickets/scan/critical-open', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanCriticalOpen']);
+    Route::post('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'createTicket']);
+    Route::patch('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateTicket']);
+    Route::post('/cs/tickets/{id}/resolve', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'resolveTicket']);
+    Route::post('/cs/tickets/{id}/escalate', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'escalateTicket']);
+    Route::get('/cs/exits/scan/recent', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanExitsRecent']);
+    Route::post('/cs/exits', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'createExit']);
+
+    // ── Payments ──
+    Route::get('/payments/status/{userId}', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'status']);
+    Route::get('/payments/generate-link', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generateLink']);
+    Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
+    Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
+    Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
+
+    // ── Matching & Assignments ──
+    Route::post('/matching/run', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'run']);
+    Route::post('/matching/assign', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'assign']);
+    Route::get('/assignments/{id}', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'showAssignment']);
+    Route::patch('/assignments/{id}/status', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'updateAssignmentStatus']);
+    Route::get('/assignments/scan/no-start-date', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'scanNoStartDate']);
+    Route::get('/assignments/scan/expiring-soon', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'scanExpiringSoon']);
+
+    // ── Communications ──
+    Route::get('/communications/thread/{phone}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByPhone']);
+    Route::get('/communications/thread/by-user/{userId}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByUser']);
+    Route::post('/communications/event', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'logEvent']);
+    Route::get('/calls/logs', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'callLogs']);
+    Route::get('/calls/logs/{id}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'showCallLog']);
+    Route::patch('/calls/logs/{id}/outcome', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'updateCallOutcome']);
+
+    // ── Campaigns ──
+    Route::get('/campaigns', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'index']);
+    Route::get('/campaigns/{id}/logs', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'logs']);
+    Route::post('/campaigns/{id}/dispatch', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'dispatch']);
 });
