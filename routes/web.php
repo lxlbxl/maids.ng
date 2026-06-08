@@ -296,6 +296,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/revoke-tokens', [AdminSettingsController::class, 'revokeApiTokens'])->name('settings.revoke-tokens');
         Route::get('/api-docs', [AdminApiDocsController::class, 'index'])->name('api_docs');
         Route::get('/webhooks', [App\Http\Controllers\Admin\AdminWebhookController::class, 'index'])->name('webhooks');
+        Route::get('/api/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'index']);
+        Route::post('/api/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'store']);
+        Route::get('/api/webhooks/statistics', [\App\Http\Controllers\Api\WebhookController::class, 'statistics']);
+        Route::get('/api/webhooks/events', [\App\Http\Controllers\Api\WebhookController::class, 'availableEvents']);
+        Route::get('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'show']);
+        Route::put('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'update']);
+        Route::delete('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy']);
+        Route::post('/api/webhooks/{id}/test', [\App\Http\Controllers\Api\WebhookController::class, 'test']);
+        Route::get('/api/webhooks/{id}/deliveries', [\App\Http\Controllers\Api\WebhookController::class, 'deliveries']);
+        Route::post('/api/deliveries/{deliveryId}/retry', [\App\Http\Controllers\Api\WebhookController::class, 'retryDelivery']);
 
         // Agent Command Center
         Route::get('/agents', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'index'])->name('agents');

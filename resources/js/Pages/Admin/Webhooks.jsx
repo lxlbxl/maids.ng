@@ -28,7 +28,7 @@ export default function Webhooks({ auth, initialWebhooks, statistics }) {
     const fetchWebhooks = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/api/v1/admin/webhooks');
+            const res = await axios.get('/admin/api/webhooks');
             setWebhooks(res.data.data?.data || []);
             if (res.data.data?.statistics) {
                 setStats(res.data.data.statistics);
@@ -43,7 +43,7 @@ export default function Webhooks({ auth, initialWebhooks, statistics }) {
     // Fetch available events
     const fetchAvailableEvents = async () => {
         try {
-            const res = await axios.get('/api/v1/admin/webhooks/events');
+            const res = await axios.get('/admin/api/webhooks/events');
             setAvailableEvents(res.data.data || {});
         } catch (error) {
             console.error('Failed to fetch events:', error);
@@ -84,13 +84,13 @@ export default function Webhooks({ auth, initialWebhooks, statistics }) {
 
         try {
             if (selectedWebhook) {
-                const res = await axios.put(`/api/v1/admin/webhooks/${selectedWebhook.id}`, data);
+                const res = await axios.put(`/admin/api/webhooks/${selectedWebhook.id}`, data);
                 if (res.data.success) {
                     setShowForm(false);
                     fetchWebhooks();
                 }
             } else {
-                const res = await axios.post('/api/v1/admin/webhooks', data);
+                const res = await axios.post('/admin/api/webhooks', data);
                 if (res.data.success) {
                     setShowForm(false);
                     fetchWebhooks();
@@ -107,7 +107,7 @@ export default function Webhooks({ auth, initialWebhooks, statistics }) {
         if (!confirm('Are you sure you want to delete this webhook?')) return;
 
         try {
-            const res = await axios.delete(`/api/v1/admin/webhooks/${id}`);
+            const res = await axios.delete(`/admin/api/webhooks/${id}`);
             if (res.data.success) {
                 fetchWebhooks();
             }
