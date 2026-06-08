@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle.custom' => \App\Http\Middleware\RateLimitMiddleware::class,
             'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
             'mcp.auth' => \App\Http\Middleware\EnsureMcpTokenIsValid::class,
+            'agent.auth' => \App\Http\Middleware\AgentApiAuth::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
