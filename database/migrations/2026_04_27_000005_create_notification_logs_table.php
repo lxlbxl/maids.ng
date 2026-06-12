@@ -32,7 +32,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index(['user_id', 'user_type']);
-            $table->index(['type', 'status']);
+            $table->index(['type', 'delivery_status']);
             $table->index('sent_at');
             $table->index('scheduled_at');
             $table->index(['related_assignment_id']);

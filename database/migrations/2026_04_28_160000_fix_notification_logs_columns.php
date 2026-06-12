@@ -11,11 +11,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // Drop conflicting indexes before renaming
+        // Drop conflicting indexes before renaming (use raw SQL to avoid transaction abort)
         try {
-            Schema::table('notification_logs', function (Blueprint $table) {
-                $table->dropIndex('notification_logs_type_status_index');
-            });
+            DB::statement('DROP INDEX IF EXISTS notification_logs_type_status_index');
+            DB::statement('DROP INDEX IF EXISTS notification_logs_type_delivery_status_index');
         } catch (\Exception $e) {
             // Index may not exist
         }
