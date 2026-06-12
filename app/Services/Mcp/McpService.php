@@ -1,4 +1,3 @@
-// File: app/Services/Mcp/McpService.php
 <?php
 
 namespace App\Services\Mcp;
