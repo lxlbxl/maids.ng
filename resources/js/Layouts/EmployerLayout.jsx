@@ -9,7 +9,7 @@ export default function EmployerLayout({ children, user }) {
     const primaryNavItems = [
         { name: 'Dashboard', href: '/employer/dashboard', icon: '📊' },
         { name: 'Matches', href: '/onboarding', icon: '🔍' },
-        { name: 'Bookings', href: '/employer/bookings', icon: '📅' },
+        { name: 'Engagements', href: '/employer/bookings', icon: '📋' },
         { name: 'Profile', href: '/employer/profile', icon: '👤' },
     ];
 

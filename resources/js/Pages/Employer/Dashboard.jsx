@@ -32,8 +32,8 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                 {[
-                    { label: 'Total Bookings', value: stats.total_bookings || 0 },
-                    { label: 'Active Bookings', value: stats.active_bookings || 0 },
+                    { label: 'Total Engagements', value: stats.total_bookings || 0 },
+                    { label: 'Active Engagements', value: stats.active_bookings || 0 },
                     { label: 'Matches Found', value: preferences?.length || 0 },
                     { label: 'Payments', value: payments?.length || 0 },
                 ].map(s => (
@@ -76,12 +76,21 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => openHireModal(p.maid, p.id)}
-                                        className="bg-teal text-white px-4 py-2 rounded-brand-md text-sm font-medium hover:bg-teal/90 transition-all flex items-center gap-1.5"
-                                    >
-                                        ⚡ Hire Now
-                                    </button>
+                                    {p.maid ? (
+                                        <button
+                                            onClick={() => openHireModal(p.maid, p.id)}
+                                            className="bg-teal text-white px-4 py-2 rounded-brand-md text-sm font-medium hover:bg-teal/90 transition-all flex items-center gap-1.5"
+                                        >
+                                            ⚡ Hire Now
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href="/onboarding"
+                                            className="bg-teal text-white px-4 py-2 rounded-brand-md text-sm font-medium hover:bg-teal/90 transition-all flex items-center gap-1.5"
+                                        >
+                                            🔍 Find Helper
+                                        </Link>
+                                    )}
                                     {p.matching_status === 'matched' && (
                                         <Link href={`/employer/matching/payment/${p.id}`} className="bg-copper text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-copper/80 transition-all text-center flex-shrink-0">
                                             Pay {feeLabel} & Unlock
@@ -106,7 +115,7 @@ export default function EmployerDashboard({ auth, preferences = [], bookings = [
             {/* Recent Bookings */}
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-display text-xl text-espresso">Recent Bookings</h2>
+                    <h2 className="font-display text-xl text-espresso">Recent Engagements</h2>
                     {bookings.length > 0 && <Link href="/employer/bookings" className="text-teal text-sm font-medium hover:text-teal-dark">View All</Link>}
                 </div>
                 {bookings.length > 0 ? (
