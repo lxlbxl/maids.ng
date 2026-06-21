@@ -476,6 +476,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile', [EmployerProfileController::class, 'show'])->name('profile');
         Route::post('/profile', [EmployerProfileController::class, 'update'])->name('profile.update');
         Route::post('/profile/photo', [EmployerProfileController::class, 'updatePhoto'])->name('profile.photo');
+        Route::post('/profile/change-password', [EmployerProfileController::class, 'changePassword'])->name('profile.change-password');
 
         // Onboarding & Matching
         Route::get('/onboarding', function () {

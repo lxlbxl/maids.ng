@@ -190,10 +190,6 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
             const foundMatches = data.matches || [];
             setMatches(foundMatches);
             setPreferenceId(data.preference_id);
-            
-            if (foundMatches.length > 0) {
-                setDirectHiringMaid(foundMatches[0]);
-            }
 
             // Track quiz completion
             sendBeaconEvent('quiz_complete', {
@@ -210,7 +206,6 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                 { id: 3, name: 'Joy Nwosu', role: 'Housekeeper', location: 'Lekki, Lagos', rating: 4.95, rate: 65000, skills: ['deep-cleaning', 'cooking'], match: 81, verified: true, avatar: null, gender: 'female', availability_status: 'available', experience_years: 6 },
             ];
             setMatches(fallbackMatches);
-            setDirectHiringMaid(fallbackMatches[0]);
 
             // Still track completion even with fallback
             sendBeaconEvent('quiz_complete', {
@@ -399,6 +394,7 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
                         <DirectHireModal
                             maid={directHiringMaid}
                             onClose={() => setDirectHiringMaid(null)}
+                            prefillData={answers}
                         />
                     )}
                 </>

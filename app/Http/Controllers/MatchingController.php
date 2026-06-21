@@ -393,6 +393,8 @@ class MatchingController extends Controller
             'contact_phone' => 'nullable|string',
             'contact_email' => 'nullable|string|email',
             'user_id' => 'nullable|integer|exists:users,id',
+            'preference_id' => 'nullable|integer|exists:employer_preferences,id',
+            'preferred_start_date' => 'nullable|date',
         ]);
 
         $employerId = $validated['user_id'] ?? Auth::id();
@@ -444,7 +446,40 @@ class MatchingController extends Controller
         $maid = User::findOrFail($validated['maid_id']);
         $p = $maid->maidProfile;
 
-        // Save preferences directly matched to the maid
+        // If an existing preference_id was supplied (e.g. "Hire Now" from the dashboard),
+        // update it in-place instead of creating a duplicate record.
+        $existingPreference = !empty($validated['preference_id'])
+            ? EmployerPreference::where('id', $validated['preference_id'])
+                ->where('employer_id', $employerId)
+                ->first()
+            : null;
+
+        if ($existingPreference) {
+            $existingPreference->update([
+                'location'         => $validated['location'],
+                'city'             => explode(',', $validated['location'])[0] ?? trim($validated['location']),
+                'state'            => trim(explode(',', $validated['location'])[1] ?? ''),
+                'selected_maid_id' => $maid->id,
+                'matching_status'  => 'matched',
+                'quiz_status'      => 'completed',
+                'quiz_completed_at' => $existingPreference->quiz_completed_at ?? now(),
+            ]);
+
+            UserEvent::recordQuizComplete($employerId, [
+                'preference_id'        => $existingPreference->id,
+                'location'             => $existingPreference->location,
+                'direct_hire_maid_id'  => $maid->id,
+                'resumed_from_dashboard' => true,
+            ]);
+
+            return response()->json([
+                'success'       => true,
+                'preference_id' => $existingPreference->id,
+                'redirect'      => route('employer.matching.payment', $existingPreference->id),
+            ]);
+        }
+
+        // No existing preference — create a fresh one (onboarding / browse flow).
         $preference = EmployerPreference::create([
             'employer_id' => $employerId,
             'help_types' => $validated['help_types'] ?? ($p ? $p->help_types : ['housekeeping']),

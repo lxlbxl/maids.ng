@@ -4,51 +4,66 @@ import { usePage } from '@inertiajs/react';
 /**
  * DirectHireModal — Streamlined hiring flow for a specific maid.
  *
- * Shown when an employer clicks "Hire [Name]" from either the Browse or Profile page.
- *
- * Behaviour differs by auth state:
- *  - Guest: 3-step flow (Your Info → Location → Confirm)
- *  - Logged-in employer: 1-step flow (just confirm location, then proceed)
+ * Shown when an employer clicks "Select & Continue" from the match list,
+ * or "Hire [Name]" from the Browse / Profile page.
  *
  * Props:
- *   maid      — { id, name, avatar, role, location, rate, availability_status, verified }
- *   onClose   — function to close the modal
+ *   maid        — { id, name, avatar, role, location, rate, availability_status, verified }
+ *   onClose     — function to close the modal
+ *   prefillData — optional quiz answers from OnboardingQuiz (contact_name, contact_phone,
+ *                 contact_email, location). When supplied, already-collected fields are
+ *                 skipped so the user never re-enters info they just provided.
  */
-export default function DirectHireModal({ maid, onClose }) {
+export default function DirectHireModal({ maid, onClose, prefillData = null }) {
     const { auth } = usePage().props;
     const user = auth?.user;
     const isLoggedIn = !!user && (user.roles?.includes('employer') || user.roles?.includes('admin'));
 
-    // For guests: 0 = contact info, 1 = location, 2 = confirm
-    // For logged-in: 0 = location, 1 = confirm
+    // Determine what information we already have
+    const hasContactInfo = isLoggedIn || (
+        prefillData &&
+        prefillData.contact_name?.trim().length >= 2 &&
+        prefillData.contact_phone?.trim().length >= 10 &&
+        prefillData.contact_email?.includes('@')
+    );
+
+    // Logged-in users always confirm location (they may be in a different area now).
+    // Guests with prefill location from the quiz skip the location step.
+    const hasLocation = !isLoggedIn && prefillData?.location?.trim().length >= 3;
+
+    // Build the minimal step list based on what we already know
+    const steps = hasContactInfo && hasLocation
+        ? ['Confirm']
+        : hasContactInfo
+            ? ['Location', 'Confirm']
+            : ['Your Info', 'Location', 'Confirm'];
+
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [form, setForm] = useState({
-        contact_name: user?.name || '',
-        contact_phone: user?.phone || '',
-        contact_email: user?.email || '',
-        location: '',
+        contact_name: user?.name || prefillData?.contact_name || '',
+        contact_phone: user?.phone || prefillData?.contact_phone || '',
+        contact_email: user?.email || prefillData?.contact_email || '',
+        location: prefillData?.location || '',
     });
 
     const overlayRef = useRef(null);
     const firstName = maid?.name?.split(' ')[0] || 'this helper';
     const isUnavailable = maid?.availability_status && maid.availability_status !== 'available';
 
-    // Steps for guest vs logged-in
-    const steps = isLoggedIn
-        ? ['Location', 'Confirm']
-        : ['Your Info', 'Location', 'Confirm'];
+    const currentStepLabel = steps[step];
+    const isContactStep = currentStepLabel === 'Your Info';
+    const isLocationStep = currentStepLabel === 'Location';
+    const isConfirmStep = currentStepLabel === 'Confirm';
 
     const csrfToken = () =>
         document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    // Close on overlay click
     const handleOverlayClick = (e) => {
         if (e.target === overlayRef.current) onClose();
     };
 
-    // Close on Escape key
     useEffect(() => {
         const handler = (e) => { if (e.key === 'Escape') onClose(); };
         window.addEventListener('keydown', handler);
@@ -60,21 +75,12 @@ export default function DirectHireModal({ maid, onClose }) {
         setError('');
     };
 
-    // Validate contact info step (guests only)
     const isContactValid = () =>
         form.contact_name.trim().length >= 2 &&
         form.contact_phone.trim().length >= 10 &&
         form.contact_email.includes('@');
 
-    // Validate location step
     const isLocationValid = () => form.location.trim().length >= 3;
-
-    // Step indices for each "page"
-    // Guest: step 0 = contact, step 1 = location, step 2 = confirm
-    // Auth:  step 0 = location, step 1 = confirm
-    const isConfirmStep = step === steps.length - 1;
-    const isLocationStep = isLoggedIn ? step === 0 : step === 1;
-    const isContactStep = !isLoggedIn && step === 0;
 
     const handleNext = () => {
         if (isContactStep && !isContactValid()) {
@@ -133,9 +139,7 @@ export default function DirectHireModal({ maid, onClose }) {
                 return;
             }
 
-            if (!response.ok) {
-                throw new Error('Server error');
-            }
+            if (!response.ok) throw new Error('Server error');
 
             const data = await response.json();
             if (data.redirect) {
@@ -192,6 +196,14 @@ export default function DirectHireModal({ maid, onClose }) {
                             <strong>{firstName}</strong> is currently marked as <strong className="capitalize">{maid.availability_status}</strong>.
                             You can still proceed — our team will contact {firstName} to confirm availability.
                         </span>
+                    </div>
+                )}
+
+                {/* Prefill banner — shown when data came from onboarding quiz */}
+                {prefillData && !isLoggedIn && (
+                    <div className="bg-teal/5 border border-teal/10 rounded-brand-md p-3 mb-4 flex gap-2 items-center text-xs text-teal">
+                        <span className="text-base leading-none flex-shrink-0">✓</span>
+                        <span>Your details from the quiz have been carried over automatically.</span>
                     </div>
                 )}
 
@@ -255,14 +267,16 @@ export default function DirectHireModal({ maid, onClose }) {
                     ) : `Proceed to Payment →`}
                 </button>
 
-                <button onClick={() => setStep(s => s - 1)} className="w-full text-muted text-xs mt-3 hover:text-espresso transition-colors">
-                    ← Edit Details
-                </button>
+                {steps.length > 1 && (
+                    <button onClick={() => setStep(s => s - 1)} className="w-full text-muted text-xs mt-3 hover:text-espresso transition-colors">
+                        ← Edit Details
+                    </button>
+                )}
             </ModalShell>
         );
     }
 
-    // ── Steps 0/1 ───────────────────────────────────────────────────────────────
+    // ── Steps: Your Info / Location ─────────────────────────────────────────────
     return (
         <ModalShell overlayRef={overlayRef} onOverlayClick={handleOverlayClick} onClose={onClose}>
             {/* Header */}
@@ -292,21 +306,23 @@ export default function DirectHireModal({ maid, onClose }) {
                 </div>
 
                 {/* Step Indicator */}
-                <div className="flex items-center gap-2">
-                    {steps.map((label, i) => (
-                        <div key={label} className="flex items-center gap-2 flex-1">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                                i < step ? 'bg-teal text-white' : i === step ? 'bg-teal text-white ring-2 ring-teal/30' : 'bg-gray-100 text-muted'
-                            }`}>
-                                {i < step ? '✓' : i + 1}
+                {steps.length > 1 && (
+                    <div className="flex items-center gap-2">
+                        {steps.map((label, i) => (
+                            <div key={label} className="flex items-center gap-2 flex-1">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                                    i < step ? 'bg-teal text-white' : i === step ? 'bg-teal text-white ring-2 ring-teal/30' : 'bg-gray-100 text-muted'
+                                }`}>
+                                    {i < step ? '✓' : i + 1}
+                                </div>
+                                <span className={`text-[10px] font-mono uppercase tracking-wide hidden sm:block ${i === step ? 'text-teal font-bold' : 'text-muted'}`}>
+                                    {label}
+                                </span>
+                                {i < steps.length - 1 && <div className={`flex-1 h-px ${i < step ? 'bg-teal' : 'bg-gray-100'}`} />}
                             </div>
-                            <span className={`text-[10px] font-mono uppercase tracking-wide hidden sm:block ${i === step ? 'text-teal font-bold' : 'text-muted'}`}>
-                                {label}
-                            </span>
-                            {i < steps.length - 1 && <div className={`flex-1 h-px ${i < step ? 'bg-teal' : 'bg-gray-100'}`} />}
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Unavailability banner */}
@@ -328,7 +344,7 @@ export default function DirectHireModal({ maid, onClose }) {
                 </div>
             )}
 
-            {/* ── Guest Step 0: Contact Info ─────────────────────────────── */}
+            {/* ── Guest Step: Contact Info ──────────────────────────────────────── */}
             {isContactStep && (
                 <div className="space-y-4">
                     <div>
@@ -376,7 +392,7 @@ export default function DirectHireModal({ maid, onClose }) {
                 </div>
             )}
 
-            {/* ── Location Step ──────────────────────────────────────────── */}
+            {/* ── Location Step ─────────────────────────────────────────────────── */}
             {isLocationStep && (
                 <div className="space-y-4">
                     <div>
@@ -397,7 +413,6 @@ export default function DirectHireModal({ maid, onClose }) {
                         />
                     </div>
 
-                    {/* Maid location hint */}
                     <div className="bg-teal/5 border border-teal/10 rounded-brand-md p-3 text-xs text-muted flex items-start gap-2">
                         <span className="text-teal text-base leading-none flex-shrink-0">📍</span>
                         <span>
@@ -454,7 +469,6 @@ function ModalShell({ overlayRef, onOverlayClick, onClose, children }) {
                 className="bg-white rounded-brand-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 relative"
                 style={{ animation: 'slide-up 0.25s ease both' }}
             >
-                {/* Close Button */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-muted transition-colors text-sm"

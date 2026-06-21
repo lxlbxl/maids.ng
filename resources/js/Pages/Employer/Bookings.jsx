@@ -5,26 +5,19 @@ import { useState } from 'react';
 
 export default function Bookings({ auth, bookings }) {
     const [hiringMaid, setHiringMaid] = useState(null);
-    const [hiringBookingId, setHiringBookingId] = useState(null);
 
-    const openHire = (maid, bookingId) => {
-        setHiringMaid(maid);
-        setHiringBookingId(bookingId);
-    };
-    const closeHire = () => {
-        setHiringMaid(null);
-        setHiringBookingId(null);
-    };
+    const openHire = (maid) => setHiringMaid(maid);
+    const closeHire = () => setHiringMaid(null);
 
     return (
         <>
             <EmployerLayout user={auth?.user}>
-                <Head title="My Bookings | Employer" />
-            
+                <Head title="My Engagements | Employer" />
+
             <div className="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 className="font-display text-3xl font-light text-espresso">My Bookings</h1>
-                    <p className="text-muted mt-2">Manage your current and past helper bookings.</p>
+                    <h1 className="font-display text-3xl font-light text-espresso">My Engagements</h1>
+                    <p className="text-muted mt-2">Track and manage your active and past helper engagements.</p>
                 </div>
             </div>
 
@@ -80,7 +73,7 @@ export default function Bookings({ auth, bookings }) {
                                                             availability_status: booking.maid.availability_status || 'available',
                                                             verified: booking.maid.verified,
                                                             rate: booking.agreed_salary,
-                                                        }, booking.id)}
+                                                        })}
                                                         className="bg-teal/10 text-teal text-xs font-medium px-3 py-1.5 rounded-brand-md hover:bg-teal hover:text-white transition-all"
                                                     >
                                                         ⚡ Hire Again
@@ -99,7 +92,7 @@ export default function Bookings({ auth, bookings }) {
                 ) : (
                     <div className="p-10 text-center">
                         <div className="w-16 h-16 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">📅</div>
-                        <h3 className="font-display text-xl text-espresso mb-2">No bookings yet</h3>
+                        <h3 className="font-display text-xl text-espresso mb-2">No engagements yet</h3>
                         <p className="text-muted text-sm mb-5">You haven't hired any helpers yet.</p>
                         <div className="flex items-center justify-center gap-3">
                             <Link href="/onboarding" className="bg-teal text-white px-6 py-2.5 rounded-brand-md text-sm font-medium hover:bg-teal-dark transition-all">
