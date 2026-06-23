@@ -334,6 +334,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifications', [AdminVerificationController::class, 'index'])->name('verifications');
         Route::post('/verifications/{id}/approve', [AdminVerificationController::class, 'approve'])->name('verifications.approve');
         Route::post('/verifications/{id}/reject', [AdminVerificationController::class, 'reject'])->name('verifications.reject');
+        Route::get('/verifications/{id}/payload', [AdminVerificationController::class, 'payload'])->name('verifications.payload');
 
         // Verification Service Transactions (Standalone NIN Verification)
         Route::get('/verification-transactions', [AdminVerificationTransactionController::class, 'index'])->name('verification-transactions');

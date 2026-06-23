@@ -25,9 +25,6 @@ class ProcessAiMatchingQueueCommand extends Command
         $this->matchingService = $matchingService;
     }
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
         $limit = (int) $this->option('limit');
@@ -35,16 +32,15 @@ class ProcessAiMatchingQueueCommand extends Command
         $type = $this->option('type');
         $dryRun = $this->option('dry-run');
 
-        $this->info('🤖 AI Agent: Processing Matching Queue');
+        $this->info('AI Agent: Processing Matching Queue');
         $this->info('=======================================');
         $this->newLine();
 
         if ($dryRun) {
-            $this->warn('⚠️  DRY RUN MODE - No jobs will be processed');
+            $this->warn('DRY RUN MODE - No jobs will be processed');
             $this->newLine();
         }
 
-        // Get pending jobs
         $jobs = $this->getPendingJobs($limit, $priority, $type);
 
         if ($jobs->isEmpty()) {
@@ -57,7 +53,6 @@ class ProcessAiMatchingQueueCommand extends Command
 
         $processed = 0;
         $failed = 0;
-        $skipped = 0;
 
         foreach ($jobs as $job) {
             $this->info("Processing job #{$job->id} [{$job->job_type}]...");
@@ -69,217 +64,135 @@ class ProcessAiMatchingQueueCommand extends Command
             }
 
             try {
-                $result = $this->processJob($job);
-
-                if ($result) {
+                if ($this->processJob($job)) {
                     $processed++;
-                    $this->info("   ✅ Successfully processed");
+                    $this->info("   Successfully processed");
                 } else {
                     $failed++;
-                    $this->error("   ❌ Failed to process");
+                    $this->error("   Failed to process");
                 }
             } catch (\Exception $e) {
                 $failed++;
-                $this->error("   ❌ Error: {$e->getMessage()}");
-
-                // Mark job as failed
-                $job->markAsFailed($e->getMessage());
-
-                Log::error('AI matching queue job failed', [
-                    'job_id' => $job->id,
-                    'error' => $e->getMessage(),
-                ]);
+                $this->error("   Error: {$e->getMessage()}");
+                $job->markFailed($e->getMessage());
+                Log::error('AI matching queue job failed', ['job_id' => $job->id, 'error' => $e->getMessage()]);
             }
 
             $this->newLine();
         }
 
         $this->info('=======================================');
-        $this->info("✅ Processed: {$processed}");
-        $this->info("❌ Failed: {$failed}");
-        $this->info("⏭️  Skipped: {$skipped}");
+        $this->info("Processed: {$processed}");
+        $this->info("Failed: {$failed}");
 
         Log::info('AI Agent: Matching queue processed', [
-            'processed' => $processed,
-            'failed' => $failed,
-            'skipped' => $skipped,
-            'dry_run' => $dryRun,
+            'processed' => $processed, 'failed' => $failed, 'dry_run' => $dryRun,
         ]);
 
         return self::SUCCESS;
     }
 
-    /**
-     * Get pending jobs from the queue.
-     */
     protected function getPendingJobs(int $limit, string $priority, string $type)
     {
         $query = AiMatchingQueue::pending()
-            ->where('scheduled_at', '<=', now())
-            ->where('retry_count', '<', 3)
-            ->orderBy('priority', 'desc')
+            ->where(function ($q) {
+                $q->whereNull('scheduled_at')->orWhere('scheduled_at', '<=', now());
+            })
+            ->where('attempt_count', '<', 3)
+            ->orderBy('priority', 'asc')
             ->orderBy('scheduled_at', 'asc');
 
-        if ($priority !== 'all') {
-            $query->where('priority', $priority);
-        }
-
-        if ($type !== 'all') {
-            $query->where('job_type', $type);
-        }
+        if ($priority !== 'all') $query->where('priority', $priority);
+        if ($type !== 'all') $query->where('job_type', $type);
 
         return $query->limit($limit)->get();
     }
 
-    /**
-     * Process a single job.
-     */
     protected function processJob(AiMatchingQueue $job): bool
     {
-        // Mark as processing
-        $job->markAsProcessing();
+        $job->markProcessing();
+        $context = $job->context_snapshot ?? [];
 
-        $context = $job->context_json ?? [];
-
-        switch ($job->job_type) {
-            case 'guarantee_match':
-                return $this->processGuaranteeMatch($job, $context);
-
-            case 'replacement':
-                return $this->processReplacement($job, $context);
-
-            case 'direct_selection':
-                return $this->processDirectSelection($job, $context);
-
-            case 'auto_match':
-                return $this->processAutoMatch($job, $context);
-
-            default:
-                throw new \Exception("Unknown job type: {$job->job_type}");
-        }
+        return match ($job->job_type) {
+            'guarantee_match' => $this->processGuaranteeMatch($job, $context),
+            'replacement_search', 'replacement' => $this->processReplacement($job, $context),
+            'direct_selection' => $this->processDirectSelection($job, $context),
+            'auto_match' => $this->processAutoMatch($job, $context),
+            default => throw new \Exception("Unknown job type: {$job->job_type}"),
+        };
     }
 
-    /**
-     * Process guarantee match job.
-     */
     protected function processGuaranteeMatch(AiMatchingQueue $job, array $context): bool
     {
-        $employerId = $job->employer_id;
-        $preferencesId = $context['preferences_id'] ?? null;
-
-        if (!$preferencesId) {
-            throw new \Exception('Preferences ID not found in context');
-        }
-
-        $preference = \App\Models\EmployerPreference::find($preferencesId);
-        if (!$preference) {
-            throw new \Exception('Preferences not found');
-        }
+        $preference = \App\Models\EmployerPreference::find($job->preference_id);
+        if (!$preference) { $job->markFailed('Preferences not found'); return false; }
 
         $bestMatch = $this->matchingService->findBestMatch($preference);
+        if (!$bestMatch) { $job->markFailed('No suitable match found', 'no_match'); return false; }
 
-        if (!$bestMatch) {
-            if ($job->retry_count < 2) {
-                $job->scheduleRetry(30);
-            } else {
-                $job->markAsNeedsReview('No suitable match found after multiple attempts');
-            }
-            return false;
-        }
-
-        $assignment = $this->assignmentService->createGuaranteeMatchAssignment(
-            $employerId,
-            $bestMatch['maid_id'],
-            $job->id,
-            $preferencesId,
-            array_merge($context, [
-                'ai_match_score' => $bestMatch['score'] ?? null,
-                'ai_match_reasoning' => $bestMatch['reasoning'] ?? null,
-            ])
+        $assignment = $this->matchingService->processGuaranteeMatchAssignment(
+            $job->employer_id, $bestMatch['maid_id'], $job->id, 'ai',
+            ['monthly_salary' => $preference->budget_max, 'start_date' => now()->addDays(7)->format('Y-m-d')],
+            $job->preference_id
         );
 
-        if ($assignment) {
-            $job->markAsCompleted(['assignment_id' => $assignment->id]);
-            return true;
-        }
-
-        if ($job->retry_count < 2) {
-            $job->scheduleRetry(30);
-        } else {
-            $job->markAsNeedsReview('Failed to create assignment');
-        }
-
+        if ($assignment) { $job->markCompleted(['assignment_id' => $assignment->id]); return true; }
+        $job->markFailed('Failed to create assignment');
         return false;
     }
 
-    /**
-     * Process replacement job.
-     */
     protected function processReplacement(AiMatchingQueue $job, array $context): bool
     {
-        $originalAssignmentId = $context['original_assignment_id'] ?? null;
+        $preference = \App\Models\EmployerPreference::find($job->preference_id);
+        $bestMatch = $preference ? $this->matchingService->findBestMatch($preference) : null;
+        if (!$bestMatch) { $job->markFailed('No replacement found', 'no_match'); return false; }
 
-        if (!$originalAssignmentId) {
-            throw new \Exception('Original assignment ID not found in context');
-        }
+        $assignment = $this->matchingService->processGuaranteeMatchAssignment(
+            $job->employer_id, $bestMatch['maid_id'], $job->id, 'ai',
+            ['monthly_salary' => $preference?->budget_max, 'start_date' => now()->addDays(7)->format('Y-m-d')]
+        );
 
-        $assignment = $this->assignmentService->findReplacementMaid($originalAssignmentId);
-
-        if ($assignment) {
-            $job->markAsCompleted([
-                'assignment_id' => $assignment->id,
-                'original_assignment_id' => $originalAssignmentId,
-            ]);
-            return true;
-        }
-
-        if ($job->retry_count < 2) {
-            $job->scheduleRetry(60);
-        } else {
-            $job->markAsNeedsReview('No suitable replacement found after multiple attempts');
-        }
-
+        if ($assignment) { $job->markCompleted(['assignment_id' => $assignment->id]); return true; }
+        $job->markFailed('Failed to create replacement');
         return false;
     }
 
-    /**
-     * Process direct selection job.
-     */
     protected function processDirectSelection(AiMatchingQueue $job, array $context): bool
     {
-        $employerId = $job->employer_id;
-        $maidId = $context['maid_id'] ?? null;
+        if (!$job->maid_id) { $job->markFailed('Maid ID missing'); return false; }
 
-        if (!$maidId) {
-            throw new \Exception('Maid ID not found in context');
-        }
-
+        $preference = \App\Models\EmployerPreference::find($job->preference_id);
         $assignment = $this->matchingService->processDirectSelection(
-            $employerId,
-            $maidId,
-            $context
+            $job->employer_id, $job->maid_id,
+            ['monthly_salary' => $preference?->budget_max, 'start_date' => now()->addDays(7)->format('Y-m-d')],
+            $job->preference_id
+        );
+
+        if ($assignment) { $job->markCompleted(['assignment_id' => $assignment->id]); return true; }
+        $job->markFailed('Failed direct selection');
+        return false;
+    }
+
+    protected function processAutoMatch(AiMatchingQueue $job, array $context): bool
+    {
+        $preference = \App\Models\EmployerPreference::find($job->preference_id);
+        if (!$preference) { $job->markFailed('Preferences not found'); return false; }
+
+        $bestMatch = $this->matchingService->findBestMatch($preference);
+        if (!$bestMatch) { $job->markFailed('No matching maids found', 'no_match'); return false; }
+
+        $assignment = $this->matchingService->processGuaranteeMatchAssignment(
+            $job->employer_id, $bestMatch['maid_id'], $job->id, 'ai',
+            ['monthly_salary' => $preference->budget_max, 'start_date' => now()->addDays(7)->format('Y-m-d')],
+            $job->preference_id
         );
 
         if ($assignment) {
-            $job->markAsCompleted(['assignment_id' => $assignment->id]);
+            $job->setAiResults($bestMatch['score'] * 100, $bestMatch['reasoning'], ['match_data' => $bestMatch]);
+            $job->markCompleted(['assignment_id' => $assignment->id]);
             return true;
         }
-
-        return false;
-    }
-
-    /**
-     * Process auto match job.
-     */
-    protected function processAutoMatch(AiMatchingQueue $job, array $context): bool
-    {
-        $employerId = $job->employer_id;
-        $preferencesId = $context['preferences_id'] ?? null;
-
-        // This would integrate with ScoutAgent for AI-powered matching
-        // For now, we'll mark it as needing review
-        $job->markAsNeedsReview('Auto-match requires ScoutAgent integration');
-
+        $job->markFailed('Failed auto match');
         return false;
     }
 }

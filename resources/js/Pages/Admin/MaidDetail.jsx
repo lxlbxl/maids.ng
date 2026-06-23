@@ -1,8 +1,31 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 
-export default function MaidDetail({ auth, id, user, profile, reviews, bookings }) {
+const VERIFICATION_LABELS = {
+    verified: { label: 'Verified', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    approved: { label: 'Approved', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    pending: { label: 'Pending', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    review_required: { label: 'Needs Review', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    failed: { label: 'Failed', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+    rejected: { label: 'Rejected', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
+    none: { label: 'No NIN', color: 'bg-gray-500/10 text-gray-300 border-gray-500/20' },
+};
+
+function getVerificationStatus(profile, ninVerification) {
+    if (profile?.is_foreigner) return 'foreigner';
+    if (profile?.nin_verified) return 'verified';
+    const s = ninVerification?.status;
+    if (s === 'approved') return 'approved';
+    if (s === 'rejected') return 'rejected';
+    if (s) return s;
+    if (!profile?.nin) return 'none';
+    return 'pending';
+}
+
+export default function MaidDetail({ auth, id, user, profile, ninVerification, reviews, bookings }) {
     const { post, processing } = useForm();
+    const vStatus = getVerificationStatus(profile, ninVerification);
+    const vInfo = VERIFICATION_LABELS[vStatus] || VERIFICATION_LABELS.none;
 
     const handleStatusUpdate = (status) => {
         post(`/admin/maids/${id}/status?status=${status}`);
@@ -114,30 +137,43 @@ export default function MaidDetail({ auth, id, user, profile, reviews, bookings 
                             <div className="flex items-center justify-between">
                                 <span className="text-white/60 text-sm">NIN Verification</span>
                                 {profile?.is_foreigner ? (
-                                    <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">🌍 Foreigner</span>
-                                ) : profile?.nin_verified ? (
-                                    <span className="bg-success/10 text-success px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✓ Verified</span>
+                                    <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">Foreigner</span>
                                 ) : (
-                                    <span className="bg-danger/10 text-danger px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✗ Pending</span>
+                                    <Link href={`/admin/verifications?search=${encodeURIComponent(user?.name)}`} className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase border cursor-pointer hover:brightness-125 transition-all ${vInfo.color}`}>{vInfo.label}</Link>
                                 )}
                             </div>
                             <div className="flex items-center justify-between">
+                                <span className="text-white/60 text-sm">NIN Number</span>
+                                <span className="text-white text-xs font-mono">{profile?.nin || '—'}</span>
+                            </div>
+                            {ninVerification && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-white/60 text-sm">Confidence</span>
+                                    <span className="text-white text-xs">{ninVerification.confidence_score ?? '—'}%</span>
+                                </div>
+                            )}
+                            <div className="flex items-center justify-between">
                                 <span className="text-white/60 text-sm">Background Check</span>
                                 {profile?.background_verified ? (
-                                    <span className="bg-success/10 text-success px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✓ Clear</span>
+                                    <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">Clear</span>
                                 ) : (
-                                    <span className="bg-danger/10 text-danger px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">✗ Pending</span>
+                                    <span className="bg-white/10 text-white/40 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold">Pending</span>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {profile?.nin_report && (
+                    {(ninVerification?.qoreid_payload || profile?.nin_report) && (
                         <div className="bg-[#121214] border border-white/5 rounded-brand-xl p-6">
-                            <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">NIN Verification Report</h3>
-                            <div className="bg-white/[0.03] border border-white/5 rounded-brand-md p-4 overflow-auto">
+                            <h3 className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/30 mb-4 font-bold">QoreID Data</h3>
+                            <div className="bg-white/[0.03] border border-white/5 rounded-brand-md p-4 overflow-auto max-h-96">
                                 <pre className="text-[10px] font-mono text-teal/80 whitespace-pre-wrap">
-                                    {JSON.stringify(JSON.parse(profile.nin_report), null, 2)}
+                                    {(() => {
+                                        try {
+                                            const data = ninVerification?.qoreid_payload || (profile?.nin_report ? JSON.parse(profile.nin_report).qoreid_response : null);
+                                            return JSON.stringify(data, null, 2);
+                                        } catch { return 'No data'; }
+                                    })()}
                                 </pre>
                             </div>
                         </div>

@@ -87,17 +87,22 @@ class VerificationController extends ApiController
         );
 
         if (!$result['success']) {
+            if (!empty($result['is_name_mismatch'])) {
+                return $this->error(
+                    'Name mismatch. The NIN is valid but the name on record does not match the provided name. Please check your full name and try again.',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    [
+                        'status' => 'mismatch',
+                        'qoreid_data' => $result['data']['qoreid_data'] ?? null,
+                    ]
+                );
+            }
             return $this->error($result['error'] ?? 'Verification failed.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         return $this->success([
-            'status' => $result['data']['status'] ?? 'verified',
-            'confidence' => $result['confidence'] ?? 0,
-            'name_match' => $result['name_match'] ?? false,
-            'name_details' => $result['data']['name_details'] ?? [],
-            'verified_at' => $result['data']['verified_at'] ?? now()->toIso8601String(),
+            'status' => 'verified',
             'qoreid_data' => $result['data']['qoreid_data'] ?? null,
-            'normalized_data' => $result['data']['data'] ?? null,
         ], 'NIN verification successful');
     }
 
@@ -181,9 +186,9 @@ class VerificationController extends ApiController
                 'index' => $index,
                 'nin' => $item['nin'],
                 'success' => $result['success'],
-                'confidence' => $result['confidence'] ?? 0,
-                'name_match' => $result['name_match'] ?? false,
+                'status' => $result['status'] ?? 'failed',
                 'error' => $result['error'] ?? null,
+                'is_name_mismatch' => $result['is_name_mismatch'] ?? false,
                 'data' => $result['data'] ?? null,
             ];
         }

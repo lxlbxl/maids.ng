@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Maid;
 use App\Models\MaidAssignment;
 use App\Models\AiMatchingQueue;
+use App\Models\EmployerPreference;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,8 @@ class MatchingService
     public function processDirectSelection(
         int $employerId,
         int $maidId,
-        array $details = []
+        array $details = [],
+        ?int $preferenceId = null
     ): ?MaidAssignment {
         try {
             DB::beginTransaction();
@@ -54,9 +56,11 @@ class MatchingService
 
             // Create assignment with auto-accepted status
             $assignment = MaidAssignment::create([
+                'preference_id' => $preferenceId,
                 'employer_id' => $employerId,
                 'maid_id' => $maidId,
-                'type' => 'direct_selection',
+                'assigned_by' => $employerId,
+                'assignment_type' => 'direct_selection',
                 'status' => 'accepted', // Auto-accepted
                 'employer_accepted_at' => now(),
                 'maid_notified_at' => now(),
@@ -109,9 +113,10 @@ class MatchingService
     public function processGuaranteeMatchAssignment(
         int $employerId,
         int $maidId,
-        int $assignedBy, // AI agent ID or admin user ID
-        string $assignedByType, // 'ai' or 'admin'
-        array $details = []
+        int $assignedBy,
+        string $assignedByType,
+        array $details = [],
+        ?int $preferenceId = null
     ): ?MaidAssignment {
         try {
             DB::beginTransaction();
@@ -132,9 +137,11 @@ class MatchingService
 
             // Create assignment with pending_acceptance status
             $assignment = MaidAssignment::create([
+                'preference_id' => $preferenceId,
                 'employer_id' => $employerId,
                 'maid_id' => $maidId,
-                'type' => 'guarantee_match',
+                'assigned_by' => $assignedBy,
+                'assignment_type' => 'guarantee_match',
                 'status' => 'pending_acceptance',
                 'assigned_by' => $assignedBy,
                 'assigned_by_type' => $assignedByType,
@@ -407,7 +414,7 @@ class MatchingService
      */
     protected function findMatchingMaids(array $requirements, int $employerId)
     {
-        $query = Maid::where('is_available', true)
+        $query = Maid::whereHas('maidProfile', fn($q) => $q->where('availability_status', 'available'))
             ->where('status', 'active');
 
         // Apply filters from requirements
@@ -465,16 +472,12 @@ class MatchingService
             });
         }
 
-        if ($preference->min_experience) {
-            $query->where('experience_years', '>=', $preference->min_experience);
+        if ($preference->budget_max) {
+            $query->where('expected_salary', '<=', $preference->budget_max);
         }
 
-        if ($preference->max_salary) {
-            $query->where('expected_salary', '<=', $preference->max_salary);
-        }
-
-        if ($preference->schedule_type) {
-            $query->where('schedule_preference', $preference->schedule_type);
+        if ($preference->schedule) {
+            $query->where('schedule_preference', $preference->schedule);
         }
 
         $maid = $query->orderBy('rating', 'desc')
@@ -489,9 +492,10 @@ class MatchingService
             'maid_id' => $maid->user_id,
             'score' => $maid->rating / 5,
             'reasoning' => "Matched based on: " . implode(', ', array_filter([
-                $preference->help_types ? 'help types' : '',
-                $preference->state ? 'location' : '',
-                $preference->min_experience ? 'experience' : '',
+                !empty($preference->help_types) ? 'help types' : null,
+                $preference->state ? 'location' : null,
+                $preference->schedule ? 'schedule' : null,
+                $preference->budget_max ? 'budget' : null,
             ])),
         ];
     }
@@ -502,7 +506,7 @@ class MatchingService
     protected function isMaidAvailable(int $maidId): bool
     {
         $maid = Maid::find($maidId);
-        return $maid && $maid->is_available && $maid->status === 'active';
+        return $maid && $maid->maidProfile && $maid->maidProfile->availability_status === 'available';
     }
 
     /**
@@ -510,9 +514,8 @@ class MatchingService
      */
     protected function markMaidUnavailable(int $maidId, int $assignmentId): void
     {
-        Maid::where('id', $maidId)->update([
-            'is_available' => false,
-            'current_assignment_id' => $assignmentId,
+        \App\Models\MaidProfile::where('user_id', $maidId)->update([
+            'availability_status' => 'unavailable',
             'updated_at' => now(),
         ]);
     }
@@ -522,9 +525,8 @@ class MatchingService
      */
     public function markMaidAvailable(int $maidId): void
     {
-        Maid::where('id', $maidId)->update([
-            'is_available' => true,
-            'current_assignment_id' => null,
+        \App\Models\MaidProfile::where('user_id', $maidId)->update([
+            'availability_status' => 'available',
             'updated_at' => now(),
         ]);
     }
@@ -561,13 +563,13 @@ class MatchingService
      */
     protected function notifyMaidOfAssignment(MaidAssignment $assignment, Maid $maid, User $employer): void
     {
-        $message = "Hello {$maid->first_name}, you have been assigned to {$employer->first_name} {$employer->last_name}. ";
+        $message = "Hello {$maid->first_name}, you have been assigned to {$employer->name}. ";
         $message .= "Please contact them at {$employer->phone} to arrange your start date. ";
         $message .= "Assignment starts on " . Carbon::parse($assignment->start_date)->format('F j, Y') . ". ";
         $message .= "- Maids.ng";
 
         $this->notificationService->sendSms(
-            $maid->user,
+            $maid,
             $message,
             [
                 'type' => 'assignment_confirmed',
@@ -580,7 +582,7 @@ class MatchingService
 
     protected function notifyEmployerOfAutoAcceptance(MaidAssignment $assignment, User $employer, Maid $maid): void
     {
-        $message = "Hi {$employer->first_name}, you have successfully selected {$maid->first_name} {$maid->last_name}. ";
+        $message = "Hi {$employer->name}, you have successfully selected {$maid->first_name} {$maid->last_name}. ";
         $message .= "She has been notified and will contact you shortly. ";
         $message .= "Assignment starts on " . Carbon::parse($assignment->start_date)->format('F j, Y') . ". ";
         $message .= "- Maids.ng";
@@ -601,7 +603,7 @@ class MatchingService
     {
         $deadline = Carbon::parse($assignment->employer_response_deadline)->format('F j, Y \a\t g:i A');
 
-        $message = "Hi {$employer->first_name}, we have assigned {$maid->first_name} {$maid->last_name} to you. ";
+        $message = "Hi {$employer->name}, we have assigned {$maid->first_name} {$maid->last_name} to you. ";
         $message .= "Please accept or reject this match within 48 hours (by {$deadline}). ";
         $message .= "Login to your dashboard to respond. - Maids.ng";
 
@@ -620,11 +622,11 @@ class MatchingService
 
     protected function notifyMaidOfPotentialAssignment(MaidAssignment $assignment, Maid $maid, User $employer): void
     {
-        $message = "Hello {$maid->first_name}, you have been proposed for a potential assignment with {$employer->first_name} {$employer->last_name}. ";
+        $message = "Hello {$maid->first_name}, you have been proposed for a potential assignment with {$employer->name}. ";
         $message .= "We are waiting for their confirmation. You will be notified once confirmed. - Maids.ng";
 
         $this->notificationService->sendSms(
-            $maid->user,
+            $maid,
             $message,
             [
                 'type' => 'potential_assignment',
@@ -637,7 +639,7 @@ class MatchingService
 
     protected function notifyEmployerOfAcceptanceConfirmation(MaidAssignment $assignment, User $employer, Maid $maid): void
     {
-        $message = "Hi {$employer->first_name}, you have accepted {$maid->first_name} {$maid->last_name}. ";
+        $message = "Hi {$employer->name}, you have accepted {$maid->first_name} {$maid->last_name}. ";
         $message .= "She has been notified and will contact you shortly. ";
         $message .= "Assignment starts on " . Carbon::parse($assignment->start_date)->format('F j, Y') . ". ";
         $message .= "- Maids.ng";
@@ -656,7 +658,7 @@ class MatchingService
 
     protected function notifyEmployerOfRejectionConfirmation(MaidAssignment $assignment, User $employer, float $refundAmount): void
     {
-        $message = "Hi {$employer->first_name}, you have rejected the assigned maid. ";
+        $message = "Hi {$employer->name}, you have rejected the assigned maid. ";
 
         if ($refundAmount > 0) {
             $message .= "A refund of N" . number_format($refundAmount, 2) . " has been credited to your wallet. ";
@@ -684,7 +686,7 @@ class MatchingService
         }
 
         $count = $matches->count();
-        $message = "Hi {$employer->first_name}, we found {$count} replacement maid(s) matching your requirements. ";
+        $message = "Hi {$employer->name}, we found {$count} replacement maid(s) matching your requirements. ";
         $message .= "Please login to your dashboard to view and select. - Maids.ng";
 
         $this->notificationService->sendSms(

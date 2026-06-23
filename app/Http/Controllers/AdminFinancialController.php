@@ -1,14 +1,20 @@
 <?php
 namespace App\Http\Controllers;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class AdminFinancialController extends Controller
 {
-    public function payments()
+    public function payments(Request $request)
     {
+        $sort = $request->sort ?? 'newest';
+        $sortDir = $sort === 'oldest' ? 'asc' : 'desc';
+
         $payments = \App\Models\MatchingFeePayment::with('employer')
-            ->latest()
-            ->paginate(20);
+            ->when($request->search, fn($q, $s) => $q->whereHas('employer', fn($q2) => $q2->where('name', 'like', "%{$s}%")))
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->orderBy('created_at', $sortDir)
+            ->paginate(20)->withQueryString();
 
         $totalRevenue = \App\Models\MatchingFeePayment::where('status', 'paid')->sum('amount');
         $escrowTotal = \App\Models\Booking::where('status', 'active')->sum('agreed_salary');
@@ -20,6 +26,7 @@ class AdminFinancialController extends Controller
 
         return Inertia::render('Admin/Financials', [
             'payments' => $payments,
+            'filters' => $request->only(['search', 'status', 'sort']),
             'stats' => [
                 'total_revenue' => $totalRevenue,
                 'escrow_balance' => $escrowTotal,

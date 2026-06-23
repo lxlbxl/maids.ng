@@ -15,11 +15,13 @@ class NinVerification extends Model
         'review_notes',
         'submitted_at',
         'reviewed_at',
+        'qoreid_payload',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'reviewed_at' => 'datetime',
+        'qoreid_payload' => 'array',
     ];
 
     public function user()

@@ -263,93 +263,39 @@ class QoreIDService
      */
     public function healthCheck(): array
     {
-        return Cache::remember('qoreid_health_check', now()->addMinutes(15), function () {
+        $authResult = Cache::remember('qoreid_health_check', now()->addHours(6), function () {
             if (empty($this->clientId) || empty($this->clientSecret)) {
-                return [
-                    'healthy' => false,
-                    'product_available' => false,
-                    'error' => 'QoreID Client ID or Secret is missing.',
-                    'status_code' => 0,
-                ];
+                return ['healthy' => false, 'error' => 'QoreID Client ID or Secret is missing.', 'status_code' => 0];
             }
-
             $token = $this->getAccessToken();
             if (empty($token)) {
-                return [
-                    'healthy' => false,
-                    'product_available' => false,
-                    'error' => 'QoreID authentication failed. Unable to obtain access token.',
-                    'status_code' => 401,
-                ];
+                return ['healthy' => false, 'error' => 'QoreID authentication failed.', 'status_code' => 401];
             }
-
-            $testNin = '00000000000';
-            $endpoint = "{$this->baseUrl}/ng/identities/nin-premium/" . urlencode($testNin);
-
-            try {
-                $response = $this->client->post($endpoint, [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $token,
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ],
-                    'json' => [
-                        'firstname' => 'TEST',
-                        'lastname' => 'USER',
-                    ],
-                ]);
-
-                $statusCode = $response->getStatusCode();
-
-                if ($statusCode === 200) {
-                    return [
-                        'healthy' => true,
-                        'product_available' => true,
-                        'error' => null,
-                        'status_code' => 200,
-                    ];
-                }
-
-                return [
-                    'healthy' => true,
-                    'product_available' => false,
-                    'error' => "QoreID returned unexpected status: {$statusCode}",
-                    'status_code' => $statusCode,
-                ];
-
-            } catch (\GuzzleHttp\Exception\GuzzleException $e) {
-                $statusCode = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
-
-                // QoreID returns 500 "Unknown Error from provider" for non-existent NINs
-                // This actually means: auth works, product is available, API is reachable
-                $productAvailable = match ($statusCode) {
-                    401 => false,
-                    402 => true,  // Auth works, just no credits
-                    403 => false, // No access to product
-                    404 => false, // Product not available for this account
-                    429 => true,  // Rate limited, but product exists
-                    500 => true,  // Provider error for dummy NIN = product is available
-                    default => null,
-                };
-
-                // Consider the service healthy if we got a meaningful response
-                $isHealthy = in_array($statusCode, [402, 429, 500]);
-
-                return [
-                    'healthy' => $isHealthy,
-                    'product_available' => $productAvailable,
-                    'error' => $isHealthy ? null : "QoreID NIN Premium endpoint returned HTTP {$statusCode}.",
-                    'status_code' => $statusCode,
-                ];
-            } catch (\Exception $e) {
-                return [
-                    'healthy' => false,
-                    'product_available' => null,
-                    'error' => 'Health check failed: ' . $e->getMessage(),
-                    'status_code' => 500,
-                ];
-            }
+            return ['healthy' => true, 'error' => null, 'status_code' => 200];
         });
+        $productAvailable = Cache::remember('qoreid_product_available', now()->addDay(), function () {
+            return $this->checkProductAvailability();
+        });
+        return ['healthy' => $authResult['healthy'], 'product_available' => $productAvailable, 'error' => $authResult['error'] ?? null, 'status_code' => $authResult['status_code'] ?? 0];
+    }
+
+    private function checkProductAvailability(): bool
+    {
+        $token = $this->getAccessToken();
+        if (empty($token)) return false;
+        $endpoint = "{$this->baseUrl}/ng/identities/nin-premium/00000000000";
+        try {
+            $this->client->post($endpoint, [
+                'headers' => ['Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json', 'Accept' => 'application/json'],
+                'json' => ['firstname' => 'TEST', 'lastname' => 'USER'],
+            ]);
+            return true;
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
+            $sc = $e->hasResponse() ? $e->getResponse()->getStatusCode() : 0;
+            return in_array($sc, [404, 500, 402, 429]);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -361,21 +307,27 @@ class QoreIDService
     }
 
     /**
-     * Compare provided name with QoreID response and calculate confidence.
-     *
-     * @param string $providedFirst
-     * @param string $providedLast
-     * @param array  $qoreIdData   The decoded QoreID response
-     * @return array               ['match' => bool, 'confidence' => int, 'details' => array]
+     * Compare provided names against QoreID response.
+     * Handles both flat and nested response structures.
+     * Returns simple match/mismatch.
      */
     public function compareNames(string $providedFirst, string $providedLast, array $qoreIdData): array
     {
-        // Extract nested identity data if present
-        $identityData = $qoreIdData['nin'] ?? $qoreIdData['nin_premium'] ?? $qoreIdData['data'] ?? $qoreIdData;
+        // QoreID nests data under 'nin' key in the response
+        $ninData = $qoreIdData['nin'] ?? [];
 
-        $apiFirst = $identityData['firstname'] ?? $identityData['firstName'] ?? '';
-        $apiLast = $identityData['lastname'] ?? $identityData['lastName'] ?? '';
-        $apiMiddle = $identityData['middlename'] ?? $identityData['middleName'] ?? '';
+        $apiFirst = $ninData['firstname']
+            ?? $qoreIdData['firstname']
+            ?? $qoreIdData['firstName']
+            ?? '';
+        $apiLast = $ninData['lastname']
+            ?? $qoreIdData['lastname']
+            ?? $qoreIdData['lastName']
+            ?? '';
+        $apiMiddle = $ninData['middlename']
+            ?? $qoreIdData['middlename']
+            ?? $qoreIdData['middleName']
+            ?? '';
 
         $providedFirst = trim(mb_strtoupper($providedFirst));
         $providedLast = trim(mb_strtoupper($providedLast));
@@ -383,49 +335,13 @@ class QoreIDService
         $apiLast = trim(mb_strtoupper($apiLast));
         $apiMiddle = trim(mb_strtoupper($apiMiddle));
 
-        $firstMatch = ($providedFirst === $apiFirst);
-        $lastMatch = ($providedLast === $apiLast);
-
-        // Check if provided first name matches either first or middle name from API
-        $firstOrMiddleMatch = false;
-        if (!empty($apiMiddle)) {
-            $firstOrMiddleMatch = ($providedFirst === $apiFirst) || ($providedFirst === $apiMiddle);
-        }
-
-        $confidence = 0;
-        $details = [];
-
-        if ($firstMatch && $lastMatch) {
-            $confidence = 100;
-            $details = ['first_name' => 'exact', 'last_name' => 'exact'];
-        } elseif ($firstOrMiddleMatch && $lastMatch) {
-            $confidence = 95;
-            $details = ['first_name' => 'matched_first_or_middle', 'last_name' => 'exact'];
-        } else {
-            // Partial match scoring
-            $firstSimilarity = 0;
-            $lastSimilarity = 0;
-
-            if (!empty($apiFirst) && !empty($providedFirst)) {
-                similar_text($providedFirst, $apiFirst, $firstSimilarity);
-            }
-            if (!empty($apiLast) && !empty($providedLast)) {
-                similar_text($providedLast, $apiLast, $lastSimilarity);
-            }
-
-            $confidence = (int) round(($firstSimilarity + $lastSimilarity) / 2);
-            $details = [
-                'first_name_similarity' => round($firstSimilarity, 1),
-                'last_name_similarity' => round($lastSimilarity, 1),
-            ];
-        }
+        $match = ($providedFirst === $apiFirst && $providedLast === $apiLast)
+            || (!empty($apiMiddle) && $providedFirst === $apiMiddle && $providedLast === $apiLast);
 
         return [
-            'match' => $confidence >= 80,
-            'confidence' => $confidence,
-            'details' => $details,
-            'api_first' => $identityData['firstname'] ?? $identityData['firstName'] ?? '',
-            'api_last' => $identityData['lastname'] ?? $identityData['lastName'] ?? '',
+            'match' => $match,
+            'api_first' => $apiFirst,
+            'api_last' => $apiLast,
         ];
     }
 }
