@@ -94,6 +94,13 @@ class AdminUserController extends Controller
         return back()->with('success', "Role for [{$user->name}] updated to {$request->role}."); 
     }
 
+    public function update(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        $user->update($request->only(['name', 'email', 'phone']));
+        return back()->with('success', "User [{$user->name}] updated.");
+    }
+
     public function destroy($id) 
     { 
         \App\Models\User::findOrFail($id)->delete();

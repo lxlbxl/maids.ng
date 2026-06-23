@@ -14,7 +14,7 @@ class MaidSearchController extends Controller
         $query = User::role('maid')
             ->where('status', 'active')
             ->with('maidProfile')
-            ->whereHas('maidProfile');
+            ->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true));
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -68,7 +68,7 @@ class MaidSearchController extends Controller
 
     public function search(Request $request)
     {
-        $query = User::role('maid')->where('status', 'active')->with('maidProfile')->whereHas('maidProfile');
+        $query = User::role('maid')->where('status', 'active')->with('maidProfile')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true));
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -95,7 +95,7 @@ class MaidSearchController extends Controller
 
     public function show($id)
     {
-        $maid = User::role('maid')->with('maidProfile', 'reviewsReceived.employer')->findOrFail($id);
+        $maid = User::role('maid')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true))->with('maidProfile', 'reviewsReceived.employer')->findOrFail($id);
         $p = $maid->maidProfile;
 
         return Inertia::render('Maids/Show', [
@@ -152,6 +152,7 @@ class MaidSearchController extends Controller
     public function locations()
     {
         $locations = MaidProfile::whereNotNull('location')
+            ->where('nin_verified', true)
             ->distinct()
             ->pluck('location');
 
@@ -160,7 +161,7 @@ class MaidSearchController extends Controller
 
     public function showJson($id)
     {
-        $maid = User::role('maid')->with('maidProfile')->findOrFail($id);
+        $maid = User::role('maid')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true))->with('maidProfile')->findOrFail($id);
         $p = $maid->maidProfile;
         return response()->json([
             'id' => $maid->id,

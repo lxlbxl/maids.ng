@@ -81,6 +81,36 @@ class AdminMaidController extends Controller
         ]); 
     }
 
+    public function update(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        // Combine name parts for the users table
+        $firstName = $request->first_name ?? '';
+        $lastName = $request->last_name ?? '';
+        $middleName = $request->middle_name ?? '';
+        $fullName = trim("{$firstName} {$middleName} {$lastName}");
+        $user->update(['name' => $fullName ?: $user->name, 'phone' => $request->phone, 'location' => $request->location]);
+
+        // Store separately on profile
+        if ($user->maidProfile) {
+            $user->maidProfile->update([
+                'first_name' => $firstName ?: $user->maidProfile->first_name,
+                'middle_name' => $middleName,
+                'last_name' => $lastName ?: $user->maidProfile->last_name,
+                'nin' => $request->nin ?? $user->maidProfile->nin,
+            ]);
+        }
+        return back()->with('success', "Helper [{$user->name}] updated.");
+    }
+
+    public function destroy($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        $user->delete();
+        return back()->with('success', 'Helper removed from system.');
+    }
+
     public function updateStatus($id, Request $request) 
     { 
         $user = \App\Models\User::findOrFail($id);
