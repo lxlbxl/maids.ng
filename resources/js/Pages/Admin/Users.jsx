@@ -4,6 +4,9 @@ import { useState } from 'react';
 
 export default function Users({ auth, users, stats, roles, filters = {} }) {
     const { post, delete: destroy, processing } = useForm();
+    const [editUser, setEditUser] = useState(null);
+    const { data, setData, put, processing: editing } = useForm({});
+
     const [filterState, setFilterState] = useState({
         search: filters.search || '',
         status: filters.status || '',
@@ -21,11 +24,21 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
     };
 
     const handleStatusUpdate = (id, currentStatus) => {
-        const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
-        post(route('admin.users.status', { id, status: newStatus }));
+        post(route('admin.users.status', { id, status: currentStatus === 'active' ? 'suspended' : 'active' }));
     };
     const handleRoleUpdate = (id, role) => { post(route('admin.users.role', { id, role })); };
     const handleDelete = (id) => { if (confirm('Permanently remove this user?')) destroy(route('admin.users.destroy', id)); };
+
+    const openEdit = (user) => {
+        setEditUser(user);
+        setData({ name: user.name, email: user.email, phone: user.phone || '' });
+    };
+    const handleUpdate = (e) => {
+        e.preventDefault();
+        put(route('admin.users.update', editUser.id), {
+            onSuccess: () => setEditUser(null),
+        });
+    };
 
     return (
         <AdminLayout>
@@ -57,6 +70,24 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
                 </div>
             </div>
 
+            {/* Edit Modal */}
+            {editUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEditUser(null)}>
+                    <div className="bg-[#121214] border border-white/10 rounded-brand-xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="font-display text-lg text-white">Edit User</h2>
+                            <button onClick={() => setEditUser(null)} className="text-white/20 hover:text-white">✕</button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="space-y-4">
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Name</label><input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" required /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Email</label><input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Phone</label><input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <button type="submit" disabled={editing} className="w-full py-3 bg-teal text-black rounded-brand-md text-xs font-bold uppercase hover:brightness-110 transition-all">{editing ? 'Saving...' : 'Save Changes'}</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-[#121214] border border-white/5 rounded-brand-xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm border-collapse">
@@ -71,7 +102,7 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {users?.data?.length > 0 ? users.data.map(user => (
-                                <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
+                                <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-[#1c1c1e] text-sm flex items-center justify-center border border-white/5 font-bold text-white/60">{user.name?.charAt(0)}</div>
@@ -88,10 +119,11 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
                                     </td>
                                     <td className="px-6 py-4 text-white/40 text-xs">{user.phone || '—'}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <Link href={`/admin/users/${user.id}`} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded border border-white/5 text-white/40 hover:text-white text-xs">View</Link>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <Link href={`/admin/users/${user.id}`} className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded border border-white/5 text-white/40 hover:text-white text-xs">View</Link>
+                                            <button onClick={() => openEdit(user)} className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 rounded border border-amber-500/20 text-amber-400 text-xs font-bold transition-all">Edit</button>
                                             {roles?.map(role => (
-                                                <button key={role.id} onClick={() => handleRoleUpdate(user.id, role.name)} className="px-2 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 rounded border border-amber-500/20 text-amber-400 text-xs font-bold transition-all">{role.name}</button>
+                                                <button key={role.id} onClick={() => handleRoleUpdate(user.id, role.name)} className="px-2 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 rounded border border-emerald-500/20 text-emerald-400 text-xs font-bold transition-all">{role.name}</button>
                                             ))}
                                             <button onClick={() => handleDelete(user.id)} className="px-2 py-1.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 text-red-400 text-xs font-bold">Del</button>
                                         </div>

@@ -58,6 +58,19 @@ export default function MaidDetail({ auth, id, user, profile, ninVerification, r
                                 {[
                                     { label: 'Email', value: user?.email },
                                     { label: 'Phone', value: user?.phone || '—' },
+                                    { label: 'Gender', value: profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : '—' },
+                                    { label: 'Age', value: (() => {
+                                        try {
+                                            const dob = ninVerification?.qoreid_payload?.nin?.birthdate;
+                                            if (dob) {
+                                                const parts = dob.split('-');
+                                                const bday = new Date(parts[2], parts[1] - 1, parts[0]);
+                                                const diff = Date.now() - bday.getTime();
+                                                return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000)) + ' yrs';
+                                            }
+                                        } catch {}
+                                        return '—';
+                                    })() },
                                     { label: 'Location', value: profile?.location || user?.location || '—' },
                                     { label: 'Type', value: profile?.maid_type || 'Helper' },
                                     { label: 'Experience', value: `${profile?.experience_years || 0} years` },

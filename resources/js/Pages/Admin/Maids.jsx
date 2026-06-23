@@ -20,6 +20,7 @@ function getVerificationStatus(maid) {
 
 export default function Maids({ auth, maids, stats, filters = {} }) {
     const { post, processing } = useForm();
+    const [editMaid, setEditMaid] = useState(null);
     const [filterState, setFilterState] = useState({
         search: filters.search || '',
         status: filters.status || '',
@@ -40,6 +41,29 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
 
     const handleStatusToggle = (id, currentStatus) => {
         post(`/admin/maids/${id}/status?status=${currentStatus === 'active' ? 'suspended' : 'active'}`);
+    };
+
+    const [editData, setEditData] = useState({ first_name: '', middle_name: '', last_name: '', phone: '', location: '', nin: '' });
+    const [saving, setSaving] = useState(false);
+
+    const openEdit = (maid) => {
+        setEditMaid(maid);
+        setEditData({
+            first_name: maid.maid_profile?.first_name || maid.name?.split(' ')[0] || '',
+            middle_name: maid.maid_profile?.middle_name || '',
+            last_name: maid.maid_profile?.last_name || maid.name?.split(' ').slice(1).join(' ') || '',
+            phone: maid.phone || '',
+            location: maid.maid_profile?.location || maid.location || '',
+            nin: maid.maid_profile?.nin || '',
+        });
+    };
+    const handleUpdate = (e) => {
+        e.preventDefault();
+        setSaving(true);
+        router.put(`/admin/maids/${editMaid.id}`, editData, { onSuccess: () => { setEditMaid(null); setSaving(false); }, onError: () => setSaving(false) });
+    };
+    const handleDelete = (id) => {
+        if (confirm('Permanently remove this helper?')) router.delete(`/admin/maids/${id}`);
     };
 
     return (
@@ -109,7 +133,11 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
                                         <button onClick={() => handleStatusToggle(maid.id, maid.status)} disabled={processing} className={`px-3 py-1 rounded-full text-[9px] font-mono font-bold uppercase cursor-pointer transition-all ${maid.status === 'active' ? 'bg-teal/10 text-teal hover:bg-teal/20' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}>{maid.status}</button>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link href={`/admin/maids/${maid.id}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded border border-white/5 text-white/40 hover:text-white text-xs transition-all opacity-0 group-hover:opacity-100">View →</Link>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <Link href={`/admin/maids/${maid.id}`} className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 rounded border border-white/5 text-white/40 hover:text-white text-xs">View</Link>
+                                            <button onClick={() => openEdit(maid)} className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 rounded border border-amber-500/20 text-amber-400 text-xs font-bold">Edit</button>
+                                            <button onClick={() => handleDelete(maid.id)} className="px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 rounded border border-red-500/20 text-red-400 text-xs font-bold">Del</button>
+                                        </div>
                                     </td>
                                 </tr>
                             )})}
@@ -122,6 +150,28 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
                 <div className="mt-8 flex justify-center gap-1">{maids.links.map((link, k) => (
                     <Link key={k} href={link.url || '#'} className={`px-4 py-2 font-mono text-[10px] uppercase tracking-widest rounded-brand-md border transition-all ${link.active ? 'bg-teal text-white border-teal' : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'} ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`} dangerouslySetInnerHTML={{ __html: link.label }} />
                 ))}</div>
+            )}
+            {/* Edit Modal */}
+            {editMaid && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setEditMaid(null)}>
+                    <div className="bg-[#121214] border border-white/10 rounded-brand-xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="font-display text-lg text-white">Edit Helper</h2>
+                            <button onClick={() => setEditMaid(null)} className="text-white/20 hover:text-white">✕</button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="space-y-4">
+                            <div className="grid grid-cols-3 gap-3">
+                                <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">First Name</label><input type="text" value={editData.first_name} onChange={e => setEditData(s => ({ ...s, first_name: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" required /></div>
+                                <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Middle <span className="text-white/20">(opt)</span></label><input type="text" value={editData.middle_name} onChange={e => setEditData(s => ({ ...s, middle_name: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                                <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Last Name</label><input type="text" value={editData.last_name} onChange={e => setEditData(s => ({ ...s, last_name: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" required /></div>
+                            </div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Phone</label><input type="text" value={editData.phone} onChange={e => setEditData(s => ({ ...s, phone: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Location</label><input type="text" value={editData.location} onChange={e => setEditData(s => ({ ...s, location: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">NIN</label><input type="text" value={editData.nin} onChange={e => setEditData(s => ({ ...s, nin: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <button type="submit" disabled={saving} className="w-full py-3 bg-teal text-black rounded-brand-md text-xs font-bold uppercase hover:brightness-110 transition-all">{saving ? 'Saving...' : 'Save Changes'}</button>
+                        </form>
+                    </div>
+                </div>
             )}
         </AdminLayout>
     );

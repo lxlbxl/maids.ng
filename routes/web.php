@@ -257,11 +257,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show');
         Route::post('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
         Route::post('/users/{id}/role', [AdminUserController::class, 'assignRole'])->name('users.role');
+        Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update');
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');
         Route::get('/maids', [AdminMaidController::class, 'index'])->name('maids');
         Route::get('/staff', [AdminUserController::class, 'staff'])->name('staff');
         Route::get('/maids/{id}', [AdminMaidController::class, 'show'])->name('maids.show');
         Route::post('/maids/{id}/status', [AdminMaidController::class, 'updateStatus'])->name('maids.status');
+        Route::put('/maids/{id}', [AdminMaidController::class, 'update'])->name('maids.update');
+        Route::delete('/maids/{id}', [AdminMaidController::class, 'destroy'])->name('maids.destroy');
         Route::get('/employers', [AdminUserController::class, 'employers'])->name('employers');
 
         // Operations
