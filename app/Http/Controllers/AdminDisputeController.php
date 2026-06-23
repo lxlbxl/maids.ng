@@ -5,11 +5,25 @@ use Illuminate\Http\Request;
 
 class AdminDisputeController extends Controller
 {
-    public function index() 
+    public function index(Request $request) 
     { 
+        $sort = $request->sort ?? 'newest';
+        $sortField = match ($sort) {
+            'priority' => 'priority',
+            'status' => 'status',
+            default => 'created_at',
+        };
+        $sortDir = $sort === 'priority_asc' ? 'asc' : 'desc';
+
         $disputes = \App\Models\Dispute::with(['user', 'booking.employer', 'booking.maid'])
-            ->latest()
-            ->paginate(10);
+            ->when($request->search, fn($q, $s) => $q->where(function($q) use ($s) {
+                $q->whereHas('user', fn($q2) => $q2->where('name', 'like', "%{$s}%"))
+                  ->orWhere('reason', 'like', "%{$s}%");
+            }))
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->search, fn($q, $s) => $q->where('reason', 'like', "%{$s}%")->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%{$s}%")))
+            ->orderBy($sortField, $sortDir)
+            ->paginate(10)->withQueryString();
 
         $stats = [
             'total' => \App\Models\Dispute::count(),
@@ -21,6 +35,7 @@ class AdminDisputeController extends Controller
         return Inertia::render('Admin/Disputes', [
             'disputes' => $disputes,
             'stats' => $stats,
+            'filters' => $request->only(['search', 'status', 'sort']),
         ]); 
     }
 

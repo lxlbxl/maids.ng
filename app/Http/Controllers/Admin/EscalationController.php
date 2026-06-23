@@ -12,12 +12,20 @@ class EscalationController extends Controller
     /**
      * Display the list of escalated items queued for manual review.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $sort = $request->sort ?? 'newest';
+        $sortDir = $sort === 'oldest' ? 'asc' : 'desc';
+
+        $escalations = AgentActivityLog::where('decision', 'queued_for_review')
+            ->when($request->search, fn($q, $s) => $q->where('reasoning', 'like', "%{$s}%"))
+            ->when($request->agent, fn($q, $a) => $q->where('agent_name', $a))
+            ->orderBy('created_at', $sortDir)
+            ->paginate(15)->withQueryString();
+
         return Inertia::render('Admin/Escalations', [
-            'escalations' => AgentActivityLog::where('decision', 'queued_for_review')
-                ->latest()
-                ->paginate(15)
+            'escalations' => $escalations,
+            'filters' => $request->only(['search', 'agent', 'sort']),
         ]);
     }
 

@@ -61,6 +61,9 @@ class RegisterController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:users',
             'phone' => 'required|string|max:20|unique:users',
             'password' => 'required|string|min:8|confirmed',
@@ -104,6 +107,9 @@ class RegisterController extends Controller
 
         // Create profile
         $user->maidProfile()->create([
+            'first_name' => $validated['first_name'],
+            'middle_name' => $validated['middle_name'] ?? null,
+            'last_name' => $validated['last_name'],
             'nin' => $validated['nin'] ?? null,
             'is_foreigner' => $validated['is_foreigner'] ?? false,
             'skills' => $validated['skills'] ?? [],

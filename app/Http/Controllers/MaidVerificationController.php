@@ -35,9 +35,20 @@ class MaidVerificationController extends Controller
                 'help_types' => [],
             ]);
         }
+
+        // Prevent NIN change if already verified
+        if ($profile->nin_verified) {
+            return back()->with('error', 'Your identity has already been verified. NIN cannot be changed.');
+        }
         
-        $request->validate(['nin' => 'required|string|size:11']);
+        $request->validate(['nin' => 'required|string|size:11|unique:maid_profiles,nin,' . $profile->id]);
         $profile->update(['nin' => $request->nin]);
+
+        // Reset verification tracking so sweep retries with new NIN
+        \App\Models\NinVerification::where('user_id', $user->id)
+            ->where('status', 'failed')
+            ->update(['status' => 'pending', 'reviewed_at' => null]);
+
         return back()->with('success', 'NIN submitted. Click "Verify Now" to trigger the Gatekeeper Agent.'); 
     }
 

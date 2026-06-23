@@ -301,7 +301,7 @@ class AiMatchingQueue extends Model
      */
     public function markCompleted(array $result = []): void
     {
-        $duration = $this->started_at ? now()->diffInMilliseconds($this->started_at) : null;
+        $duration = $this->started_at ? (int) abs(now()->diffInMilliseconds($this->started_at)) : null;
 
         $this->update([
             'status' => 'completed',

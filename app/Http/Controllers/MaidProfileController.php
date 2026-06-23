@@ -24,7 +24,18 @@ class MaidProfileController extends Controller
     public function update(Request $request)
     {
         $user = Auth::user();
+
+        // Block name changes if NIN has been verified
+        if ($user->maidProfile && $user->maidProfile->nin_verified && $request->has('name')) {
+            return back()->with('error', 'Your name cannot be changed after NIN verification. Contact support if you need assistance.');
+        }
+
         $user->update($request->only('name', 'phone', 'location'));
+
+        // Update middle_name on profile if provided
+        if ($request->has('middle_name') && $user->maidProfile) {
+            $user->maidProfile->update(['middle_name' => $request->middle_name]);
+        }
 
         // Recalculate profile completeness after update
         $this->maidProfileService->recalculate($user);

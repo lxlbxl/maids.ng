@@ -25,11 +25,10 @@ const detectStateFromLocation = (locationStr) => {
 const STEPS = [
     {
         id: 'name',
-        title: 'Welcome! What is your name?',
-        subtitle: 'Please enter your full name as it is on your ID.',
-        type: 'input',
-        field: 'name',
-        placeholder: 'e.g. Mary Okoro',
+        title: 'What is your full name?',
+        subtitle: 'Enter your name exactly as it appears on your NIN slip.',
+        type: 'name',
+        fields: ['first_name', 'last_name'],
     },
     {
         id: 'gender',
@@ -126,7 +125,7 @@ const STEPS = [
     {
         id: 'nin',
         title: 'Trust & Safety',
-        subtitle: 'We need your NIN to verify your identity. If you are not Nigerian, tick the box below.',
+        subtitle: 'Enter your NIN. Your name must match exactly as it appears on your NIN slip — mismatches will delay your verification.',
         type: 'nin',
         field: 'nin',
     },
@@ -156,6 +155,9 @@ export default function MaidRegister() {
     }, []);
 
     const { data, setData, post, processing, errors } = useForm({
+        first_name: '',
+        middle_name: '',
+        last_name: '',
         name: '',
         email: '',
         phone: '',
@@ -179,7 +181,7 @@ export default function MaidRegister() {
 
     const isStepValid = () => {
         switch (step.id) {
-            case 'name': return data.name.trim().length > 0;
+            case 'name': return data.first_name.trim().length > 0 && data.last_name.trim().length > 0;
             case 'gender': return data.gender !== '';
             case 'photo': return data.avatar !== null;
             case 'contact': return data.phone.trim().length > 5;
@@ -226,6 +228,7 @@ export default function MaidRegister() {
     };
 
     const submit = () => {
+        data.name = `${data.first_name.trim()} ${data.last_name.trim()}`;
         post('/register/maid');
     };
 
@@ -264,6 +267,47 @@ export default function MaidRegister() {
                             </p>
                         </div>
                         {errors.avatar && <p className="text-danger text-sm">{errors.avatar}</p>}
+                    </div>
+                );
+            case 'name':
+                return (
+                    <div className="space-y-4 animate-fade-in">
+                        <div>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">First Name</label>
+                            <input
+                                type="text"
+                                value={data.first_name}
+                                onChange={e => setData('first_name', e.target.value)}
+                                placeholder="e.g. Mary"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                                autoFocus
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Middle Name <span className="text-teal/60">(optional)</span></label>
+                            <input
+                                type="text"
+                                value={data.middle_name}
+                                onChange={e => setData('middle_name', e.target.value)}
+                                placeholder="e.g. Favour"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-muted dark:text-gray-400 mb-1">Surname / Last Name</label>
+                            <input
+                                type="text"
+                                value={data.last_name}
+                                onChange={e => setData('last_name', e.target.value)}
+                                placeholder="e.g. Okoro"
+                                className="w-full h-14 bg-white dark:bg-[#1c1c1e] border-2 border-gray-200 dark:border-white/10 rounded-brand-md px-5 text-lg focus:border-teal outline-none transition-all"
+                            />
+                        </div>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 p-3 rounded-brand-md">
+                            Your name must match exactly as it appears on your NIN slip. Mismatches will delay verification.
+                        </p>
+                        {errors.first_name && <p className="text-danger text-sm">{errors.first_name}</p>}
+                        {errors.last_name && <p className="text-danger text-sm">{errors.last_name}</p>}
                     </div>
                 );
             case 'input':
@@ -365,6 +409,9 @@ export default function MaidRegister() {
                             </h4>
                             <p className="text-xs text-muted dark:text-gray-400 leading-relaxed">
                                 Nigerian law requires all domestic workers to be verified. Your data is encrypted and secure.
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                Your full name must match exactly as it appears on your NIN slip.
                             </p>
                         </div>
                         <div className={`${data.is_foreigner ? 'opacity-40 pointer-events-none' : ''}`}>

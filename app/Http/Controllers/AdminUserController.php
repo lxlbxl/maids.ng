@@ -16,12 +16,19 @@ class AdminUserController extends Controller
 
     public function index(Request $request) 
     { 
-        // Employers are users who are not maids and not admins, or explicitly have employer role
+        $sort = $request->sort ?? 'newest';
+        $sortField = match ($sort) {
+            'name_asc', 'name_desc', 'name' => 'name',
+            default => 'created_at',
+        };
+        $sortDir = in_array($sort, ['name_asc', 'oldest']) ? 'asc' : 'desc';
+
         $users = \App\Models\User::role('employer')
             ->with(['roles', 'employerPreferences'])
             ->when($request->search, fn($q, $s) => $q->where(fn($q2) => $q2->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")))
-            ->latest()
-            ->paginate(20);
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->orderBy('created_at', $sortDir)
+            ->paginate(20)->withQueryString();
 
         // Fallback for stats if tables/roles are missing
         $stats = [
@@ -44,7 +51,7 @@ class AdminUserController extends Controller
         return Inertia::render('Admin/Users', [
             'users' => $users,
             'stats' => $stats,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'status', 'sort']),
             'roles' => \Spatie\Permission\Models\Role::all()
         ]); 
     }
@@ -66,7 +73,7 @@ class AdminUserController extends Controller
         return Inertia::render('Admin/Staff', [
             'staff' => $staff,
             'stats' => $stats,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'status', 'sort']),
             'roles' => \Spatie\Permission\Models\Role::all(),
         ]);
     }
