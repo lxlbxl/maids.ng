@@ -18,7 +18,7 @@ class KnowledgeBaseController extends Controller
     {
         $articles = AgentKnowledgeBase::with('editor')
             ->when($request->category, fn($q, $v) => $q->where('category', $v))
-            ->when($request->search, fn($q, $v) => $q->where('title', 'like', "%{$v}%"))
+            ->when($request->search, fn($q, $v) => $q->where('title', 'ilike', "%{$v}%"))
             ->orderBy('priority')
             ->orderBy('category')
             ->paginate(25);

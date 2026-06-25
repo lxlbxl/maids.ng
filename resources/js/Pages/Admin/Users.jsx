@@ -31,7 +31,7 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
 
     const openEdit = (user) => {
         setEditUser(user);
-        setData({ name: user.name, email: user.email, phone: user.phone || '' });
+        setData({ name: user.name, email: user.email, phone: user.phone || '', password: '' });
     };
     const handleUpdate = (e) => {
         e.preventDefault();
@@ -82,6 +82,7 @@ export default function Users({ auth, users, stats, roles, filters = {} }) {
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Name</label><input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" required /></div>
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Email</label><input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Phone</label><input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">New Password <span className="text-white/20">(leave blank to keep)</span></label><input type="text" value={data.password} onChange={e => setData('password', e.target.value)} placeholder="Set new password..." className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white placeholder-white/20 focus:border-teal outline-none" /></div>
                             <button type="submit" disabled={editing} className="w-full py-3 bg-teal text-black rounded-brand-md text-xs font-bold uppercase hover:brightness-110 transition-all">{editing ? 'Saving...' : 'Save Changes'}</button>
                         </form>
                     </div>

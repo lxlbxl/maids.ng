@@ -11,7 +11,7 @@ class AdminNotificationController extends Controller
         $sortDir = $sort === 'oldest' ? 'asc' : 'desc';
 
         $notifications = \App\Models\Notification::with('user')
-            ->when($request->search, fn($q, $s) => $q->where('title', 'like', "%{$s}%")->orWhere('message', 'like', "%{$s}%"))
+            ->when($request->search, fn($q, $s) => $q->where('title', 'ilike', "%{$s}%")->orWhere('message', 'ilike', "%{$s}%"))
             ->when($request->type, fn($q, $t) => $q->where('type', $t))
             ->orderBy('created_at', $sortDir)
             ->paginate(20)->withQueryString();

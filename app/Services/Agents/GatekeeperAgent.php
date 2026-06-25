@@ -41,8 +41,18 @@ class GatekeeperAgent extends AgentService
                 ['dob' => $maid->dob ?? '', 'phone' => $maid->user->phone ?? '']
             );
 
-            // Outcome 1: API failed (NIN not found, network error, etc.)
+            // Outcome 1: API failed
             if (!$apiResult['success']) {
+                $statusCode = $apiResult['status_code'] ?? 0;
+
+                // Insufficient credits — keep as pending so sweep retries after top-up
+                if ($statusCode === 402) {
+                    $this->updateNinTrackingRecord($maid->user_id, 'pending');
+                    $this->notifyAdminLowCredits();
+                    $this->escalate($action, "rejected", "QoreID credits exhausted. " . ($apiResult['error'] ?? ''), $maid, 0);
+                    return ['success' => false, 'status' => 'pending', 'reason' => 'Verification queued — processing will resume once QoreID credits are topped up.'];
+                }
+
                 $this->updateNinTrackingRecord($maid->user_id, 'failed');
                 $this->escalate($action, "rejected", $apiResult['error'] ?? 'QoreID API error', $maid, 0);
                 return ['success' => false, 'status' => 'failed', 'reason' => $apiResult['error'] ?? 'Verification failed.'];
@@ -185,5 +195,32 @@ class GatekeeperAgent extends AgentService
     {
         $this->logDecision(action: "manual_verify_identity", decision: "approved", confidenceScore: 100,
             reasoning: "Manual verification by Admin: {$admin->name}.", subject: $maid);
+    }
+
+    /**
+     * Send internal notification to admins that QoreID credits are exhausted.
+     */
+    protected function notifyAdminLowCredits(): void
+    {
+        // Rate limit: only notify once every 6 hours
+        if (\Illuminate\Support\Facades\Cache::has('qoreid_low_credits_notified')) return;
+
+        \Illuminate\Support\Facades\Cache::put('qoreid_low_credits_notified', true, now()->addHours(6));
+
+        try {
+            $admins = \App\Models\User::role('admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'type' => 'system',
+                    'title' => 'QoreID Credits Exhausted',
+                    'message' => 'NIN verifications are paused — QoreID account has insufficient credits. Please top up at dashboard.qoreid.com to resume automatic verification.',
+                    'data' => ['action' => 'top_up_qoreid', 'urgency' => 'high'],
+                ]);
+            }
+            Log::warning('GatekeeperAgent: QoreID credits exhausted — admin notified.');
+        } catch (\Exception $e) {
+            Log::error('GatekeeperAgent: Failed to send low-credit notification: ' . $e->getMessage());
+        }
     }
 }

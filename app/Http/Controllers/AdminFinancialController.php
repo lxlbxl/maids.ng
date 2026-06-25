@@ -11,7 +11,7 @@ class AdminFinancialController extends Controller
         $sortDir = $sort === 'oldest' ? 'asc' : 'desc';
 
         $payments = \App\Models\MatchingFeePayment::with('employer')
-            ->when($request->search, fn($q, $s) => $q->whereHas('employer', fn($q2) => $q2->where('name', 'like', "%{$s}%")))
+            ->when($request->search, fn($q, $s) => $q->whereHas('employer', fn($q2) => $q2->where('name', 'ilike', "%{$s}%")))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->orderBy('created_at', $sortDir)
             ->paginate(20)->withQueryString();

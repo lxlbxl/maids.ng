@@ -28,12 +28,12 @@ class AdminVerificationTransactionController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('maid_nin', 'like', "%{$search}%")
-                    ->orWhere('maid_first_name', 'like', "%{$search}%")
-                    ->orWhere('maid_last_name', 'like', "%{$search}%")
-                    ->orWhere('payment_reference', 'like', "%{$search}%")
-                    ->orWhere('requester_name', 'like', "%{$search}%")
-                    ->orWhere('requester_email', 'like', "%{$search}%");
+                $q->where('maid_nin', 'ilike', "%{$search}%")
+                    ->orWhere('maid_first_name', 'ilike', "%{$search}%")
+                    ->orWhere('maid_last_name', 'ilike', "%{$search}%")
+                    ->orWhere('payment_reference', 'ilike', "%{$search}%")
+                    ->orWhere('requester_name', 'ilike', "%{$search}%")
+                    ->orWhere('requester_email', 'ilike', "%{$search}%");
             });
         }
         if ($request->filled('date_from')) {

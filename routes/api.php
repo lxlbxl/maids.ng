@@ -123,13 +123,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/dashboard', [MaidController::class, 'dashboard']);
         });
 
+}); // closes auth:sanctum
 
 /*
 |--------------------------------------------------------------------------
 | Dedicated MCP Agent Routes (Option B)
 |--------------------------------------------------------------------------
 */
-Route::prefix('v1/mcp')->middleware(['mcp.auth'])->group(function () {
+Route::prefix('mcp')->middleware(['mcp.auth'])->group(function () {
     // Maid Management
     Route::get('/maids/{maid_id}', [\App\Http\Controllers\Api\McpAgentController::class, 'getMaidProfile']);
     Route::patch('/maids/{maid_id}/availability', [\App\Http\Controllers\Api\McpAgentController::class, 'updateMaidAvailability']);
@@ -155,7 +156,7 @@ Route::prefix('v1/mcp')->middleware(['mcp.auth'])->group(function () {
 | Dedicated CLI Agent Routes (with Audit Logging)
 |--------------------------------------------------------------------------
 */
-Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
+Route::prefix('cli')->middleware(['mcp.auth'])->group(function () {
     // System Status & Health
     Route::get('/status', [CliAgentController::class, 'status']);
     Route::get('/health', [CliAgentController::class, 'health']);
@@ -197,6 +198,7 @@ Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
 
     // User Management
     Route::get('/users', [CliAgentController::class, 'listUsers']);
+    Route::get('/users/lookup', [CliAgentController::class, 'lookupByPhone']);
     Route::get('/users/{id}', [CliAgentController::class, 'getUser']);
     Route::put('/users/{id}/status', [CliAgentController::class, 'updateUserStatus']);
 
@@ -211,8 +213,6 @@ Route::prefix('v1/cli')->middleware(['mcp.auth'])->group(function () {
     Route::post('/matching/manual-assign', [CliAgentController::class, 'manualAssign']);
     Route::get('/matching/queue', [CliAgentController::class, 'matchingQueue']);
 });
-
-    }); // closes auth:sanctum
 
 }); // closes v1 prefix
 

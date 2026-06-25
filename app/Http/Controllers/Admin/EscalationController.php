@@ -18,7 +18,7 @@ class EscalationController extends Controller
         $sortDir = $sort === 'oldest' ? 'asc' : 'desc';
 
         $escalations = AgentActivityLog::where('decision', 'queued_for_review')
-            ->when($request->search, fn($q, $s) => $q->where('reasoning', 'like', "%{$s}%"))
+            ->when($request->search, fn($q, $s) => $q->where('reasoning', 'ilike', "%{$s}%"))
             ->when($request->agent, fn($q, $a) => $q->where('agent_name', $a))
             ->orderBy('created_at', $sortDir)
             ->paginate(15)->withQueryString();

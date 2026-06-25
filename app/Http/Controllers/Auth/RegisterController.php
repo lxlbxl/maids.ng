@@ -60,7 +60,7 @@ class RegisterController extends Controller
         \Log::info('Maid registration attempt', ['data' => $request->except('password', 'password_confirmation', 'avatar')]);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -90,8 +90,12 @@ class RegisterController extends Controller
         // If no email, create a dummy one or use phone
         $email = $validated['email'] ?? $validated['phone'] . '@maids.ng';
 
+        // Compute full name from parts if not provided
+        $fullName = trim("{$validated['first_name']} {$validated['middle_name']} {$validated['last_name']}");
+        if (!empty($validated['name'])) $fullName = $validated['name'];
+
         $user = User::create([
-            'name' => $validated['name'],
+            'name' => $fullName,
             'email' => $email,
             'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
@@ -125,9 +129,11 @@ class RegisterController extends Controller
 
         \Log::info('Maid profile created', ['user_id' => $user->id]);
 
-        // Also create a record in nin_verifications table for tracking (if NIN provided)
+        // Create a nin_verifications tracking record
         if (!empty($validated['nin'])) {
             try {
+                // Remove any stale record from retries
+                \App\Models\NinVerification::where('user_id', $user->id)->delete();
                 \App\Models\NinVerification::create([
                     'user_id' => $user->id,
                     'status' => 'pending',

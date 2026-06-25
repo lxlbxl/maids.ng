@@ -19,10 +19,18 @@ class TermiiProvider implements SmsProviderInterface
 
     public function __construct()
     {
-        // Read from Admin Settings (database) — falls back to .env
         $this->apiKey = Setting::get('termii_api_key', config('services.termii.api_key', ''));
         $this->senderId = Setting::get('termii_sender_id', config('services.termii.sender_id', 'MaidsNG'));
-        $this->baseUrl = Setting::get('termii_url', config('services.termii.url', 'https://api.ng.termii.com/api'));
+        $rawUrl = Setting::get('termii_url', config('services.termii.url', 'https://api.ng.termii.com'));
+
+        // Ensure /api is in the path for both v2 and v3 Termii endpoints
+        $parsed = parse_url(rtrim($rawUrl, '/'));
+        $host = ($parsed['scheme'] ?? 'https') . '://' . ($parsed['host'] ?? 'api.ng.termii.com');
+        $path = $parsed['path'] ?? '';
+        if (!str_contains($path, '/api')) {
+            $path = rtrim($path, '/') . '/api';
+        }
+        $this->baseUrl = $host . $path;
     }
 
     public function send(string $phone, string $message): array

@@ -19,8 +19,8 @@ class MaidSearchController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'like', "%{$search}%"));
+                $q->where('name', 'ilike', "%{$search}%")
+                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'ilike', "%{$search}%"));
             });
         }
 
@@ -28,9 +28,9 @@ class MaidSearchController extends Controller
             $location = $request->input('location');
             $query->whereHas('maidProfile', function ($mp) use ($location) {
                 $mp->where(function ($q) use ($location) {
-                    $q->where('location', 'like', "%{$location}%")
-                      ->orWhere('state', 'like', "%{$location}%")
-                      ->orWhereJsonContains('willing_states', $location)
+                    $q->where('location', 'ilike', "%{$location}%")
+                      ->orWhere('state', 'ilike', "%{$location}%")
+                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower])
                       ->orWhereJsonContains('willing_states', 'anywhere');
                 });
             });
@@ -73,8 +73,8 @@ class MaidSearchController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'like', "%{$search}%"));
+                $q->where('name', 'ilike', "%{$search}%")
+                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'ilike', "%{$search}%"));
             });
         }
 
@@ -82,9 +82,9 @@ class MaidSearchController extends Controller
             $location = $request->input('location');
             $query->whereHas('maidProfile', function ($mp) use ($location) {
                 $mp->where(function ($q) use ($location) {
-                    $q->where('location', 'like', "%{$location}%")
-                      ->orWhere('state', 'like', "%{$location}%")
-                      ->orWhereJsonContains('willing_states', $location)
+                    $q->where('location', 'ilike', "%{$location}%")
+                      ->orWhere('state', 'ilike', "%{$location}%")
+                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower])
                       ->orWhereJsonContains('willing_states', 'anywhere');
                 });
             });

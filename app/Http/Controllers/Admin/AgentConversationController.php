@@ -51,9 +51,9 @@ class AgentConversationController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('identity', function ($q) use ($search) {
-                $q->where('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('display_name', 'like', "%{$search}%");
+                $q->where('email', 'ilike', "%{$search}%")
+                    ->orWhere('phone', 'ilike', "%{$search}%")
+                    ->orWhere('display_name', 'ilike', "%{$search}%");
             });
         }
 
