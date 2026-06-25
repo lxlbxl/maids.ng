@@ -10,8 +10,8 @@ class AdminBookingController extends Controller
         $bookings = \App\Models\Booking::with(['employer', 'maid', 'maid.maidProfile'])
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->search, function($q, $s) {
-                $q->whereHas('employer', fn($q2) => $q2->where('name', 'like', "%{$s}%"))
-                  ->orWhereHas('maid', fn($q2) => $q2->where('name', 'like', "%{$s}%"));
+                $q->whereHas('employer', fn($q2) => $q2->where('name', 'ilike', "%{$s}%"))
+                  ->orWhereHas('maid', fn($q2) => $q2->where('name', 'ilike', "%{$s}%"));
             })
             ->latest()
             ->paginate(20);

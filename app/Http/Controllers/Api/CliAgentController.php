@@ -552,6 +552,50 @@ class CliAgentController extends Controller
         return response()->json(['data' => $user]);
     }
 
+    public function lookupByPhone(Request $request)
+    {
+        $request->validate(['phone' => 'required|string']);
+
+        $phone = $request->phone;
+        $user = User::with(['maidProfile', 'employerPreferences', 'ninVerification'])
+            ->where('phone', $phone)
+            ->orWhere('phone', 'like', '%' . ltrim($phone, '0') . '%')
+            ->first();
+
+        if (!$user) {
+            return response()->json(['data' => null, 'message' => 'No user found with that phone number'], 404);
+        }
+
+        $this->logAction('lookup_by_phone', ['phone' => $phone]);
+
+        return response()->json([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'email' => $user->email,
+                'role' => $user->role ?? ($user->roles->first()->name ?? null),
+                'status' => $user->status,
+                'location' => $user->location,
+                'nin_verified' => $user->maidProfile?->nin_verified ?? false,
+                'verification_status' => $user->ninVerification?->status ?? 'none',
+                'maid_profile' => $user->maidProfile ? [
+                    'skills' => $user->maidProfile->skills,
+                    'help_types' => $user->maidProfile->help_types,
+                    'expected_salary' => $user->maidProfile->expected_salary,
+                    'availability_status' => $user->maidProfile->availability_status,
+                    'rating' => $user->maidProfile->rating,
+                ] : null,
+                'employer_preferences' => $user->employerPreferences->first() ? [
+                    'help_types' => $user->employerPreferences->first()?->help_types,
+                    'location' => $user->employerPreferences->first()?->location,
+                    'budget_max' => $user->employerPreferences->first()?->budget_max,
+                    'matching_status' => $user->employerPreferences->first()?->matching_status,
+                ] : null,
+            ],
+        ]);
+    }
+
     public function updateUserStatus(Request $request, $user_id)
     {
         $request->validate(['status' => 'required|in:active,inactive,suspended,banned']);

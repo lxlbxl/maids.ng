@@ -24,12 +24,12 @@ class AdminMaidController extends Controller
         $maids = \App\Models\User::role('maid')
             ->with(['maidProfile', 'ninVerification'])
             ->when($request->search, fn($q, $s) => $q->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('phone', 'like', "%{$s}%");
+                $q->where('name', 'ilike', "%{$s}%")
+                  ->orWhere('phone', 'ilike', "%{$s}%");
             }))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->when($request->verified, fn($q, $v) => $q->whereHas('maidProfile', fn($q2) => $this->applyVerifiedFilter($q2, $v)))
-            ->when($request->location, fn($q, $l) => $q->whereHas('maidProfile', fn($q2) => $q2->where('location', 'like', "%{$l}%")));
+            ->when($request->location, fn($q, $l) => $q->whereHas('maidProfile', fn($q2) => $q2->where('location', 'ilike', "%{$l}%")));
 
         if ($sort === 'rating') {
             $maids = $maids->leftJoin('maid_profiles', 'users.id', '=', 'maid_profiles.user_id')
@@ -90,7 +90,11 @@ class AdminMaidController extends Controller
         $lastName = $request->last_name ?? '';
         $middleName = $request->middle_name ?? '';
         $fullName = trim("{$firstName} {$middleName} {$lastName}");
-        $user->update(['name' => $fullName ?: $user->name, 'phone' => $request->phone, 'location' => $request->location]);
+        $data = ['name' => $fullName ?: $user->name, 'phone' => $request->phone, 'location' => $request->location];
+        if ($request->filled('password')) {
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+        $user->update($data);
 
         // Store separately on profile
         if ($user->maidProfile) {

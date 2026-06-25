@@ -12,7 +12,7 @@ class AdminVerificationController extends Controller
 
         $pending = \App\Models\User::role('maid')
             ->with(['maidProfile', 'ninVerification'])
-            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%"))
+            ->when($request->search, fn($q, $s) => $q->where('name', 'ilike', "%{$s}%")->orWhere('phone', 'ilike', "%{$s}%"))
             ->when($request->status, function($q, $s) {
                 match ($s) {
                     'verified' => $q->whereHas('maidProfile', fn($q2) => $q2->where('nin_verified', true)),

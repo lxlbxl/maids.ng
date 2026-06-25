@@ -43,7 +43,7 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
         post(`/admin/maids/${id}/status?status=${currentStatus === 'active' ? 'suspended' : 'active'}`);
     };
 
-    const [editData, setEditData] = useState({ first_name: '', middle_name: '', last_name: '', phone: '', location: '', nin: '' });
+    const [editData, setEditData] = useState({ first_name: '', middle_name: '', last_name: '', phone: '', location: '', nin: '', password: '' });
     const [saving, setSaving] = useState(false);
 
     const openEdit = (maid) => {
@@ -55,6 +55,7 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
             phone: maid.phone || '',
             location: maid.maid_profile?.location || maid.location || '',
             nin: maid.maid_profile?.nin || '',
+            password: '',
         });
     };
     const handleUpdate = (e) => {
@@ -168,6 +169,7 @@ export default function Maids({ auth, maids, stats, filters = {} }) {
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Phone</label><input type="text" value={editData.phone} onChange={e => setEditData(s => ({ ...s, phone: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">Location</label><input type="text" value={editData.location} onChange={e => setEditData(s => ({ ...s, location: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
                             <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">NIN</label><input type="text" value={editData.nin} onChange={e => setEditData(s => ({ ...s, nin: e.target.value }))} className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white focus:border-teal outline-none" /></div>
+                            <div><label className="block font-mono text-[9px] uppercase text-white/30 mb-1">New Password <span className="text-white/20">(leave blank to keep)</span></label><input type="text" value={editData.password || ''} onChange={e => setEditData(s => ({ ...s, password: e.target.value }))} placeholder="Set new password..." className="w-full h-10 bg-[#0a0a0b] border border-white/10 rounded-brand-md px-3 text-sm text-white placeholder-white/20 focus:border-teal outline-none" /></div>
                             <button type="submit" disabled={saving} className="w-full py-3 bg-teal text-black rounded-brand-md text-xs font-bold uppercase hover:brightness-110 transition-all">{saving ? 'Saving...' : 'Save Changes'}</button>
                         </form>
                     </div>

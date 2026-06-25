@@ -560,45 +560,43 @@ class AdminSettingsController extends Controller
      */
     public function testTermii(Request $request): JsonResponse
     {
+        $provider = new \App\Services\Sms\TermiiProvider();
         $apiKey = Setting::get('termii_api_key', config('services.termii.api_key', ''));
-        $baseUrl = Setting::get('termii_url', config('services.termii.url', 'https://api.ng.termii.com/api'));
 
         if (!$apiKey) {
             return response()->json(['success' => false, 'message' => 'Termii API key not configured.'], 400);
         }
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(15)
-                ->get("{$baseUrl}/get-balance", [
-                    'api_key' => $apiKey,
-                ]);
+            // If phone provided, send a test SMS
+            if ($request->has('phone') && !empty($request->phone)) {
+                $result = $provider->send(
+                    $request->phone,
+                    $request->input('message', 'Test SMS from Maids.ng admin panel. If you received this, SMS is working!')
+                );
 
-            $status = $response->status();
-            $body = $response->json();
-
-            if ($status === 200 && isset($body['balance'])) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Termii connected successfully. Balance: ' . ($body['balance'] ?? 'N/A'),
-                    'status_code' => $status,
-                    'balance' => $body['balance'] ?? null,
-                    'currency' => $body['currency'] ?? 'NGN',
+                    'success' => $result['success'],
+                    'message' => $result['success'] ? 'SMS sent successfully!' : ($result['error'] ?? 'Failed to send'),
+                    'data' => $result,
                 ]);
             }
 
-            if ($status === 401 || $status === 403) {
+            // Otherwise just check balance
+            $result = $provider->getBalance();
+
+            if ($result['success']) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Termii authentication failed. Check your API key.',
-                    'status_code' => $status,
-                ], 400);
+                    'success' => true,
+                    'message' => 'Termii connected. Balance: ' . ($result['balance'] ?? 'N/A'),
+                    'balance' => $result['balance'] ?? null,
+                    'currency' => $result['currency'] ?? 'NGN',
+                ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => "Termii returned status: {$status}",
-                'status_code' => $status,
-                'response' => $body,
+                'message' => $result['error'] ?? 'Termii connection failed.',
             ], 500);
 
         } catch (\Exception $e) {

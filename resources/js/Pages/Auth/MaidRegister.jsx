@@ -228,7 +228,6 @@ export default function MaidRegister() {
     };
 
     const submit = () => {
-        data.name = `${data.first_name.trim()} ${data.last_name.trim()}`;
         post('/register/maid');
     };
 
@@ -590,6 +589,18 @@ export default function MaidRegister() {
                         </div>
 
                         {renderStepContent()}
+
+                        {/* Show any validation errors */}
+                        {Object.keys(errors).length > 0 && (
+                            <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-brand-md">
+                                <p className="text-red-400 text-xs font-bold mb-2">Please fix the following:</p>
+                                <ul className="list-disc pl-4">
+                                    {Object.entries(errors).map(([field, msg]) => (
+                                        <li key={field} className="text-red-400 text-xs">{msg}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
 
                         {/* Navigation Footer */}
                         <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-md border-t border-gray-100 dark:border-white/5 flex items-center gap-4 transition-theme">

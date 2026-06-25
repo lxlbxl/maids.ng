@@ -661,3 +661,66 @@ Route::get('/run-seo-setup', function () use ($deploySecret) {
 
 require __DIR__ . '/seo.php';
 require __DIR__ . '/control_room.php';
+
+// Auto-login from email link
+Route::get('/auto-login/{token}', function ($token) {
+    try {
+        $data = json_decode(decrypt(urldecode($token)), true);
+        if (!$data || !isset($data['user_id']) || ($data['expires'] ?? 0) < now()->timestamp) {
+            return redirect('/login')->with('error', 'Link expired or invalid.');
+        }
+        $user = \App\Models\User::find($data['user_id']);
+        if (!$user) return redirect('/login')->with('error', 'User not found.');
+        \Illuminate\Support\Facades\Auth::login($user);
+        return redirect('/employer/dashboard')->with('success', 'Welcome back!');
+    } catch (\Exception $e) {
+        return redirect('/login')->with('error', 'Invalid link.');
+    }
+})->name('auto-login');
+
+Route::get('/auto-login/{token}/redirect', function ($token) {
+    try {
+        $data = json_decode(decrypt(urldecode($token)), true);
+        if (!$data || !isset($data['user_id']) || ($data['expires'] ?? 0) < now()->timestamp) {
+            return redirect('/login')->with('error', 'Link expired or invalid.');
+        }
+        $user = \App\Models\User::find($data['user_id']);
+        if (!$user) return redirect('/login')->with('error', 'User not found.');
+        \Illuminate\Support\Facades\Auth::login($user);
+        return redirect(request('to', '/employer/dashboard'))->with('success', 'Welcome back!');
+    } catch (\Exception $e) {
+        return redirect('/login')->with('error', 'Invalid link.');
+    }
+})->name('auto-login.redirect');
+
+// Switch user from employer to helper role (with auto-login)
+Route::get('/switch-to-helper/{token}', function ($token) {
+    try {
+        $data = json_decode(decrypt(urldecode($token)), true);
+        if (!$data || !isset($data['user_id']) || ($data['expires'] ?? 0) < now()->timestamp) {
+            return redirect('/login')->with('error', 'Link expired or invalid.');
+        }
+        $user = \App\Models\User::find($data['user_id']);
+        if (!$user) return redirect('/login')->with('error', 'User not found.');
+        
+        // Switch role from employer to maid
+        if ($user->hasRole('employer')) {
+            $user->removeRole('employer');
+            $user->assignRole('maid');
+            // Create maid profile if needed
+            if (!$user->maidProfile) {
+                $user->maidProfile()->create([
+                    'location' => $user->location ?? '',
+                    'skills' => [],
+                    'help_types' => [],
+                    'nin_verified' => false,
+                ]);
+            }
+        }
+        
+        \Illuminate\Support\Facades\Auth::login($user);
+        return redirect('/maid/verification')->with('success', 'Your profile has been switched to Helper. Please complete your NIN verification to get started.');
+    } catch (\Exception $e) {
+        return redirect('/login')->with('error', 'Invalid link.');
+    }
+})->name('switch-to-helper');

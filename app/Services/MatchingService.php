@@ -425,7 +425,7 @@ class MatchingService
         }
 
         if (!empty($requirements['location'])) {
-            $query->where('location', 'like', '%' . $requirements['location'] . '%');
+            $query->where('location', 'ilike', '%' . $requirements['location'] . '%');
         }
 
         if (!empty($requirements['experience_years'])) {
@@ -459,16 +459,25 @@ class MatchingService
             });
 
         if (!empty($preference->help_types)) {
-            foreach ($preference->help_types as $type) {
-                $query->whereJsonContains('help_types', $type);
-            }
+            $query->where(function ($q) use ($preference) {
+                foreach ($preference->help_types as $type) {
+                    $normalized = $this->normalizeHelpType($type);
+                    if ($normalized !== $type) {
+                        $q->orWhereJsonContains('help_types', $type)
+                          ->orWhereJsonContains('help_types', $normalized);
+                    } else {
+                        $q->orWhereJsonContains('help_types', $type);
+                    }
+                }
+            });
         }
 
         if ($preference->state) {
-            $query->where(function ($q) use ($preference) {
-                $q->where('state', $preference->state)
-                  ->orWhereJsonContains('willing_states', $preference->state)
-                  ->orWhereJsonContains('willing_states', 'anywhere');
+            $state = trim($preference->state);
+            $query->where(function ($q) use ($state) {
+                $q->whereRaw('LOWER(state) = ?', [strtolower($state)])
+                  ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [strtolower($state)])
+                  ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = 'anywhere')");
             });
         }
 
@@ -782,5 +791,16 @@ class MatchingService
             ]);
             return null;
         }
+    }
+
+    /**
+     * Normalize help type taxonomy to bridge employer/maid labeling differences.
+     */
+    private function normalizeHelpType(string $type): string
+    {
+        return match (strtolower(trim($type))) {
+            'housekeeping', 'housekeeper', 'house-help', 'house help', 'maid', 'domestic', 'domestic help' => 'cleaning',
+            default => strtolower(trim($type)),
+        };
     }
 }

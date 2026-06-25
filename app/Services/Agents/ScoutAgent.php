@@ -104,9 +104,13 @@ class ScoutAgent extends AgentService
         $maxScore = 100;
         $breakdown = [];
 
-        // 1. Help Type Match (Max 35 points) - attributes are already arrays due to model casts
-        $employerHelpTypes = array_map('strtolower', (array) ($preferences->help_types ?? []));
-        $maidHelpTypes = array_map('strtolower', (array) ($maid->help_types ?? []));
+        // 1. Help Type Match (Max 35 points) - normalize taxonomy differences
+        $normalize = fn(string $t): string => match ($t) {
+            'housekeeping', 'housekeeper', 'house-help', 'house help', 'maid', 'domestic', 'domestic help' => 'cleaning',
+            default => $t,
+        };
+        $employerHelpTypes = array_map(fn($t) => $normalize(strtolower(trim($t))), (array) ($preferences->help_types ?? []));
+        $maidHelpTypes = array_map(fn($t) => $normalize(strtolower(trim($t))), (array) ($maid->help_types ?? []));
 
         if (empty($maidHelpTypes)) {
             $maidHelpTypes = array_map('strtolower', (array) ($maid->skills ?? []));

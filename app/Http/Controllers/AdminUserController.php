@@ -25,7 +25,7 @@ class AdminUserController extends Controller
 
         $users = \App\Models\User::role('employer')
             ->with(['roles', 'employerPreferences'])
-            ->when($request->search, fn($q, $s) => $q->where(fn($q2) => $q2->where('name', 'like', "%{$s}%")->orWhere('phone', 'like', "%{$s}%")))
+            ->when($request->search, fn($q, $s) => $q->where(fn($q2) => $q2->where('name', 'ilike', "%{$s}%")->orWhere('phone', 'ilike', "%{$s}%")))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->orderBy('created_at', $sortDir)
             ->paginate(20)->withQueryString();
@@ -60,7 +60,7 @@ class AdminUserController extends Controller
     {
         $staff = \App\Models\User::role('admin')
             ->with('roles')
-            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when($request->search, fn($q, $s) => $q->where('name', 'ilike', "%{$s}%"))
             ->latest()
             ->paginate(20);
 
@@ -97,7 +97,11 @@ class AdminUserController extends Controller
     public function update(Request $request, $id)
     {
         $user = \App\Models\User::findOrFail($id);
-        $user->update($request->only(['name', 'email', 'phone']));
+        $data = $request->only(['name', 'email', 'phone']);
+        if ($request->filled('password')) {
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+        $user->update($data);
         return back()->with('success', "User [{$user->name}] updated.");
     }
 

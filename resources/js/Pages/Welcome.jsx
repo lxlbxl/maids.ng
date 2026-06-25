@@ -36,9 +36,9 @@ export default function Welcome({ auth, appSettings }) {
                         ) : (
                             <>
                                 <Link href="/login" className="text-sm text-teal font-medium hover:text-teal-dark transition-colors">Log In</Link>
-                                <Link href="/onboarding" className="bg-teal text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1">
+                                <a href="#get-started" className="bg-teal text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1">
                                     Get Started
-                                </Link>
+                                </a>
                             </>
                         )}
                     </div>
@@ -46,7 +46,7 @@ export default function Welcome({ auth, appSettings }) {
             </nav>
 
             {/* ── Hero Section ── */}
-            <section className="min-h-screen flex items-center bg-espresso relative overflow-hidden pt-20">
+            <section id="hero" className="min-h-screen flex items-center bg-espresso relative overflow-hidden pt-20">
                 {/* Background texture */}
                 <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%)', backgroundSize: '28px 28px' }} />
                 <div className="absolute top-[-300px] right-[-200px] w-[800px] h-[800px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(15,85,86,0.35) 0%, transparent 65%)' }} />
@@ -188,6 +188,30 @@ export default function Welcome({ auth, appSettings }) {
                             </div>
                         </div>
                     )}
+                </div>
+            </section>
+
+            {/* ── Choose Your Path ── */}
+            <section id="get-started" className="py-20 px-6 bg-white dark:bg-[#0f0f10] transition-theme scroll-mt-16">
+                <div className="max-w-4xl mx-auto text-center mb-12">
+                    <h2 className="font-display text-3xl md:text-4xl font-light text-espresso dark:text-[#f0ede8] mb-3">
+                        What brings you to Maids.ng?
+                    </h2>
+                    <p className="text-muted dark:text-gray-400">Choose your path below to get started</p>
+                </div>
+                <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Link href="/onboarding" className="group block bg-ivory dark:bg-[#1c1c1e] border border-gray-200 dark:border-white/10 rounded-brand-xl p-8 text-center hover:border-teal/30 hover:shadow-lg transition-all">
+                        <div className="text-5xl mb-4">👨‍👩‍👧</div>
+                        <h3 className="font-display text-xl text-espresso dark:text-white mb-2">I Want to Hire Help</h3>
+                        <p className="text-muted dark:text-gray-400 text-sm">Find a verified housekeeper, nanny, cook, or driver for your home.</p>
+                        <span className="inline-block mt-4 px-6 py-3 bg-teal text-white rounded-brand-md text-sm font-medium group-hover:bg-teal-dark transition-all">Find a Helper →</span>
+                    </Link>
+                    <Link href="/register/maid" className="group block bg-ivory dark:bg-[#1c1c1e] border border-gray-200 dark:border-white/10 rounded-brand-xl p-8 text-center hover:border-copper/30 hover:shadow-lg transition-all">
+                        <div className="text-5xl mb-4">💼</div>
+                        <h3 className="font-display text-xl text-espresso dark:text-white mb-2">I'm Looking for Work</h3>
+                        <p className="text-muted dark:text-gray-400 text-sm">Register as a helper, get verified, and start getting matched with families near you.</p>
+                        <span className="inline-block mt-4 px-6 py-3 bg-copper text-white rounded-brand-md text-sm font-medium group-hover:bg-copper-dark transition-all">Register as Helper →</span>
+                    </Link>
                 </div>
             </section>
 

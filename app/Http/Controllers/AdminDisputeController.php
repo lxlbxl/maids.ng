@@ -17,11 +17,11 @@ class AdminDisputeController extends Controller
 
         $disputes = \App\Models\Dispute::with(['user', 'booking.employer', 'booking.maid'])
             ->when($request->search, fn($q, $s) => $q->where(function($q) use ($s) {
-                $q->whereHas('user', fn($q2) => $q2->where('name', 'like', "%{$s}%"))
-                  ->orWhere('reason', 'like', "%{$s}%");
+                $q->whereHas('user', fn($q2) => $q2->where('name', 'ilike', "%{$s}%"))
+                  ->orWhere('reason', 'ilike', "%{$s}%");
             }))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn($q, $s) => $q->where('reason', 'like', "%{$s}%")->orWhereHas('user', fn($q2) => $q2->where('name', 'like', "%{$s}%")))
+            ->when($request->search, fn($q, $s) => $q->where('reason', 'ilike', "%{$s}%")->orWhereHas('user', fn($q2) => $q2->where('name', 'ilike', "%{$s}%")))
             ->orderBy($sortField, $sortDir)
             ->paginate(10)->withQueryString();
 

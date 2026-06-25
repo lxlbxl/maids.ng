@@ -842,6 +842,30 @@ export default function Settings({ auth, settings, aiManifest, mcpServers: initi
                                                 className="w-full bg-[#0a0a0b] border border-white/10 rounded-brand-lg px-6 py-4 text-white focus:border-teal/50 outline-none"
                                             />
                                         </div>
+                                        <div className="pt-4 border-t border-white/5">
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const phone = prompt('Enter phone number to test SMS (e.g. 08012345678):');
+                                                    if (!phone) return;
+                                                    setTestResults(s => ({ ...s, sms: 'sending' }));
+                                                    try {
+                                                        const res = await axios.post('/admin/settings/test/termii', { phone });
+                                                        setTestResults(s => ({ ...s, sms: res.data }));
+                                                    } catch (e) {
+                                                        setTestResults(s => ({ ...s, sms: { success: false, message: e.response?.data?.message || e.message } }));
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-teal/10 border border-teal/20 rounded-brand-md text-teal text-xs font-bold hover:bg-teal/20 transition-all"
+                                            >
+                                                {testResults.sms === 'sending' ? 'Sending...' : '📱 Test SMS'}
+                                            </button>
+                                            {testResults.sms && testResults.sms !== 'sending' && (
+                                                <div className={`mt-3 p-3 rounded text-xs ${testResults.sms.success ? 'bg-teal/10 text-teal border border-teal/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                                    {testResults.sms.success ? '✅ SMS sent successfully!' : (testResults.sms.message || 'Failed to send SMS')}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
