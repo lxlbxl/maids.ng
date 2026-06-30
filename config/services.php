@@ -91,7 +91,7 @@ return [
     ],
 
     'fees' => [
-        'matching' => env('MATCHING_FEE_AMOUNT', 5000),
+        'matching' => env('MATCHING_FEE_AMOUNT', 20000),
         'nin_verification' => env('NIN_VERIFICATION_FEE', 5000),
     ],
 

@@ -138,7 +138,7 @@ class KnowledgeService
     private function fetchPricingContext(): array
     {
         $raw = [
-            'matching_fee' => (int) \App\Models\Setting::get('matching_fee', 5000),
+            'matching_fee' => (int) AppModelsSetting::get('matching_fee_amount', 20000),
             'premium_matching_fee' => (int) \App\Models\Setting::get('premium_matching_fee', 15000),
             'commission_rate' => (float) \App\Models\Setting::get('commission_rate', 15),
             'guarantee_period_days' => (int) \App\Models\Setting::get('guarantee_period_days', 10),

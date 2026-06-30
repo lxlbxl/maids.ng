@@ -54,8 +54,8 @@ class HandleInertiaRequests extends Middleware
             // Public app settings shared with ALL Inertia pages automatically.
             // Update rates in the Admin → Settings panel; no code changes needed.
             'appSettings' => fn () => [
-                'matchingFee'          => (int) \App\Models\Setting::get('matching_fee_amount', 5000),
-                'matchingFeeFormatted' => '₦' . number_format((int) \App\Models\Setting::get('matching_fee_amount', 5000)),
+                'matchingFee'          => (int) \App\Models\Setting::get('matching_fee_amount', 20000),
+                'matchingFeeFormatted' => '₦' . number_format((int) \App\Models\Setting::get('matching_fee_amount', 20000)),
             ],
             'controlRoom' => function () {
                 if (!auth()->check() || !auth()->user()->hasRole('admin')) {

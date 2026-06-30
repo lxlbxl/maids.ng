@@ -29,7 +29,7 @@ class MatchingFeeController extends Controller
 
         $preference = EmployerPreference::findOrFail($validated['preference_id']);
         $paymentType = $validated['payment_type'] ?? 'matching_fee';
-        $amount = (int) Setting::get('matching_fee_amount', 5000);
+        $amount = (int) Setting::get('matching_fee_amount', 20000);
         $reference = 'MNG-' . strtoupper(Str::random(10));
 
         $gateway = Setting::get('default_payment_gateway', 'paystack');

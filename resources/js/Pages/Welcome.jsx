@@ -3,14 +3,36 @@ import { useState } from 'react';
 import AmbassadorChatWidget from '@/Components/AmbassadorChatWidget';
 
 export default function Welcome({ auth, appSettings }) {
-    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
+    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦20,000';
     const [audience, setAudience] = useState('employer'); // 'employer' | 'worker'
 
     return (
         <>
             <Head>
-                <title>Maids.ng — Find Trusted Home Help in Nigeria</title>
-                <meta name="description" content="Find verified housekeepers, nannies, cooks and drivers near you. Or register as a helper and get paid jobs in Nigeria. Safe, fast and trusted." />
+                <title>Maids.ng — Find Trusted Home Help in Nigeria | Verified Housekeepers, Nannies & Cooks</title>
+                <meta name="description" content="Find verified housekeepers, nannies, cooks and drivers near you. Or register as a helper and get paid jobs in Nigeria. Safe, fast and trusted. ID-checked helpers, 10-day free replacement." />
+                <meta name="keywords" content="maids, house help, domestic help, nanny, cook, driver, housekeeper, cleaning, childcare, Lagos, Abuja, Nigeria, verified helpers" />
+                <meta name="robots" content="index, follow" />
+                <meta name="author" content="Maids.ng" />
+                <link rel="canonical" href="https://maids.ng" />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://maids.ng" />
+                <meta property="og:title" content="Maids.ng — Find Trusted Home Help in Nigeria" />
+                <meta property="og:description" content="Verified housekeepers, nannies, cooks & drivers matched to your needs. ID-checked helpers, smart matching, 10-day free replacement — 96% satisfaction rate." />
+                <meta property="og:image" content="https://maids.ng/maids-logo.png" />
+                <meta property="og:image:width" content="512" />
+                <meta property="og:image:height" content="512" />
+                <meta property="og:site_name" content="Maids.ng" />
+                <meta property="og:locale" content="en_NG" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:url" content="https://maids.ng" />
+                <meta name="twitter:title" content="Maids.ng — Find Trusted Home Help in Nigeria" />
+                <meta name="twitter:description" content="Verified housekeepers, nannies, cooks & drivers. ID-checked, smart matching, 10-day free replacement." />
+                <meta name="twitter:image" content="https://maids.ng/maids-logo.png" />
             </Head>
 
             {/* ── Navigation ── */}
