@@ -34,7 +34,7 @@ class MatchingController extends ApiController
         }
 
         // Check employer has sufficient balance for matching fee
-        $matchingFee = config('services.matching_fee', 5000);
+        $matchingFee = config('services.fees.matching', 20000);
         $walletService = app(\App\Services\WalletService::class);
         $balanceCheck = $walletService->checkBalance($user->id, $matchingFee);
 

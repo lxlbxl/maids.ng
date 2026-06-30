@@ -110,7 +110,7 @@ class SupportTools
             . "2) Our Scout Agent scores all available maids against your preferences. "
             . "3) You receive top matches with detailed profiles and match scores. "
             . "4) Select your preferred maid and pay the one-time matching fee "
-            . "(₦" . number_format((int) Setting::get('matching_fee_amount', 5000)) . "). "
+            . "(₦" . number_format((int) Setting::get('matching_fee_amount', 20000)) . "). "
             . "5) Your assignment is activated and the maid is notified. "
             . "Typical time from quiz to active assignment: 24-72 hours.";
     }

@@ -228,6 +228,7 @@ export default function MaidRegister() {
     };
 
     const submit = () => {
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'CompleteRegistration', { content_name: 'Helper Signup' }); } catch(e) {}
         post('/register/maid');
     };
 
@@ -556,7 +557,23 @@ export default function MaidRegister() {
 
     return (
         <>
-            <Head title="Helper Registration" />
+            <Head>
+                <title>Register as a Helper — Maids.ng | Find Paid Domestic Work in Nigeria</title>
+                <meta name="description" content="Register for free as a housekeeper, nanny, cook, or driver. Get verified, matched with families near you, and start earning. No salary cuts — we protect your rights." />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href="https://maids.ng/register/maid" />
+
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://maids.ng/register/maid" />
+                <meta property="og:title" content="Register as a Helper — Maids.ng" />
+                <meta property="og:description" content="Register for free as a housekeeper, nanny, cook, or driver. Get verified, matched with families, and start earning." />
+                <meta property="og:image" content="https://maids.ng/maids-logo.png" />
+
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Register as a Helper — Maids.ng" />
+                <meta name="twitter:description" content="Find paid domestic work in Nigeria. Register free, get verified, start earning." />
+                <meta name="twitter:image" content="https://maids.ng/maids-logo.png" />
+            </Head>
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex flex-col transition-theme">
                 {/* Progress Bar */}
                 <div className="fixed top-0 left-0 right-0 h-1.5 bg-gray-100 dark:bg-white/5 z-50">

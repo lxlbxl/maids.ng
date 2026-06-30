@@ -4,8 +4,13 @@ import { useState } from 'react';
 export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000, paystackKey, defaultGateway }) {
     const [loading, setLoading] = useState(false);
 
+    const trackPixel = (event, params = {}) => {
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params); } catch(e) {}
+    };
+
     const handlePayment = async () => {
         setLoading(true);
+        trackPixel('InitiateCheckout', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match' });
         try {
             const resp = await fetch('/employer/matching-fee/initialize', {
                 method: 'POST',
@@ -53,6 +58,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                             phone_number: data.phone,
                         },
                         callback: function (response) {
+                            trackPixel('Lead', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match' });
                             window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
                         },
                         onclose: function() {
@@ -72,6 +78,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                         amount: data.amount * 100, // Paystack requires kobo
                         ref: data.reference,
                         callback: function(response) {
+                            trackPixel('Lead', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match' });
                             window.location.href = `/employer/matching-fee/verify?reference=${response.reference}`;
                         },
                         onClose: function() {

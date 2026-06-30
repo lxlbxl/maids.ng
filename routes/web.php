@@ -56,7 +56,7 @@ Route::get('/', function () {
 // Conversational Onboarding (Public - no account required upfront)
 Route::get('/onboarding', function () {
     return Inertia::render('Employer/OnboardingQuiz', [
-        'guaranteeFee' => (int) \App\Models\Setting::get('matching_fee_amount', 5000),
+        'guaranteeFee' => (int) \App\Models\Setting::get('matching_fee_amount', 20000),
     ]);
 })->name('onboarding');
 
@@ -485,7 +485,7 @@ Route::middleware('auth')->group(function () {
         // Onboarding & Matching
         Route::get('/onboarding', function () {
             return Inertia::render('Employer/OnboardingQuiz', [
-                'guaranteeFee' => (int) \App\Models\Setting::get('matching_fee_amount', 5000),
+                'guaranteeFee' => (int) \App\Models\Setting::get('matching_fee_amount', 20000),
             ]);
         })->name('onboarding');
         Route::post('/matching/find', [MatchingController::class, 'findMatches'])->name('matching.find');
@@ -669,10 +669,11 @@ Route::get('/auto-login/{token}', function ($token) {
         if (!$data || !isset($data['user_id']) || ($data['expires'] ?? 0) < now()->timestamp) {
             return redirect('/login')->with('error', 'Link expired or invalid.');
         }
-        $user = \App\Models\User::find($data['user_id']);
+        $user = \App\Models\User::with('roles')->find($data['user_id']);
         if (!$user) return redirect('/login')->with('error', 'User not found.');
         \Illuminate\Support\Facades\Auth::login($user);
-        return redirect('/employer/dashboard')->with('success', 'Welcome back!');
+        $dashboard = $user->hasRole('admin') ? '/admin/dashboard' : ($user->hasRole('maid') ? '/maid/dashboard' : '/employer/dashboard');
+        return redirect($dashboard)->with('success', 'Welcome back!');
     } catch (\Exception $e) {
         return redirect('/login')->with('error', 'Invalid link.');
     }
@@ -684,10 +685,11 @@ Route::get('/auto-login/{token}/redirect', function ($token) {
         if (!$data || !isset($data['user_id']) || ($data['expires'] ?? 0) < now()->timestamp) {
             return redirect('/login')->with('error', 'Link expired or invalid.');
         }
-        $user = \App\Models\User::find($data['user_id']);
+        $user = \App\Models\User::with('roles')->find($data['user_id']);
         if (!$user) return redirect('/login')->with('error', 'User not found.');
         \Illuminate\Support\Facades\Auth::login($user);
-        return redirect(request('to', '/employer/dashboard'))->with('success', 'Welcome back!');
+        $to = request('to', $user->hasRole('maid') ? '/maid/dashboard' : '/employer/dashboard');
+        return redirect($to)->with('success', 'Welcome back!');
     } catch (\Exception $e) {
         return redirect('/login')->with('error', 'Invalid link.');
     }

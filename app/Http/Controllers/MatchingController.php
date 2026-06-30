@@ -267,7 +267,7 @@ class MatchingController extends Controller
                 ]);
 
         // Include guarantee_fee in response so frontend can show it for zero-result upsell
-        $guaranteeFee = (int) Setting::get('matching_fee_amount', 5000);
+        $guaranteeFee = (int) Setting::get('matching_fee_amount', 20000);
 
         if ($request->expectsJson() || $request->header('Accept') === 'application/json') {
             return response()->json([
@@ -355,7 +355,7 @@ class MatchingController extends Controller
                 'verified' => ($profile?->nin_verified ?? false) && ($profile?->background_verified ?? false),
                 'avatar' => $maid->avatar,
             ] : null,
-            'matchingFee' => (int) Setting::get('matching_fee_amount', 5000),
+            'matchingFee' => (int) Setting::get('matching_fee_amount', 20000),
             'paystackKey' => $publicKey,
             'defaultGateway' => $defaultGateway,
         ]);
@@ -373,7 +373,7 @@ class MatchingController extends Controller
 
         return Inertia::render('Employer/GuaranteeMatchPayment', [
             'preference' => $preference,
-            'guaranteeFee' => (int) Setting::get('matching_fee_amount', 5000),
+            'guaranteeFee' => (int) Setting::get('matching_fee_amount', 20000),
             'paystackKey' => $publicKey,
             'defaultGateway' => $defaultGateway,
         ]);
