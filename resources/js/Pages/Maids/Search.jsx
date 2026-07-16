@@ -10,10 +10,11 @@ export default function Search({ maids, filters }) {
     const [search, setSearch] = useState(filters?.search || '');
     const [location, setLocation] = useState(filters?.location || '');
     const [schedule, setSchedule] = useState(filters?.schedule || '');
+    const [gender, setGender] = useState(filters?.gender || '');
     const [hiringMaid, setHiringMaid] = useState(null);
 
     const handleFilter = () => {
-        router.get('/maids', { search, location, schedule }, { preserveState: true });
+        router.get('/maids', { search, location, schedule, gender }, { preserveState: true });
     };
 
     const handleKeyDown = (e) => {
@@ -72,6 +73,15 @@ export default function Search({ maids, filters }) {
                                 <option value="part-time" className="bg-espresso">Part-Time</option>
                                 <option value="weekends" className="bg-espresso">Weekends</option>
                                 <option value="live-in" className="bg-espresso">Live-In</option>
+                            </select>
+                            <select 
+                                value={gender}
+                                onChange={e => setGender(e.target.value)}
+                                className="md:w-36 bg-white/10 border-none rounded-brand-md px-5 py-3.5 text-sm text-white focus:ring-2 focus:ring-teal/40"
+                            >
+                                <option value="" className="bg-espresso">Any Gender</option>
+                                <option value="female" className="bg-espresso">Female</option>
+                                <option value="male" className="bg-espresso">Male</option>
                             </select>
                             <button 
                                 onClick={handleFilter}

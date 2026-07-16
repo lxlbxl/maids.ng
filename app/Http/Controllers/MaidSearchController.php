@@ -33,8 +33,7 @@ class MaidSearchController extends Controller
                 $mp->where(function ($q) use ($location, $locLower) {
                     $q->where('location', 'ilike', "%{$location}%")
                       ->orWhere('state', 'ilike', "%{$location}%")
-                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower])
-                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = 'anywhere')");
+                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower]);
                 });
             });
         }
