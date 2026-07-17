@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 
 class OnboardingController extends ApiController
 {
-    public function show(int $userId): JsonResponse
+    public function show($userId): JsonResponse
     {
         try {
             $journey = OnboardingJourney::firstOrCreate(
@@ -140,7 +140,7 @@ class OnboardingController extends ApiController
         }
     }
 
-    public function touchpoints(int $journeyId): JsonResponse
+    public function touchpoints($journeyId): JsonResponse
     {
         try {
             $touchpoints = OnboardingTouchpoint::where('journey_id', $journeyId)->latest()->get();
@@ -178,7 +178,7 @@ class OnboardingController extends ApiController
         }
     }
 
-    public function updateMilestone(Request $request, int $userId): JsonResponse
+    public function updateMilestone(Request $request, $userId): JsonResponse
     {
         $validated = $request->validate([
             'milestone' => 'required|string|in:quiz_started,quiz_completed,payment_confirmed,nin_submitted,profile_updated',
@@ -229,7 +229,7 @@ class OnboardingController extends ApiController
         }
     }
 
-    public function updateStatus(Request $request, int $journeyId): JsonResponse
+    public function updateStatus(Request $request, $journeyId): JsonResponse
     {
         $validated = $request->validate([
             'status' => 'required|string|in:in_progress,completed,abandoned,on_hold',
@@ -249,7 +249,7 @@ class OnboardingController extends ApiController
         }
     }
 
-    public function storeNote(Request $request, int $journeyId): JsonResponse
+    public function storeNote(Request $request, $journeyId): JsonResponse
     {
         $validated = $request->validate([
             'note'         => 'required|string|max:5000',

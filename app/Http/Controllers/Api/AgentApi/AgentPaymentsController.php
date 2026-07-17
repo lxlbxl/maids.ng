@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 
 class AgentPaymentsController extends ApiController
 {
-    public function status(int $userId): JsonResponse
+    public function status($userId): JsonResponse
     {
         try {
             $payment = MatchingFeePayment::where('employer_id', $userId)

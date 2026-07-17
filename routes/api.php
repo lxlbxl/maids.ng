@@ -64,7 +64,7 @@ Route::prefix('v1')->group(function () {
     // Public Maid Discovery
     Route::get('/maids', [MaidController::class, 'listAvailable']);
     // Removed unimplemented /search, /top-rated, /verified. Use query params on /maids instead (e.g. ?location=... &verified_only=true)
-    Route::get('/maids/{id}', [MaidController::class, 'publicProfile']);
+    Route::get('/maids/{id}', [MaidController::class, 'publicProfile'])->whereNumber('id');
 
     // Reference Data
     Route::get('/reference/skills', [MaidController::class, 'getSkills']);
@@ -113,7 +113,7 @@ Route::prefix('v1')->group(function () {
 
             // Assignments
             Route::get('/assignments', [MaidController::class, 'assignments']);
-            Route::get('/assignments/{id}', [MaidController::class, 'assignmentDetail']);
+            Route::get('/assignments/{id}', [MaidController::class, 'assignmentDetail'])->whereNumber('id');
 
             // Earnings & Payments
             Route::get('/earnings', [MaidController::class, 'earnings']);
@@ -180,10 +180,10 @@ Route::prefix('cli')->middleware(['mcp.auth'])->group(function () {
 
     // Assignment Management
     Route::get('/assignments', [CliAgentController::class, 'listAssignments']);
-    Route::get('/assignments/{id}', [CliAgentController::class, 'getAssignment']);
-    Route::post('/assignments/{id}/accept', [CliAgentController::class, 'acceptAssignment']);
-    Route::post('/assignments/{id}/reject', [CliAgentController::class, 'rejectAssignment']);
-    Route::post('/assignments/{id}/complete', [CliAgentController::class, 'completeAssignment']);
+    Route::get('/assignments/{id}', [CliAgentController::class, 'getAssignment'])->whereNumber('id');
+    Route::post('/assignments/{id}/accept', [CliAgentController::class, 'acceptAssignment'])->whereNumber('id');
+    Route::post('/assignments/{id}/reject', [CliAgentController::class, 'rejectAssignment'])->whereNumber('id');
+    Route::post('/assignments/{id}/complete', [CliAgentController::class, 'completeAssignment'])->whereNumber('id');
     Route::get('/assignments/statistics', [CliAgentController::class, 'getAssignmentStatistics']);
 
     // Wallet & Payments
@@ -193,15 +193,15 @@ Route::prefix('cli')->middleware(['mcp.auth'])->group(function () {
     // Notifications
     Route::get('/notifications', [CliAgentController::class, 'listNotifications']);
     Route::get('/notifications/unread-count', [CliAgentController::class, 'getUnreadCount']);
-    Route::post('/notifications/{id}/read', [CliAgentController::class, 'markNotificationAsRead']);
+    Route::post('/notifications/{id}/read', [CliAgentController::class, 'markNotificationAsRead'])->whereNumber('id');
     Route::post('/notifications/mark-all-read', [CliAgentController::class, 'markAllNotificationsAsRead']);
-    Route::delete('/notifications/{id}', [CliAgentController::class, 'deleteNotification']);
+    Route::delete('/notifications/{id}', [CliAgentController::class, 'deleteNotification'])->whereNumber('id');
 
     // User Management
     Route::get('/users', [CliAgentController::class, 'listUsers']);
     Route::get('/users/lookup', [CliAgentController::class, 'lookupByPhone']);
-    Route::get('/users/{id}', [CliAgentController::class, 'getUser']);
-    Route::put('/users/{id}/status', [CliAgentController::class, 'updateUserStatus']);
+    Route::get('/users/{id}', [CliAgentController::class, 'getUser'])->whereNumber('id');
+    Route::put('/users/{id}/status', [CliAgentController::class, 'updateUserStatus'])->whereNumber('id');
 
     // Reference Data
     Route::get('/reference/skills', [CliAgentController::class, 'getSkills']);
@@ -250,9 +250,9 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
 
     Route::post('/users/lookup', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'lookup']);
     Route::post('/users', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'store']);
-    Route::get('/users/{id}/summary', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'summary']);
-    Route::patch('/users/{id}', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'update']);
-    Route::get('/users/{id}/conversation-history', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'conversationHistory']);
+    Route::get('/users/{id}/summary', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'summary'])->whereNumber('id');
+    Route::patch('/users/{id}', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'update'])->whereNumber('id');
+    Route::get('/users/{id}/conversation-history', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'conversationHistory'])->whereNumber('id');
     Route::get('/users/scan/inactive', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanInactive']);
     Route::get('/users/scan/incomplete-maids', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanIncompleteMaids']);
 
@@ -266,8 +266,8 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
 
     Route::post('/conversations/message', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'message']);
     Route::get('/conversations', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'index']);
-    Route::get('/conversations/{id}', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'show']);
-    Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'messages']);
+    Route::get('/conversations/{id}', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'show'])->whereNumber('id');
+    Route::get('/conversations/{id}/messages', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'messages'])->whereNumber('id');
     Route::get('/agent/identity/lookup', [\App\Http\Controllers\Api\AgentApi\ConversationController::class, 'identityLookup']);
 
     Route::post('/campaigns/send-direct', [\App\Http\Controllers\Api\AgentApi\CampaignController::class, 'sendDirect']);
@@ -280,36 +280,36 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/metrics/funnel', [\App\Http\Controllers\Api\AgentApi\MetricsController::class, 'funnel']);
 
     // ── Onboarding ──
-    Route::get('/onboarding/{userId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'show']);
+    Route::get('/onboarding/{userId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'show'])->whereNumber('userId');
     Route::get('/onboarding/scan/needs-welcome-call', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanNeedsWelcomeCall']);
     Route::get('/onboarding/scan/quiz-abandoned', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanQuizAbandoned']);
     Route::get('/onboarding/scan/awaiting-payment', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanAwaitingPayment']);
     Route::get('/onboarding/scan/maid-profile-incomplete', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanMaidProfileIncomplete']);
     Route::get('/onboarding/scan/nin-pending', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanNinPending']);
     Route::get('/onboarding/scan/abandoned', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanAbandoned']);
-    Route::get('/onboarding/touchpoints/{journeyId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'touchpoints']);
+    Route::get('/onboarding/touchpoints/{journeyId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'touchpoints'])->whereNumber('journeyId');
     Route::post('/onboarding/touchpoints', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'storeTouchpoint']);
-    Route::patch('/onboarding/{userId}/milestone', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateMilestone']);
-    Route::patch('/onboarding/{journeyId}/status', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateStatus']);
-    Route::post('/onboarding/{journeyId}/note', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'storeNote']);
+    Route::patch('/onboarding/{userId}/milestone', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateMilestone'])->whereNumber('userId');
+    Route::patch('/onboarding/{journeyId}/status', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateStatus'])->whereNumber('journeyId');
+    Route::post('/onboarding/{journeyId}/note', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'storeNote'])->whereNumber('journeyId');
 
     // ── Fulfillment ──
     Route::post('/fulfillment/open', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'open']);
-    Route::get('/fulfillment/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'show']);
-    Route::get('/fulfillment/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'byEmployer']);
+    Route::get('/fulfillment/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'show'])->whereNumber('id');
+    Route::get('/fulfillment/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'byEmployer'])->whereNumber('userId');
     Route::get('/fulfillment/scan/all-active', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanAllActive']);
     Route::get('/fulfillment/scan/stalled', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanStalled']);
     Route::get('/fulfillment/scan/awaiting-first-day', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanAwaitingFirstDay']);
     Route::get('/fulfillment/scan/day-one-not-confirmed', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanDayOneNotConfirmed']);
     Route::get('/fulfillment/scan/ready-to-activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'scanReadyToActivate']);
-    Route::patch('/fulfillment/{id}/stage', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'updateStage']);
-    Route::post('/fulfillment/{id}/record-salary', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'recordSalary']);
-    Route::post('/fulfillment/{id}/set-start-date', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'setStartDate']);
-    Route::post('/fulfillment/{id}/confirm-arrival', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'confirmArrival']);
-    Route::post('/fulfillment/{id}/note', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'storeNote']);
-    Route::post('/fulfillment/{id}/activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'activate']);
-    Route::post('/fulfillment/{id}/fail', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'fail']);
-    Route::get('/fulfillment/events/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'events']);
+    Route::patch('/fulfillment/{id}/stage', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'updateStage'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/record-salary', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'recordSalary'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/set-start-date', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'setStartDate'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/confirm-arrival', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'confirmArrival'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/note', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'storeNote'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'activate'])->whereNumber('id');
+    Route::post('/fulfillment/{id}/fail', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'fail'])->whereNumber('id');
+    Route::get('/fulfillment/events/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'events'])->whereNumber('id');
 
     // ── Sales ──
     Route::get('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'pipeline'])->whereNumber('userId');
@@ -324,27 +324,27 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::post('/sales/pipeline/{userId}/action-taken', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'actionTaken'])->whereNumber('userId');
 
     // ── Customer Success ──
-    Route::get('/cs/cases/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'show']);
-    Route::get('/cs/cases/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'byEmployer']);
+    Route::get('/cs/cases/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'show'])->whereNumber('id');
+    Route::get('/cs/cases/by-employer/{userId}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'byEmployer'])->whereNumber('userId');
     Route::get('/cs/cases/scan/at-risk', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanAtRisk']);
     Route::get('/cs/cases/scan/appraisal-due', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanAppraisalDue']);
     Route::get('/cs/cases/scan/no-contact-30d', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanNoContact30d']);
-    Route::patch('/cs/cases/{id}/health', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateHealth']);
-    Route::post('/cs/cases/{id}/appraisal', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'appraisal']);
-    Route::post('/cs/cases/{id}/note', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'storeNote']);
+    Route::patch('/cs/cases/{id}/health', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateHealth'])->whereNumber('id');
+    Route::post('/cs/cases/{id}/appraisal', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'appraisal'])->whereNumber('id');
+    Route::post('/cs/cases/{id}/note', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'storeNote'])->whereNumber('id');
     Route::get('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'listTickets']);
-    Route::get('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'showTicket']);
+    Route::get('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'showTicket'])->whereNumber('id');
     Route::get('/cs/tickets/scan/sla-breached', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanSlaBreached']);
     Route::get('/cs/tickets/scan/critical-open', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanCriticalOpen']);
     Route::post('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'storeTicket']);
-    Route::patch('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateTicket']);
-    Route::post('/cs/tickets/{id}/resolve', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'resolveTicket']);
-    Route::post('/cs/tickets/{id}/escalate', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'escalateTicket']);
+    Route::patch('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateTicket'])->whereNumber('id');
+    Route::post('/cs/tickets/{id}/resolve', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'resolveTicket'])->whereNumber('id');
+    Route::post('/cs/tickets/{id}/escalate', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'escalateTicket'])->whereNumber('id');
     Route::get('/cs/exits/scan/recent', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanExitsRecent']);
     Route::post('/cs/exits', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'createExit']);
 
     // ── Payments ──
-    Route::get('/payments/status/{userId}', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'status']);
+    Route::get('/payments/status/{userId}', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'status'])->whereNumber('userId');
     Route::get('/payments/generate-link', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generateLink']);
     Route::post('/payments/generate-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generatePwbt']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
@@ -354,21 +354,21 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     // ── Matching & Assignments ──
     Route::post('/matching/run', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'run']);
     Route::post('/matching/assign', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'assign']);
-    Route::get('/assignments/{id}', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'showAssignment']);
-    Route::patch('/assignments/{id}/status', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'updateAssignmentStatus']);
+    Route::get('/assignments/{id}', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'showAssignment'])->whereNumber('id');
+    Route::patch('/assignments/{id}/status', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'updateAssignmentStatus'])->whereNumber('id');
     Route::get('/assignments/scan/no-start-date', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'scanNoStartDate']);
     Route::get('/assignments/scan/expiring-soon', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'scanExpiringSoon']);
 
     // ── Communications ──
     Route::get('/communications/thread/{phone}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByPhone']);
-    Route::get('/communications/thread/by-user/{userId}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByUser']);
+    Route::get('/communications/thread/by-user/{userId}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByUser'])->whereNumber('userId');
     Route::post('/communications/event', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'logEvent']);
     Route::get('/calls/logs', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'callLogs']);
-    Route::get('/calls/logs/{id}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'showCallLog']);
-    Route::patch('/calls/logs/{id}/outcome', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'updateCallOutcome']);
+    Route::get('/calls/logs/{id}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'showCallLog'])->whereNumber('id');
+    Route::patch('/calls/logs/{id}/outcome', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'updateCallOutcome'])->whereNumber('id');
 
     // ── Campaigns ──
     Route::get('/campaigns', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'index']);
-    Route::get('/campaigns/{id}/logs', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'logs']);
-    Route::post('/campaigns/{id}/dispatch', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'dispatch']);
+    Route::get('/campaigns/{id}/logs', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'logs'])->whereNumber('id');
+    Route::post('/campaigns/{id}/dispatch', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'dispatch'])->whereNumber('id');
 });
