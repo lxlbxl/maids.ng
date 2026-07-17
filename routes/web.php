@@ -94,8 +94,8 @@ Route::get('/api/unmatched-employer-locations', function () {
     });
     return response()->json($states);
 });
-Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show');
-Route::get('/api/maids/{id}', [MaidSearchController::class, 'showJson'])->name('maids.show.json');
+Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show')->whereNumber('id');
+Route::get('/api/maids/{id}', [MaidSearchController::class, 'showJson'])->name('maids.show.json')->whereNumber('id');
 
 // Deployment & Maintenance (Token-only auth — works on shared hosting)
 // IMPORTANT: Set DEPLOY_SECRET in your .env file, or it uses a default.
@@ -242,10 +242,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread');
     Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read')->whereNumber('id');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clear');
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy')->whereNumber('id');
     Route::post('/notifications/preferences', [NotificationController::class, 'updatePreferences'])->name('notifications.preferences');
 
     // Admin Routes
@@ -254,32 +254,32 @@ Route::middleware('auth')->group(function () {
 
         // People Management
         Route::get('/users', [AdminUserController::class, 'index'])->name('users');
-        Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show');
-        Route::post('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
-        Route::post('/users/{id}/role', [AdminUserController::class, 'assignRole'])->name('users.role');
-        Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show')->whereNumber('id');
+        Route::post('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->name('users.status')->whereNumber('id');
+        Route::post('/users/{id}/role', [AdminUserController::class, 'assignRole'])->name('users.role')->whereNumber('id');
+        Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update')->whereNumber('id');
+        Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy')->whereNumber('id');
         Route::get('/maids', [AdminMaidController::class, 'index'])->name('maids');
         Route::get('/staff', [AdminUserController::class, 'staff'])->name('staff');
-        Route::get('/maids/{id}', [AdminMaidController::class, 'show'])->name('maids.show');
-        Route::post('/maids/{id}/status', [AdminMaidController::class, 'updateStatus'])->name('maids.status');
-        Route::put('/maids/{id}', [AdminMaidController::class, 'update'])->name('maids.update');
-        Route::delete('/maids/{id}', [AdminMaidController::class, 'destroy'])->name('maids.destroy');
+        Route::get('/maids/{id}', [AdminMaidController::class, 'show'])->name('maids.show')->whereNumber('id');
+        Route::post('/maids/{id}/status', [AdminMaidController::class, 'updateStatus'])->name('maids.status')->whereNumber('id');
+        Route::put('/maids/{id}', [AdminMaidController::class, 'update'])->name('maids.update')->whereNumber('id');
+        Route::delete('/maids/{id}', [AdminMaidController::class, 'destroy'])->name('maids.destroy')->whereNumber('id');
         Route::get('/employers', [AdminUserController::class, 'employers'])->name('employers');
 
         // Operations
         Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings');
-        Route::get('/bookings/{id}', [AdminBookingController::class, 'show'])->name('bookings.show');
-        Route::post('/bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.status');
+        Route::get('/bookings/{id}', [AdminBookingController::class, 'show'])->name('bookings.show')->whereNumber('id');
+        Route::post('/bookings/{id}/status', [AdminBookingController::class, 'updateStatus'])->name('bookings.status')->whereNumber('id');
         Route::get('/disputes', [AdminDisputeController::class, 'index'])->name('disputes');
-        Route::post('/disputes/{id}/resolve', [AdminDisputeController::class, 'resolve'])->name('disputes.resolve');
+        Route::post('/disputes/{id}/resolve', [AdminDisputeController::class, 'resolve'])->name('disputes.resolve')->whereNumber('id');
 
         // Financials
         Route::get('/payments', [AdminFinancialController::class, 'payments'])->name('payments');
         Route::get('/earnings', [AdminFinancialController::class, 'earnings'])->name('earnings');
         Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews');
-        Route::post('/reviews/{id}/flag', [AdminReviewController::class, 'toggleFlag'])->name('reviews.flag');
-        Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
+        Route::post('/reviews/{id}/flag', [AdminReviewController::class, 'toggleFlag'])->name('reviews.flag')->whereNumber('id');
+        Route::delete('/reviews/{id}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy')->whereNumber('id');
 
         // System
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications_panel');
@@ -291,9 +291,9 @@ Route::middleware('auth')->group(function () {
         // MCP Server Manager
         Route::get('/mcp', [McpController::class, 'index'])->name('mcp.index');
         Route::post('/mcp', [McpController::class, 'store'])->name('mcp.store');
-        Route::put('/mcp/{id}', [McpController::class, 'update'])->name('mcp.update');
-        Route::delete('/mcp/{id}', [McpController::class, 'destroy'])->name('mcp.destroy');
-        Route::post('/mcp/{id}/test', [McpController::class, 'testConnection'])->name('mcp.test');
+        Route::put('/mcp/{id}', [McpController::class, 'update'])->name('mcp.update')->whereNumber('id');
+        Route::delete('/mcp/{id}', [McpController::class, 'destroy'])->name('mcp.destroy')->whereNumber('id');
+        Route::post('/mcp/{id}/test', [McpController::class, 'testConnection'])->name('mcp.test')->whereNumber('id');
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings');
         Route::post('/settings/api-token', [AdminSettingsController::class, 'generateApiToken'])->name('settings.api-token');
         Route::post('/settings/revoke-tokens', [AdminSettingsController::class, 'revokeApiTokens'])->name('settings.revoke-tokens');
@@ -303,18 +303,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/api/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'store']);
         Route::get('/api/webhooks/statistics', [\App\Http\Controllers\Api\WebhookController::class, 'statistics']);
         Route::get('/api/webhooks/events', [\App\Http\Controllers\Api\WebhookController::class, 'availableEvents']);
-        Route::get('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'show']);
-        Route::put('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'update']);
-        Route::delete('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy']);
-        Route::post('/api/webhooks/{id}/test', [\App\Http\Controllers\Api\WebhookController::class, 'test']);
-        Route::get('/api/webhooks/{id}/deliveries', [\App\Http\Controllers\Api\WebhookController::class, 'deliveries']);
-        Route::post('/api/deliveries/{deliveryId}/retry', [\App\Http\Controllers\Api\WebhookController::class, 'retryDelivery']);
+        Route::get('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'show'])->whereNumber('id');
+        Route::put('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'update'])->whereNumber('id');
+        Route::delete('/api/webhooks/{id}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy'])->whereNumber('id');
+        Route::post('/api/webhooks/{id}/test', [\App\Http\Controllers\Api\WebhookController::class, 'test'])->whereNumber('id');
+        Route::get('/api/webhooks/{id}/deliveries', [\App\Http\Controllers\Api\WebhookController::class, 'deliveries'])->whereNumber('id');
+        Route::post('/api/deliveries/{deliveryId}/retry', [\App\Http\Controllers\Api\WebhookController::class, 'retryDelivery'])->whereNumber('deliveryId');
 
         // Agent Command Center
         Route::get('/agents', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'index'])->name('agents');
         Route::post('/agents/toggle', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'toggleAgent'])->name('agents.toggle');
         Route::post('/agents/channels/toggle', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'toggleChannel'])->name('agents.channels.toggle');
-        Route::post('/agents/conversations/{id}/close', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'closeConversation'])->name('agents.conversations.close');
+        Route::post('/agents/conversations/{id}/close', [\App\Http\Controllers\Admin\AdminAgentConfigController::class, 'closeConversation'])->name('agents.conversations.close')->whereNumber('id');
 
         // AI Matching Queue
         Route::get('/matching', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'index'])->name('matching');
@@ -324,31 +324,31 @@ Route::middleware('auth')->group(function () {
         Route::post('/matching/{jobId}/retry', [\App\Http\Controllers\Admin\AdminMatchingController::class, 'retry'])->name('matching.retry');
 
         // Dispute Refund Action
-        Route::post('/disputes/{id}/refund', [\App\Http\Controllers\AdminDisputeController::class, 'refund'])->name('disputes.refund');
+        Route::post('/disputes/{id}/refund', [\App\Http\Controllers\AdminDisputeController::class, 'refund'])->name('disputes.refund')->whereNumber('id');
 
         // Salary Management
         Route::get('/salary', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'index'])->name('salary');
-        Route::post('/salary/{id}/nudge', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'nudge'])->name('salary.nudge');
-        Route::post('/salary/{id}/process', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'processPayment'])->name('salary.process');
-        Route::post('/salary/{id}/mark-paid', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'markPaid'])->name('salary.mark-paid');
+        Route::post('/salary/{id}/nudge', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'nudge'])->name('salary.nudge')->whereNumber('id');
+        Route::post('/salary/{id}/process', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'processPayment'])->name('salary.process')->whereNumber('id');
+        Route::post('/salary/{id}/mark-paid', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'markPaid'])->name('salary.mark-paid')->whereNumber('id');
         Route::get('/salary/export', [\App\Http\Controllers\Admin\AdminSalaryController::class, 'export'])->name('salary.export');
 
 
         Route::get('/verifications', [AdminVerificationController::class, 'index'])->name('verifications');
-        Route::post('/verifications/{id}/approve', [AdminVerificationController::class, 'approve'])->name('verifications.approve');
-        Route::post('/verifications/{id}/reject', [AdminVerificationController::class, 'reject'])->name('verifications.reject');
-        Route::get('/verifications/{id}/payload', [AdminVerificationController::class, 'payload'])->name('verifications.payload');
+        Route::post('/verifications/{id}/approve', [AdminVerificationController::class, 'approve'])->name('verifications.approve')->whereNumber('id');
+        Route::post('/verifications/{id}/reject', [AdminVerificationController::class, 'reject'])->name('verifications.reject')->whereNumber('id');
+        Route::get('/verifications/{id}/payload', [AdminVerificationController::class, 'payload'])->name('verifications.payload')->whereNumber('id');
 
         // Verification Service Transactions (Standalone NIN Verification)
         Route::get('/verification-transactions', [AdminVerificationTransactionController::class, 'index'])->name('verification-transactions');
-        Route::get('/verification-transactions/{id}', [AdminVerificationTransactionController::class, 'show'])->name('verification-transactions.show');
-        Route::post('/verification-transactions/{id}', [AdminVerificationTransactionController::class, 'update'])->name('verification-transactions.update');
+        Route::get('/verification-transactions/{id}', [AdminVerificationTransactionController::class, 'show'])->name('verification-transactions.show')->whereNumber('id');
+        Route::post('/verification-transactions/{id}', [AdminVerificationTransactionController::class, 'update'])->name('verification-transactions.update')->whereNumber('id');
         Route::post('/verification-transactions/pricing', [AdminVerificationTransactionController::class, 'updatePricing'])->name('verification-transactions.update-pricing');
         Route::get('/verification-transactions/export', [AdminVerificationTransactionController::class, 'export'])->name('verification-transactions.export');
         Route::get('/verification-transactions/stats', [AdminVerificationTransactionController::class, 'stats'])->name('verification-transactions.stats');
 
         Route::get('/escalations', [App\Http\Controllers\Admin\EscalationController::class, 'index'])->name('escalations');
-        Route::post('/escalations/{id}/resolve', [App\Http\Controllers\Admin\EscalationController::class, 'resolve'])->name('escalations.resolve');
+        Route::post('/escalations/{id}/resolve', [App\Http\Controllers\Admin\EscalationController::class, 'resolve'])->name('escalations.resolve')->whereNumber('id');
 
         // ── Agent Administration ──
         Route::prefix('agent')->name('agent.')->group(function () {
@@ -428,8 +428,8 @@ Route::middleware('auth')->group(function () {
         Route::prefix('seo')->name('seo.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'index'])->name('dashboard');
             Route::get('/pages', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'pages'])->name('pages');
-            Route::get('/pages/{id}', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'showPage'])->name('page.show');
-            Route::post('/pages/{id}/regenerate', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'regenerateContent'])->name('page.regenerate');
+            Route::get('/pages/{id}', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'showPage'])->name('page.show')->whereNumber('id');
+            Route::post('/pages/{id}/regenerate', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'regenerateContent'])->name('page.regenerate')->whereNumber('id');
             Route::post('/bulk-generate', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'bulkGenerate'])->name('bulk.generate');
             Route::post('/bulk-refresh', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'bulkRefreshContent'])->name('bulk.refresh');
             Route::get('/locations', [\App\Http\Controllers\Admin\Seo\SeoDashboardController::class, 'locations'])->name('locations');
@@ -458,9 +458,9 @@ Route::middleware('auth')->group(function () {
 
         // Bookings
         Route::get('/bookings', [BookingController::class, 'indexMaid'])->name('bookings');
-        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show');
-        Route::post('/bookings/{id}/accept', [BookingController::class, 'accept'])->name('bookings.accept');
-        Route::post('/bookings/{id}/reject', [BookingController::class, 'reject'])->name('bookings.reject');
+        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show')->whereNumber('id');
+        Route::post('/bookings/{id}/accept', [BookingController::class, 'accept'])->name('bookings.accept')->whereNumber('id');
+        Route::post('/bookings/{id}/reject', [BookingController::class, 'reject'])->name('bookings.reject')->whereNumber('id');
         Route::get('/bookings/stats', [BookingController::class, 'stats'])->name('bookings.stats');
 
         // Earnings/Payments
@@ -501,15 +501,15 @@ Route::middleware('auth')->group(function () {
 
         // Maids Search
         Route::get('/maids', [MaidSearchController::class, 'index'])->name('maids');
-        Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show');
+        Route::get('/maids/{id}', [MaidSearchController::class, 'show'])->name('maids.show')->whereNumber('id');
 
         // Bookings
         Route::get('/bookings', [BookingController::class, 'indexEmployer'])->name('bookings');
         Route::post('/bookings', [BookingController::class, 'create'])->name('bookings.create');
-        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show');
-        Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
-        Route::post('/bookings/{id}/start', [BookingController::class, 'start'])->name('bookings.start');
-        Route::post('/bookings/{id}/complete', [BookingController::class, 'complete'])->name('bookings.complete');
+        Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show')->whereNumber('id');
+        Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel')->whereNumber('id');
+        Route::post('/bookings/{id}/start', [BookingController::class, 'start'])->name('bookings.start')->whereNumber('id');
+        Route::post('/bookings/{id}/complete', [BookingController::class, 'complete'])->name('bookings.complete')->whereNumber('id');
         Route::get('/bookings/stats', [BookingController::class, 'stats'])->name('bookings.stats');
 
         // Payments
@@ -520,8 +520,8 @@ Route::middleware('auth')->group(function () {
         // Reviews
         Route::get('/reviews', [ReviewController::class, 'indexEmployer'])->name('reviews');
         Route::post('/reviews', [ReviewController::class, 'create'])->name('reviews.create');
-        Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update');
-        Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+        Route::put('/reviews/{id}', [ReviewController::class, 'update'])->name('reviews.update')->whereNumber('id');
+        Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.destroy')->whereNumber('id');
     });
 });
 
@@ -539,7 +539,7 @@ Route::post('/webhooks/matching-fee/flutterwave', [MatchingFeeController::class,
 |--------------------------------------------------------------------------
 */
 Route::post('/ambassador/chat', [\App\Http\Controllers\Api\AmbassadorChatController::class, 'chat'])->name('ambassador.chat');
-Route::get('/ambassador/conversation/{id}', [\App\Http\Controllers\Api\AmbassadorChatController::class, 'history'])->name('ambassador.history');
+Route::get('/ambassador/conversation/{id}', [\App\Http\Controllers\Api\AmbassadorChatController::class, 'history'])->name('ambassador.history')->whereNumber('id');
 
 // Setup for shared hosting (runs ALL migrations + seeds)
 Route::get('/run-setup', function () use ($deploySecret) {

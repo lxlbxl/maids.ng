@@ -118,7 +118,7 @@ class AdminController extends ApiController
     /**
      * Verify a maid (admin manual approval).
      */
-    public function verifyMaid(int $id): JsonResponse
+    public function verifyMaid($id): JsonResponse
     {
         $user = User::findOrFail($id);
 
@@ -167,7 +167,7 @@ class AdminController extends ApiController
     /**
      * Approve a withdrawal request.
      */
-    public function approveWithdrawal(ApproveWithdrawalRequest $request, int $id): JsonResponse
+    public function approveWithdrawal(ApproveWithdrawalRequest $request, $id): JsonResponse
     {
         $user = Auth::user();
         $validated = $request->validated();
@@ -195,7 +195,7 @@ class AdminController extends ApiController
     /**
      * Reject a withdrawal request.
      */
-    public function rejectWithdrawal(Request $request, int $id): JsonResponse
+    public function rejectWithdrawal(Request $request, $id): JsonResponse
     {
         $user = Auth::user();
 
@@ -290,7 +290,7 @@ class AdminController extends ApiController
     /**
      * Get user details.
      */
-    public function userDetails(int $id): JsonResponse
+    public function userDetails($id): JsonResponse
     {
         $user = Auth::user();
 
@@ -313,7 +313,7 @@ class AdminController extends ApiController
     /**
      * Update user status.
      */
-    public function updateUserStatus(UpdateUserStatusRequest $request, int $id): JsonResponse
+    public function updateUserStatus(UpdateUserStatusRequest $request, $id): JsonResponse
     {
         $user = Auth::user();
         $validated = $request->validated();
@@ -443,7 +443,7 @@ class AdminController extends ApiController
     /**
      * Escalate an overdue salary schedule.
      */
-    public function escalateSalary(Request $request, int $id): JsonResponse
+    public function escalateSalary(Request $request, $id): JsonResponse
     {
         $schedule = SalarySchedule::findOrFail($id);
 
@@ -465,7 +465,7 @@ class AdminController extends ApiController
     /**
      * Send manual reminder for a salary schedule.
      */
-    public function sendSalaryReminder(int $id): JsonResponse
+    public function sendSalaryReminder($id): JsonResponse
     {
         $schedule = SalarySchedule::with('employer')->findOrFail($id);
 
@@ -547,7 +547,7 @@ class AdminController extends ApiController
     /**
      * Manually mark a schedule as paid (admin override).
      */
-    public function markSchedulePaid(Request $request, int $id): JsonResponse
+    public function markSchedulePaid(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'notes' => 'nullable|string|max:1000',
@@ -894,7 +894,7 @@ class AdminController extends ApiController
     /**
      * Get assignment detail.
      */
-    public function assignmentDetail(int $id): JsonResponse
+    public function assignmentDetail($id): JsonResponse
     {
         if (!Auth::user()->isAdmin()) {
             return $this->forbidden('Unauthorized.');
@@ -909,7 +909,7 @@ class AdminController extends ApiController
     /**
      * Cancel an assignment.
      */
-    public function cancelAssignment(int $id, Request $request): JsonResponse
+    public function cancelAssignment($id, Request $request): JsonResponse
     {
         if (!Auth::user()->isAdmin()) {
             return $this->forbidden('Unauthorized.');
