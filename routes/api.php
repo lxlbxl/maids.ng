@@ -312,16 +312,16 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/fulfillment/events/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'events']);
 
     // ── Sales ──
-    Route::get('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'pipeline']);
+    Route::get('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'pipeline'])->whereNumber('userId');
     Route::get('/sales/scan/hot-leads', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanHotLeads']);
     Route::get('/sales/scan/warm-leads', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWarmLeads']);
     Route::get('/sales/scan/payment-pending', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanPaymentPending']);
     Route::get('/sales/scan/winback-recent', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWinbackRecent']);
     Route::get('/sales/scan/winback-lapsed', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanWinbackLapsed']);
     Route::get('/sales/scan/upsell-candidates', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'scanUpsellCandidates']);
-    Route::patch('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'updatePipeline']);
-    Route::post('/sales/pipeline/{userId}/event', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'logEvent']);
-    Route::post('/sales/pipeline/{userId}/action-taken', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'actionTaken']);
+    Route::patch('/sales/pipeline/{userId}', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'updatePipeline'])->whereNumber('userId');
+    Route::post('/sales/pipeline/{userId}/event', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'logEvent'])->whereNumber('userId');
+    Route::post('/sales/pipeline/{userId}/action-taken', [\App\Http\Controllers\Api\AgentApi\SalesController::class, 'actionTaken'])->whereNumber('userId');
 
     // ── Customer Success ──
     Route::get('/cs/cases/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'show']);
