@@ -30,7 +30,7 @@ class NoteController extends ApiController
         return $this->success($note, 'Note logged', [], 201);
     }
 
-    public function index(string $entityType, int $entityId): JsonResponse
+    public function index(string $entityType, $entityId): JsonResponse
     {
         $notes = AgentNote::forEntity($entityType, $entityId);
 

@@ -44,7 +44,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
         try {
             $case = FulfillmentCase::with(['employer', 'maid', 'events'])->findOrFail($id);
@@ -55,7 +55,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function byEmployer(int $userId): JsonResponse
+    public function byEmployer($userId): JsonResponse
     {
         try {
             $case = FulfillmentCase::where('employer_id', $userId)
@@ -158,7 +158,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function updateStage(Request $request, int $id): JsonResponse
+    public function updateStage(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'stage' => 'required|string|max:100',
@@ -190,7 +190,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function recordSalary(Request $request, int $id): JsonResponse
+    public function recordSalary(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'party'  => 'required|string|in:maid,employer',
@@ -238,7 +238,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function setStartDate(Request $request, int $id): JsonResponse
+    public function setStartDate(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'start_date'       => 'required|date',
@@ -267,7 +267,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function confirmArrival(Request $request, int $id): JsonResponse
+    public function confirmArrival(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'maid_arrived_day_one' => 'required|boolean',
@@ -297,7 +297,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function storeNote(Request $request, int $id): JsonResponse
+    public function storeNote(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'notes'      => 'required|string|max:5000',
@@ -321,7 +321,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function activate(Request $request, int $id): JsonResponse
+    public function activate(Request $request, $id): JsonResponse
     {
         try {
             $case = FulfillmentCase::findOrFail($id);
@@ -346,7 +346,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function fail(Request $request, int $id): JsonResponse
+    public function fail(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'fail_reason' => 'required|string|max:1000',
@@ -373,7 +373,7 @@ class FulfillmentController extends ApiController
         }
     }
 
-    public function events(int $id): JsonResponse
+    public function events($id): JsonResponse
     {
         try {
             $events = FulfillmentEvent::where('fulfillment_case_id', $id)

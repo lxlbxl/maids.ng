@@ -85,7 +85,7 @@ class UserController extends ApiController
         ]);
     }
 
-    public function summary(int $id): JsonResponse
+    public function summary($id): JsonResponse
     {
         $user = User::with(['maidProfile', 'employerPreferences'])->findOrFail($id);
 
@@ -152,7 +152,7 @@ class UserController extends ApiController
         return $this->success(['user_id' => $user->id], 'User created', 201);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $user = User::findOrFail($id);
 
@@ -209,7 +209,7 @@ class UserController extends ApiController
         ]);
     }
 
-    public function conversationHistory(int $id): JsonResponse
+    public function conversationHistory($id): JsonResponse
     {
         $conversations = AgentConversation::where('user_id', $id)
             ->with(['messages' => fn($q) => $q->latest()->limit(30)])

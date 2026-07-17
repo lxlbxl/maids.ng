@@ -21,7 +21,7 @@ class CampaignsController extends ApiController
         }
     }
 
-    public function logs(int $id): JsonResponse
+    public function logs($id): JsonResponse
     {
         try {
             AgentCampaign::findOrFail($id);
@@ -37,7 +37,7 @@ class CampaignsController extends ApiController
         }
     }
 
-    public function dispatch(Request $request, int $id): JsonResponse
+    public function dispatch(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'channel_identity_id' => 'required|integer|exists:agent_channel_identities,id',
