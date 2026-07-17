@@ -140,16 +140,41 @@ class UserController extends ApiController
             'password' => 'nullable|string|min:8',
         ]);
 
+        // Find-or-create by phone first, then by email
+        $variants = $this->phoneVariants($validated['phone']);
+        $existing = User::where(function ($query) use ($variants) {
+            foreach ($variants as $variant) {
+                $query->orWhere('phone', 'like', '%' . $variant . '%');
+            }
+        })->first();
+
+        if ($existing) {
+            return $this->success([
+                'user_id' => $existing->id,
+                'name' => $existing->name,
+                'phone' => $existing->phone,
+                'role' => $existing->role,
+                'status' => $existing->status,
+                'existed' => true,
+            ], 'User already exists');
+        }
+
+        $email = $validated['email'] ?? ($validated['phone'].'@maids.ng');
+
+        if (User::where('email', $email)->exists()) {
+            $email = $validated['phone'] . '.' . now()->timestamp . '@maids.ng';
+        }
+
         $user = User::create([
             'name'     => $validated['name'],
             'phone'    => $validated['phone'],
-            'email'    => $validated['email'] ?? ($validated['phone'].'@maids.ng'),
+            'email'    => $email,
             'password' => bcrypt($validated['password'] ?? 'maids123'),
             'role'     => $validated['role'],
             'status'   => 'active',
         ]);
 
-        return $this->success(['user_id' => $user->id], 'User created', 201);
+        return $this->success(['user_id' => $user->id, 'existed' => false], 'User created', [], 201);
     }
 
     public function update(Request $request, $id): JsonResponse
