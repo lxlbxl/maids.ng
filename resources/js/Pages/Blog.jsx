@@ -144,7 +144,7 @@ export default function Blog() {
                     <div>
                         <h4 className="font-semibold text-ivory mb-3">Contact</h4>
                         <div className="space-y-2">
-                            <p>08012345678</p>
+                            <p>0201 330 9202</p>
                             <p>hello@maids.ng</p>
                             <p>Lagos, Nigeria</p>
                         </div>

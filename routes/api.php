@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\UserEventController;
 use App\Http\Controllers\Api\VerificationController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\CliAgentController;
+use App\Http\Controllers\Api\WacrmBridgeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -218,6 +219,26 @@ Route::prefix('cli')->middleware(['mcp.auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Agent Channel Webhooks — Inbound Messages from External Platforms
+|--------------------------------------------------------------------------
+|
+| Public endpoints called by WACRM, Mailgun, Meta, etc.
+| Signature verification is handled inside each controller.
+|
+*/
+Route::prefix('agent/webhook')->group(function () {
+    Route::post('/whatsapp', [AgentChannelWebhookController::class, 'whatsappWebhook']);
+    Route::post('/email', [AgentChannelWebhookController::class, 'emailWebhook']);
+    Route::post('/instagram', [AgentChannelWebhookController::class, 'instagramWebhook']);
+    Route::post('/facebook', [AgentChannelWebhookController::class, 'facebookWebhook']);
+    Route::get('/facebook/verify', [AgentChannelWebhookController::class, 'facebookVerify']);
+
+    // WACRM outbound webhook bridge → Paperclip AI
+    Route::post('/wacrm-bridge', WacrmBridgeController::class);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Agent API Routes — External Agent Operations
 |--------------------------------------------------------------------------
 |
@@ -267,10 +288,10 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/onboarding/scan/nin-pending', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanNinPending']);
     Route::get('/onboarding/scan/abandoned', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'scanAbandoned']);
     Route::get('/onboarding/touchpoints/{journeyId}', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'touchpoints']);
-    Route::post('/onboarding/touchpoints', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'createTouchpoint']);
-    Route::patch('/onboarding/{userId}/milestone', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'milestone']);
+    Route::post('/onboarding/touchpoints', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'storeTouchpoint']);
+    Route::patch('/onboarding/{userId}/milestone', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateMilestone']);
     Route::patch('/onboarding/{journeyId}/status', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'updateStatus']);
-    Route::post('/onboarding/{journeyId}/note', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'addNote']);
+    Route::post('/onboarding/{journeyId}/note', [\App\Http\Controllers\Api\AgentApi\OnboardingController::class, 'storeNote']);
 
     // ── Fulfillment ──
     Route::post('/fulfillment/open', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'open']);
@@ -285,7 +306,7 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::post('/fulfillment/{id}/record-salary', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'recordSalary']);
     Route::post('/fulfillment/{id}/set-start-date', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'setStartDate']);
     Route::post('/fulfillment/{id}/confirm-arrival', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'confirmArrival']);
-    Route::post('/fulfillment/{id}/note', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'addNote']);
+    Route::post('/fulfillment/{id}/note', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'storeNote']);
     Route::post('/fulfillment/{id}/activate', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'activate']);
     Route::post('/fulfillment/{id}/fail', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'fail']);
     Route::get('/fulfillment/events/{id}', [\App\Http\Controllers\Api\AgentApi\FulfillmentController::class, 'events']);
@@ -310,12 +331,12 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/cs/cases/scan/no-contact-30d', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanNoContact30d']);
     Route::patch('/cs/cases/{id}/health', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateHealth']);
     Route::post('/cs/cases/{id}/appraisal', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'appraisal']);
-    Route::post('/cs/cases/{id}/note', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'addNote']);
+    Route::post('/cs/cases/{id}/note', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'storeNote']);
     Route::get('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'listTickets']);
     Route::get('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'showTicket']);
     Route::get('/cs/tickets/scan/sla-breached', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanSlaBreached']);
     Route::get('/cs/tickets/scan/critical-open', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'scanCriticalOpen']);
-    Route::post('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'createTicket']);
+    Route::post('/cs/tickets', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'storeTicket']);
     Route::patch('/cs/tickets/{id}', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'updateTicket']);
     Route::post('/cs/tickets/{id}/resolve', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'resolveTicket']);
     Route::post('/cs/tickets/{id}/escalate', [\App\Http\Controllers\Api\AgentApi\CsController::class, 'escalateTicket']);
@@ -325,6 +346,7 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     // ── Payments ──
     Route::get('/payments/status/{userId}', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'status']);
     Route::get('/payments/generate-link', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generateLink']);
+    Route::post('/payments/generate-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generatePwbt']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
