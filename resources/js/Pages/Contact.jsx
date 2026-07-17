@@ -49,7 +49,7 @@ export default function Contact() {
                                 </div>
                                 <div className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1">
                                     <h3 className="font-semibold text-teal mb-2">Phone</h3>
-                                    <p className="text-muted">08012345678</p>
+                                    <p className="text-muted">0201 330 9202</p>
                                     <p className="text-muted text-sm">Mon–Sat, 8am–6pm WAT</p>
                                 </div>
                                 <div className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1">
@@ -165,7 +165,7 @@ export default function Contact() {
                     <div>
                         <h4 className="font-semibold text-ivory mb-3">Contact</h4>
                         <div className="space-y-2">
-                            <p>08012345678</p>
+                            <p>0201 330 9202</p>
                             <p>hello@maids.ng</p>
                             <p>Lagos, Nigeria</p>
                         </div>

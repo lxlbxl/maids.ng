@@ -594,7 +594,7 @@ export default function Welcome({ auth, appSettings }) {
                         <div className="space-y-2">
                             <Link href="/terms" className="block hover:text-teal-light transition-colors">Terms of Service</Link>
                             <Link href="/privacy" className="block hover:text-teal-light transition-colors">Privacy Policy</Link>
-                            <p className="mt-4">📞 08012345678</p>
+                            <p className="mt-4">📞 0201 330 9202</p>
                             <p>✉️ hello@maids.ng</p>
                         </div>
                     </div>
