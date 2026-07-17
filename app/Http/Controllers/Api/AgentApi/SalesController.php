@@ -12,8 +12,14 @@ use Illuminate\Http\Request;
 
 class SalesController extends ApiController
 {
-    public function pipeline(int $userId): JsonResponse
+    public function pipeline($userId): JsonResponse
     {
+        if (!is_numeric($userId)) {
+            return $this->error('Invalid user ID', 400);
+        }
+
+        $userId = (int) $userId;
+
         try {
             $pipeline = SalesPipeline::firstOrCreate(
                 ['user_id' => $userId],
@@ -142,7 +148,7 @@ class SalesController extends ApiController
         }
     }
 
-    public function updatePipeline(Request $request, int $userId): JsonResponse
+    public function updatePipeline(Request $request, $userId): JsonResponse
     {
         $validated = $request->validate([
             'funnel_stage' => 'nullable|string|max:100',
@@ -164,7 +170,7 @@ class SalesController extends ApiController
         }
     }
 
-    public function logEvent(Request $request, int $userId): JsonResponse
+    public function logEvent(Request $request, $userId): JsonResponse
     {
         $validated = $request->validate([
             'event_type' => 'required|string|max:100',
@@ -198,7 +204,7 @@ class SalesController extends ApiController
         }
     }
 
-    public function actionTaken(Request $request, int $userId): JsonResponse
+    public function actionTaken(Request $request, $userId): JsonResponse
     {
         $validated = $request->validate([
             'action'           => 'required|string|max:100',
