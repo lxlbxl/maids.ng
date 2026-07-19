@@ -51,6 +51,10 @@ class WacrmBridgeController extends ApiController
         $whatsappMessageId = $data['whatsapp_message_id'] ?? null;
         $contentType = $data['content_type'] ?? 'text';
         $text = $data['text'] ?? '';
+        $mediaUrl = $data['media_url'] ?? null;
+        $caption = $data['caption'] ?? null;
+        $filename = $data['filename'] ?? null;
+        $mimeType = $data['mime_type'] ?? null;
         $deliveryId = $payload['id'] ?? uniqid('bridge_', true);
 
         if (!$conversationId || !$contactId) {
@@ -67,13 +71,13 @@ class WacrmBridgeController extends ApiController
                     'conversation_id' => $conversationId,
                 ]);
                 $this->reopenIssueIfDone($existingIssueId, $conversationId);
-                $this->addCommentToIssue($existingIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $deliveryId);
+                $this->addCommentToIssue($existingIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $mediaUrl, $caption, $filename, $mimeType, $deliveryId);
             } else {
                 Log::info('WACRM bridge: creating new issue for conversation', [
                     'conversation_id' => $conversationId,
                 ]);
                 $newIssueId = $this->createIssueForConversation($conversationId);
-                $this->addCommentToIssue($newIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $deliveryId);
+                $this->addCommentToIssue($newIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $mediaUrl, $caption, $filename, $mimeType, $deliveryId);
             }
         } catch (\Throwable $e) {
             Log::error('WACRM bridge failed', [
@@ -190,9 +194,8 @@ class WacrmBridgeController extends ApiController
     /**
      * Add a comment to a Paperclip issue representing the inbound WhatsApp message.
      *
-     * The comment carries the full WACRM payload context so the Paperclip agent
-     * has everything it needs (contact_id, conversation_id, message content, etc.)
-     * to look up the user, reason, and reply.
+     * Formats the comment body based on content_type so the Paperclip agent gets
+     * the right context for text, voice notes, images, documents, and locations.
      */
     private function addCommentToIssue(
         string $issueId,
@@ -201,25 +204,94 @@ class WacrmBridgeController extends ApiController
         ?string $whatsappMessageId,
         string $contentType,
         string $text,
+        ?string $mediaUrl,
+        ?string $caption,
+        ?string $filename,
+        ?string $mimeType,
         string $deliveryId
     ): void {
-        // Build a clean, structured comment body that the agent can parse
-        $body = sprintf(
-            "---\n" .
-            "**WhatsApp incoming message**\n" .
-            "delivery_id: `%s`\n" .
-            "conversation_id: `%s`\n" .
-            "contact_id: `%s`\n" .
-            "whatsapp_message_id: `%s`\n" .
-            "content_type: `%s`\n\n" .
-            "> %s\n",
-            $deliveryId,
-            $conversationId,
-            $contactId,
-            $whatsappMessageId ?? 'N/A',
-            $contentType,
-            $text
-        );
+        $mediaUrlFull = $mediaUrl ? 'https://wa.maids.ng' . $mediaUrl : null;
+
+        $body = "---\n**WhatsApp incoming message**\n";
+        $body .= "delivery_id: `{$deliveryId}`\n";
+        $body .= "conversation_id: `{$conversationId}`\n";
+        $body .= "contact_id: `{$contactId}`\n";
+        $body .= "whatsapp_message_id: `" . ($whatsappMessageId ?? 'N/A') . "`\n";
+        $body .= "content_type: `{$contentType}`\n";
+
+        if ($caption) {
+            $body .= "caption: `{$caption}`\n";
+        }
+        if ($filename) {
+            $body .= "filename: `{$filename}`\n";
+        }
+        if ($mimeType) {
+            $body .= "mime_type: `{$mimeType}`\n";
+        }
+
+        $body .= "\n";
+
+        // Format body based on content type
+        switch ($contentType) {
+            case 'audio':
+            case 'voice':
+                $body .= "🎤 **Voice note received**\n";
+                if ($mediaUrlFull) {
+                    $body .= "Listen: {$mediaUrlFull}\n";
+                }
+                $body .= "_The agent should transcribe this audio to extract the user's message._\n";
+                break;
+
+            case 'image':
+                $body .= "🖼️ **Image received**\n";
+                if ($caption) {
+                    $body .= "> {$caption}\n";
+                }
+                if ($mediaUrlFull) {
+                    $body .= "View: {$mediaUrlFull}\n";
+                }
+                break;
+
+            case 'video':
+                $body .= "🎬 **Video received**\n";
+                if ($caption) {
+                    $body .= "> {$caption}\n";
+                }
+                if ($mediaUrlFull) {
+                    $body .= "View: {$mediaUrlFull}\n";
+                }
+                break;
+
+            case 'document':
+                $body .= "📎 **Document received**";
+                if ($filename) {
+                    $body .= ": {$filename}";
+                }
+                $body .= "\n";
+                if ($caption) {
+                    $body .= "> {$caption}\n";
+                }
+                if ($mediaUrlFull) {
+                    $body .= "Download: {$mediaUrlFull}\n";
+                }
+                break;
+
+            case 'location':
+                $body .= "📍 **Location shared**\n";
+                $body .= "> {$text}\n";
+                break;
+
+            default:
+                // text or fallback
+                $body .= "> {$text}\n";
+                break;
+        }
+
+        Log::info('WACRM bridge: sending comment to Paperclip', [
+            'issue_id' => $issueId,
+            'content_type' => $contentType,
+            'has_media' => (bool) $mediaUrl,
+        ]);
 
         $response = Http::post(
             self::PAPERCLIP_API_URL . '/issues/' . $issueId . '/comments',
