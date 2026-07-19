@@ -53,6 +53,9 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
+// WhatsApp CTA redirect — Directive 09 (MNG-HERO-01). Attribution per position.
+Route::get('/wa/{source}', \App\Http\Controllers\WhatsAppRedirectController::class)->name('wa.redirect');
+
 // Conversational Onboarding (Public - no account required upfront)
 Route::get('/onboarding', function () {
     return Inertia::render('Employer/OnboardingQuiz', [
