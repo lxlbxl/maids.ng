@@ -26,6 +26,10 @@ use App\Http\Controllers\Api\VerificationController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\CliAgentController;
 use App\Http\Controllers\Api\WacrmBridgeController;
+use App\Http\Controllers\Api\WacrmMediaController;
+use App\Http\Controllers\Api\CallSummaryController;
+use App\Http\Controllers\Api\InCallRequestController;
+use App\Http\Controllers\Api\OutboundCallController;
 
 /*
 |--------------------------------------------------------------------------
@@ -235,6 +239,10 @@ Route::prefix('agent/webhook')->group(function () {
 
     // WACRM outbound webhook bridge → Paperclip AI
     Route::post('/wacrm-bridge', WacrmBridgeController::class);
+    Route::get('/wacrm-media/{mediaId}', WacrmMediaController::class);
+    Route::post('/call-summary', CallSummaryController::class);
+    Route::post('/in-call-request', InCallRequestController::class);
+    Route::post('/outbound-call', OutboundCallController::class);
 });
 
 /*
