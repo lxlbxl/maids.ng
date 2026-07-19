@@ -1,4 +1,5 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -14,7 +15,7 @@ export default function ResetPassword({ token, email }) {
     };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title="Reset Password | Maids.ng" />
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] font-body flex items-center justify-center px-4 transition-theme">
                 <div className="w-full max-w-md">
@@ -81,6 +82,6 @@ export default function ResetPassword({ token, email }) {
                     </p>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

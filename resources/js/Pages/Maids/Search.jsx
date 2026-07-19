@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import DirectHireModal from '@/Components/DirectHireModal';
 import EmployerHireModal from '@/Components/EmployerHireModal';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function Search({ maids, filters }) {
     const { auth } = usePage().props;
@@ -22,29 +23,17 @@ export default function Search({ maids, filters }) {
     };
 
     return (
-        <>
+        <PublicLayout>
             <Head title="Find Trusted Helpers | Maids.ng" />
-            
+
             <div className="min-h-screen bg-ivory font-body">
-                {/* Header */}
-                <nav className="bg-white border-b border-gray-100 px-6 py-4 shadow-sm sticky top-0 z-30">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <Link href="/">
-                            <img src="/maids-logo.png" alt="Maids.ng" className="h-8" />
-                        </Link>
-                        <div className="flex items-center gap-4">
-                            <Link href="/login" className="text-sm text-muted hover:text-espresso transition-colors">Sign In</Link>
-                            <Link href="/register" className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Get Started</Link>
-                        </div>
-                    </div>
-                </nav>
 
                 {/* Hero Search */}
                 <div className="bg-espresso text-white px-6 py-16 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '30px 30px' }}></div>
                     <div className="max-w-4xl mx-auto text-center relative z-10">
                         <h1 className="font-display text-5xl font-light mb-4 tracking-tight">Find Your <span className="text-teal">Perfect Helper</span></h1>
-                        <p className="text-white/60 mb-10 text-lg">AI-matched, verified, and background-checked domestic helpers across Nigeria.</p>
+                        <p className="text-white/60 mb-10 text-lg">AI-matched, NIN-verified domestic helpers across Nigeria.</p>
                         
                         <div className="bg-white/10 backdrop-blur-md rounded-brand-xl p-2 flex flex-col md:flex-row gap-2 border border-white/10">
                             <input 
@@ -243,6 +232,6 @@ export default function Search({ maids, filters }) {
                     />
                 )
             )}
-        </>
+        </PublicLayout>
     );
 }

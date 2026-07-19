@@ -145,7 +145,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                             <div className="bg-teal-ghost rounded-brand-xl p-6 border border-teal-pale">
                                 <h4 className="font-semibold text-teal text-sm mb-3">What's Included</h4>
                                 <ul className="space-y-2 text-sm text-espresso">
-                                    {['Access to helper\'s full contact details', 'Verified background check report', '10-day money-back guarantee', 'Priority customer support', 'Free replacement if unsatisfied'].map(item => (
+                                    {['Access to helper\'s full contact details', 'NIN verification report', '10-day money-back guarantee', 'Priority customer support', 'Free replacement if unsatisfied'].map(item => (
                                         <li key={item} className="flex items-center gap-2">
                                             <span className="text-success text-xs">✓</span> {item}
                                         </li>

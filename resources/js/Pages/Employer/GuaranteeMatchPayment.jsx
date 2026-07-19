@@ -226,7 +226,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                                 <ul className="space-y-2 text-sm text-espresso">
                                     {[
                                         'Dedicated team actively sourcing your helper',
-                                        'Verified background check on matched helper',
+                                        'NIN identity verification on matched helper',
                                         'No additional matching fee when assigned',
                                         '14-day money-back guarantee',
                                         'Priority customer support',

@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 import { useState, useEffect } from 'react';
 
 const NIGERIAN_STATES = [
@@ -556,7 +557,7 @@ export default function MaidRegister() {
     };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head>
                 <title>Register as a Helper — Maids.ng | Find Paid Domestic Work in Nigeria</title>
                 <meta name="description" content="Register for free as a housekeeper, nanny, cook, or driver. Get verified, matched with families near you, and start earning. No salary cuts — we protect your rights." />
@@ -655,6 +656,6 @@ export default function MaidRegister() {
                     }
                 `}</style>
             </div>
-        </>
+        </PublicLayout>
     );
 }
