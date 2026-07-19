@@ -12,10 +12,12 @@ export default function StickyCtaBar({ intent = 'hire' }) {
 
     useEffect(() => {
         const hero = document.getElementById('hero');
-        if (!hero) return;
         // Direct check — setVisible with an unchanged value is a no-op render,
-        // so an unthrottled passive listener stays cheap.
-        const onScroll = () => setVisible(hero.getBoundingClientRect().bottom <= 0);
+        // so an unthrottled passive listener stays cheap. Pages without a hero
+        // show the bar after a modest scroll instead.
+        const onScroll = () => setVisible(
+            hero ? hero.getBoundingClientRect().bottom <= 0 : window.scrollY > 320
+        );
         onScroll();
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
@@ -23,7 +25,7 @@ export default function StickyCtaBar({ intent = 'hire' }) {
 
     return (
         <div
-            className={`fixed bottom-0 inset-x-0 z-40 lg:hidden transition-transform duration-300 ease-brand motion-reduce:transition-none ${
+            className={`fixed bottom-0 inset-x-0 z-40 lg:hidden print:hidden transition-transform duration-300 ease-brand motion-reduce:transition-none ${
                 visible ? 'translate-y-0' : 'translate-y-full'
             }`}
             aria-hidden={!visible}

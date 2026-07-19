@@ -44,7 +44,7 @@ export default function SiteHeader({ auth, intent = 'hire' }) {
     return (
         <>
             <header
-                className={`sticky top-0 z-50 w-full bg-ivory/95 dark:bg-[#121214]/95 backdrop-blur-md border-b border-[#E5E0D8] dark:border-white/10 transition-all duration-300 ${
+                className={`sticky top-0 z-50 w-full bg-ivory/95 dark:bg-[#121214]/95 backdrop-blur-md border-b border-[#E5E0D8] dark:border-white/10 transition-all duration-300 print:hidden ${
                     compressed ? 'h-14' : 'h-16'
                 }`}
             >
