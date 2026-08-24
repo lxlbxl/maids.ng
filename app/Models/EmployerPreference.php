@@ -51,4 +51,9 @@ class EmployerPreference extends Model
     {
         return $this->hasOne(MatchingFeePayment::class, 'preference_id');
     }
+
+    public function assignments()
+    {
+        return $this->hasMany(MaidAssignment::class, 'preference_id');
+    }
 }

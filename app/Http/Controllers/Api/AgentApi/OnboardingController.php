@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\AgentApi;
 
 use App\Http\Controllers\Api\ApiController;
 use App\Models\AgentNote;
+use App\Models\CallLog;
 use App\Models\EmployerPreference;
 use App\Models\MaidProfile;
 use App\Models\OnboardingJourney;
@@ -137,6 +138,52 @@ class OnboardingController extends ApiController
             ], 'Abandoned onboarding journeys');
         } catch (\Throwable $e) {
             return $this->error('Failed to scan abandoned journeys: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function scanNeedsCall(): JsonResponse
+    {
+        try {
+            $maidUserIds = MaidProfile::where('profile_completeness', '>=', 80)
+                ->where('nin_verified', true)
+                ->where('created_at', '<', now()->subHours(48))
+                ->pluck('user_id');
+
+            $calledUserIds = CallLog::whereIn('user_id', $maidUserIds)
+                ->where('call_type', 'onboarding')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->pluck('user_id');
+
+            $users = User::whereIn('id', $maidUserIds)
+                ->whereNotIn('id', $calledUserIds)
+                ->get(['id', 'name', 'phone', 'email']);
+
+            return $this->success([
+                'count' => $users->count(),
+                'users' => $users,
+            ], 'Maids needing call');
+        } catch (\Throwable $e) {
+            return $this->error('Failed to scan for maids needing call: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function callLogs(Request $request): JsonResponse
+    {
+        try {
+            $query = CallLog::query();
+
+            if ($userId = $request->get('user_id')) {
+                $query->where('user_id', $userId);
+            }
+            if ($callType = $request->get('call_type')) {
+                $query->where('call_type', $callType);
+            }
+
+            $logs = $query->with('user:id,name,phone')->latest()->paginate(25);
+
+            return $this->paginated($logs, 'Call logs retrieved');
+        } catch (\Throwable $e) {
+            return $this->error('Failed to retrieve call logs: ' . $e->getMessage(), 500);
         }
     }
 
