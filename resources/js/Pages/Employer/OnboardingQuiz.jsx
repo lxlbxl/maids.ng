@@ -267,7 +267,11 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
         if (matches.length > 0) {
             return (
                 <>
-                    <Head title="Your Matches" />
+                    <Head>
+                        <title>Your Matches — Maids.ng</title>
+                        <meta name="description" content="We found verified helpers matching your requirements. Select a helper to complete your matching and get connected." />
+                        <meta name="robots" content="noindex" />
+                    </Head>
                     <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] py-12 px-6">
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-12">
@@ -404,7 +408,11 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
         // ── Zero Results: Guarantee Match Upsell ──
         return (
             <>
-                <Head title="Guarantee Match — Maids.ng" />
+                <Head>
+                    <title>Guarantee Match — Maids.ng | Find Your Perfect Helper</title>
+                    <meta name="description" content="No exact match? Our Guarantee Match service finds and assigns a verified helper for you — or your money back." />
+                    <meta name="robots" content="noindex" />
+                </Head>
                 <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] py-12 px-6">
                     <div className="max-w-3xl mx-auto">
                         {/* Header */}
@@ -505,7 +513,23 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     // ── Quiz View ──
     return (
         <>
-            <Head title="Find Your Perfect Helper" />
+            <Head>
+                <title>Find Your Perfect Helper — Maids.ng | Hire Verified Home Help</title>
+                <meta name="description" content="Tell us what you need and we'll match you with verified housekeepers, nannies, cooks, and drivers in Nigeria. ID-checked helpers, 10-day free replacement." />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href="https://maids.ng/onboarding" />
+
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://maids.ng/onboarding" />
+                <meta property="og:title" content="Hire Verified Home Help — Maids.ng" />
+                <meta property="og:description" content="Find verified housekeepers, nannies, cooks & drivers. ID-checked, smart matching, 10-day free replacement." />
+                <meta property="og:image" content="https://maids.ng/maids-logo.png" />
+
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Hire Verified Home Help — Maids.ng" />
+                <meta name="twitter:description" content="Find verified housekeepers, nannies, cooks & drivers in Nigeria." />
+                <meta name="twitter:image" content="https://maids.ng/maids-logo.png" />
+            </Head>
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex flex-col">
                 {/* Progress Bar */}
                 <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 dark:bg-white/10 z-50">

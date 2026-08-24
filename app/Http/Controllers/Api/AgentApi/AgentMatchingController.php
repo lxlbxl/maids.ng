@@ -59,7 +59,7 @@ class AgentMatchingController extends ApiController
         }
     }
 
-    public function showAssignment(int $id): JsonResponse
+    public function showAssignment($id): JsonResponse
     {
         try {
             $assignment = MaidAssignment::with(['employer', 'maid'])->findOrFail($id);
@@ -70,7 +70,7 @@ class AgentMatchingController extends ApiController
         }
     }
 
-    public function updateAssignmentStatus(Request $request, int $id): JsonResponse
+    public function updateAssignmentStatus(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'status' => 'required|string|in:pending_acceptance,accepted,rejected,completed,cancelled',

@@ -1,11 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function ForgotPassword() {
     const { data, setData, post, processing } = useForm({ email: '' });
     const submit = (e) => { e.preventDefault(); post('/forgot-password'); };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title="Forgot Password" />
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex items-center justify-center px-6 transition-theme">
                 <div className="w-full max-w-md text-center">
@@ -22,6 +23,6 @@ export default function ForgotPassword() {
                     <p className="text-sm text-muted dark:text-gray-400 mt-6"><Link href="/login" className="text-teal font-medium">← Back to Login</Link></p>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

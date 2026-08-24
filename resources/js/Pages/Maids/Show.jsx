@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import DirectHireModal from '@/Components/DirectHireModal';
 import EmployerHireModal from '@/Components/EmployerHireModal';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function Show({ maid }) {
     const { auth } = usePage().props;
@@ -24,22 +25,17 @@ export default function Show({ maid }) {
     };
 
     return (
-        <>
+        <PublicLayout>
             <Head title={`${maid.name} — Helper Profile | Maids.ng`} />
             
             <div className="min-h-screen bg-ivory font-body pb-16">
-                {/* Header */}
-                <nav className="bg-white border-b border-gray-100 px-6 py-4 shadow-sm sticky top-0 z-30">
+                {/* Contextual utility bar (site header comes from PublicLayout) */}
+                <div className="bg-white border-b border-gray-100 px-6 py-3">
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <Link href="/">
-                            <img src="/maids-logo.png" alt="Maids.ng" className="h-8" />
-                        </Link>
-                        <div className="flex items-center gap-4">
-                            <Link href="/maids" className="text-sm text-muted hover:text-espresso transition-colors">← Back to Search</Link>
-                            <button onClick={() => setHireModalOpen(true)} className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Hire {maid.name?.split(' ')[0]}</button>
-                        </div>
+                        <Link href="/maids" className="text-sm text-muted hover:text-espresso transition-colors">← Back to Search</Link>
+                        <button onClick={() => setHireModalOpen(true)} className="bg-teal text-white px-5 py-2 rounded-brand-md text-sm font-bold hover:bg-teal/90 transition-all">Hire {maid.name?.split(' ')[0]}</button>
                     </div>
-                </nav>
+                </div>
 
                 <div className="max-w-7xl mx-auto px-6 py-10">
                     {/* Profile Hero Card */}
@@ -388,8 +384,8 @@ export default function Show({ maid }) {
                                     <li className="flex items-start gap-3">
                                         <span className="text-base leading-none">{maid.background_verified ? '✅' : '⏳'}</span>
                                         <div>
-                                            <p className="font-bold text-espresso">Criminal Background Check</p>
-                                            <p className="text-muted text-[11px]">{maid.background_verified ? 'Clear criminal and background screening records.' : 'Background screening underway.'}</p>
+                                            <p className="font-bold text-espresso">Guarantor Verification</p>
+                                            <p className="text-muted text-[11px]">{maid.background_verified ? 'Guarantor contact collected and confirmed.' : 'Guarantor confirmation underway.'}</p>
                                         </div>
                                     </li>
                                     <li className="flex items-start gap-3">
@@ -443,6 +439,6 @@ export default function Show({ maid }) {
                     />
                 )
             )}
-        </>
+        </PublicLayout>
     );
 }

@@ -26,7 +26,7 @@ class CommsController extends ApiController
         }
     }
 
-    public function threadByUser(int $userId): JsonResponse
+    public function threadByUser($userId): JsonResponse
     {
         try {
             $conversations = AgentConversation::where('user_id', $userId)
@@ -86,7 +86,7 @@ class CommsController extends ApiController
         }
     }
 
-    public function showCallLog(int $id): JsonResponse
+    public function showCallLog($id): JsonResponse
     {
         try {
             $log = CallLog::with('user:id,name,phone')->findOrFail($id);
@@ -97,7 +97,7 @@ class CommsController extends ApiController
         }
     }
 
-    public function updateCallOutcome(Request $request, int $id): JsonResponse
+    public function updateCallOutcome(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'goal_achieved'    => 'nullable|boolean',

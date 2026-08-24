@@ -48,7 +48,7 @@ class CreateAssignmentFromMatch implements ShouldQueue
         $maidId = $bestMatch['maid_id'];
 
         // Check employer has sufficient balance for matching fee
-        $matchingFee = config('services.matching_fee', 5000);
+        $matchingFee = config('services.matching_fee', 20000);
         $walletCheck = $this->walletService->checkBalance($employerId, $matchingFee);
 
         if (!$walletCheck['has_sufficient']) {

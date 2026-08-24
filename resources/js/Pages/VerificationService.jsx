@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 const STEPS = [
     { id: 'intro', title: 'Identity is the Foundation of Trust', subtitle: 'Our Gatekeeper AI connects directly to the National Identity Database (NIMC) to ensure your helper is exactly who they claim to be.' },
@@ -226,24 +227,13 @@ export default function VerificationService({ fee }) {
     };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title="Verify Identity — NIN Verification Service | Maids.ng" />
             <div className="min-h-screen bg-ivory font-body flex flex-col">
-                {/* Progress Bar */}
-                <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+                {/* Progress Bar (sits just below the sticky header) */}
+                <div className="sticky top-0 left-0 right-0 h-1 bg-gray-200 z-40 -mb-1">
                     <div className="h-full bg-teal transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
                 </div>
-
-                {/* Header */}
-                <nav className="bg-white border-b border-gray-100 px-6 py-4 shadow-sm">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <Link href="/"><img src="/maids-logo.png" alt="Maids.ng" className="h-8" /></Link>
-                        <div className="flex items-center gap-4">
-                            <Link href="/maids" className="text-sm text-muted hover:text-espresso">Browse Helpers</Link>
-                            <Link href="/login" className="text-sm text-muted hover:text-espresso">Sign In</Link>
-                        </div>
-                    </div>
-                </nav>
 
                 <div className="flex-1 flex items-center justify-center px-6 py-16">
                     <div className="max-w-xl w-full">
@@ -475,6 +465,6 @@ export default function VerificationService({ fee }) {
                     </div>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

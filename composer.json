@@ -14,7 +14,7 @@
         "laravel/tinker": "^2.9",
         "sentry/sentry-laravel": "^4.0",
         "spatie/laravel-permission": "^6.0",
-        "symfony/polyfill-php84": "*",
+        "symfony/polyfill-php84": "^1.31",
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {

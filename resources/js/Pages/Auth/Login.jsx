@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({ 
@@ -13,7 +14,7 @@ export default function Login() {
     };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title="Log In" />
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex items-center justify-center px-6 relative overflow-hidden transition-theme">
                 {/* Decorative background elements */}
@@ -88,6 +89,6 @@ export default function Login() {
                     </p>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

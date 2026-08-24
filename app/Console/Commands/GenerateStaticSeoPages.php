@@ -76,7 +76,7 @@ class GenerateStaticSeoPages extends Command
         $servicePlural = $service->plural ?? $service->name . 's';
         $metaDesc = $page->meta_description ?? "Find verified {$servicePlural} in {$location->name}. NIN-verified, AI-matched, backed by a 10-day money-back guarantee.";
 
-        $matchingFee = number_format((int) Setting::get('matching_fee_amount', 5000));
+        $matchingFee = number_format((int) Setting::get('matching_fee_amount', 20000));
 
         // Get genuinely unique content from the content matrix
         $cityData = SeoContentMatrix::cityData($citySlug);

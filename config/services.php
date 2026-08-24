@@ -91,7 +91,7 @@ return [
     ],
 
     'fees' => [
-        'matching' => env('MATCHING_FEE_AMOUNT', 5000),
+        'matching' => env('MATCHING_FEE_AMOUNT', 20000),
         'nin_verification' => env('NIN_VERIFICATION_FEE', 5000),
     ],
 
@@ -110,6 +110,8 @@ return [
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+        // Public wa.me number for site CTAs (digits only, intl format, no +)
+        'number' => env('WHATSAPP_NUMBER', '2348173070000'),
     ],
 
     /*

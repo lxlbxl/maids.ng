@@ -4,8 +4,13 @@ import { useState } from 'react';
 export default function MatchingPayment({ preference, maid, matchingFee = 5000, paystackKey }) {
     const [loading, setLoading] = useState(false);
 
+    const trackPixel = (event, params = {}) => {
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params); } catch(e) {}
+    };
+
     const handlePayment = async () => {
         setLoading(true);
+        trackPixel('InitiateCheckout', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee' });
         try {
             const resp = await fetch('/employer/matching-fee/initialize', {
                 method: 'POST',
@@ -28,6 +33,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                             phone_number: data.phone,
                         },
                         callback: function (response) {
+                            trackPixel('Lead', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee' });
                             window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
                         },
                         onclose: function() {
@@ -38,9 +44,10 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                     const handler = window.PaystackPop.setup({
                         key: data.key,
                         email: data.email,
-                        amount: data.amount * 100, // Paystack requires kobo
+                        amount: data.amount * 100,
                         ref: data.reference,
                         callback: function(response) {
+                            trackPixel('Lead', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee' });
                             window.location.href = `/employer/matching-fee/verify?reference=${response.reference}`;
                         },
                         onClose: function() {
@@ -138,7 +145,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                             <div className="bg-teal-ghost rounded-brand-xl p-6 border border-teal-pale">
                                 <h4 className="font-semibold text-teal text-sm mb-3">What's Included</h4>
                                 <ul className="space-y-2 text-sm text-espresso">
-                                    {['Access to helper\'s full contact details', 'Verified background check report', '10-day money-back guarantee', 'Priority customer support', 'Free replacement if unsatisfied'].map(item => (
+                                    {['Access to helper\'s full contact details', 'NIN verification report', '10-day money-back guarantee', 'Priority customer support', 'Free replacement if unsatisfied'].map(item => (
                                         <li key={item} className="flex items-center gap-2">
                                             <span className="text-success text-xs">✓</span> {item}
                                         </li>

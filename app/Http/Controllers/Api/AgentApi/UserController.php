@@ -13,6 +13,41 @@ use Illuminate\Http\Request;
 
 class UserController extends ApiController
 {
+    /**
+     * Generate all plausible phone format variants for lookup.
+     *
+     * Nigerian numbers commonly appear as:
+     *   - 08012345678  (local, with leading 0)
+     *   - 2348012345678 (international, 13 digits)
+     *   - +2348012345678 (with + prefix)
+     *
+     * This normalizes the input and returns all variants so we can
+     * match regardless of how the user (or WACRM) formatted the number.
+     */
+    private function phoneVariants(string $raw): array
+    {
+        $digits = preg_replace('/[^\d]/', '', $raw);
+        $variants = [$digits];
+
+        // 13 digits starting with 234 → also try 0-prefixed local format
+        if (strlen($digits) === 13 && str_starts_with($digits, '234')) {
+            $variants[] = '0' . substr($digits, 3); // e.g. 08104999930
+        }
+
+        // 11 digits starting with 0 → also try 234-prefixed international
+        if (strlen($digits) === 11 && str_starts_with($digits, '0')) {
+            $variants[] = '234' . substr($digits, 1); // e.g. 2348104999930
+        }
+
+        // 10 digits (no prefix at all) → try both local and international
+        if (strlen($digits) === 10 && !str_starts_with($digits, '0')) {
+            $variants[] = '0' . $digits;
+            $variants[] = '234' . $digits;
+        }
+
+        return array_unique($variants);
+    }
+
     public function lookup(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -26,7 +61,12 @@ class UserController extends ApiController
         if ($id = $validated['user_id'] ?? null) {
             $user = User::find($id);
         } elseif ($phone = $validated['phone'] ?? null) {
-            $user = User::where('phone', 'like', '%'.preg_replace('/[^\d]/', '', $phone).'%')->first();
+            $variants = $this->phoneVariants($phone);
+            $user = User::where(function ($query) use ($variants) {
+                foreach ($variants as $variant) {
+                    $query->orWhere('phone', 'like', '%' . $variant . '%');
+                }
+            })->first();
         } elseif ($email = $validated['email'] ?? null) {
             $user = User::where('email', $email)->first();
         }
@@ -45,7 +85,7 @@ class UserController extends ApiController
         ]);
     }
 
-    public function summary(int $id): JsonResponse
+    public function summary($id): JsonResponse
     {
         $user = User::with(['maidProfile', 'employerPreferences'])->findOrFail($id);
 
@@ -100,19 +140,44 @@ class UserController extends ApiController
             'password' => 'nullable|string|min:8',
         ]);
 
+        // Find-or-create by phone first, then by email
+        $variants = $this->phoneVariants($validated['phone']);
+        $existing = User::where(function ($query) use ($variants) {
+            foreach ($variants as $variant) {
+                $query->orWhere('phone', 'like', '%' . $variant . '%');
+            }
+        })->first();
+
+        if ($existing) {
+            return $this->success([
+                'user_id' => $existing->id,
+                'name' => $existing->name,
+                'phone' => $existing->phone,
+                'role' => $existing->role,
+                'status' => $existing->status,
+                'existed' => true,
+            ], 'User already exists');
+        }
+
+        $email = $validated['email'] ?? ($validated['phone'].'@maids.ng');
+
+        if (User::where('email', $email)->exists()) {
+            $email = $validated['phone'] . '.' . now()->timestamp . '@maids.ng';
+        }
+
         $user = User::create([
             'name'     => $validated['name'],
             'phone'    => $validated['phone'],
-            'email'    => $validated['email'] ?? ($validated['phone'].'@maids.ng'),
+            'email'    => $email,
             'password' => bcrypt($validated['password'] ?? 'maids123'),
             'role'     => $validated['role'],
             'status'   => 'active',
         ]);
 
-        return $this->success(['user_id' => $user->id], 'User created', 201);
+        return $this->success(['user_id' => $user->id, 'existed' => false], 'User created', [], 201);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $user = User::findOrFail($id);
 
@@ -169,7 +234,7 @@ class UserController extends ApiController
         ]);
     }
 
-    public function conversationHistory(int $id): JsonResponse
+    public function conversationHistory($id): JsonResponse
     {
         $conversations = AgentConversation::where('user_id', $id)
             ->with(['messages' => fn($q) => $q->latest()->limit(30)])

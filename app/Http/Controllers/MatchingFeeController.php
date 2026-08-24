@@ -29,7 +29,7 @@ class MatchingFeeController extends Controller
 
         $preference = EmployerPreference::findOrFail($validated['preference_id']);
         $paymentType = $validated['payment_type'] ?? 'matching_fee';
-        $amount = (int) Setting::get('matching_fee_amount', 5000);
+        $amount = (int) Setting::get('matching_fee_amount', 20000);
         $reference = 'MNG-' . strtoupper(Str::random(10));
 
         $gateway = Setting::get('default_payment_gateway', 'paystack');
@@ -164,51 +164,129 @@ class MatchingFeeController extends Controller
 
     public function webhook(Request $request)
     {
-        // Paystack Webhook
         $payload = $request->all();
-        $reference = $payload['data']['reference'] ?? null;
+        $event = $payload['event'] ?? '';
+        $reference = $payload['data']['reference'] ?? $payload['tx_ref'] ?? null;
 
         if (!$reference) {
             return response()->json(['status' => 'ignored'], 200);
         }
 
-        $payment = MatchingFeePayment::where('reference', $reference)->first();
+        // Look up payment by reference OR tx_ref (Flutterwave uses tx_ref)
+        $payment = MatchingFeePayment::where('reference', $reference)
+            ->orWhere('tx_ref', $reference)
+            ->first();
+
         if (!$payment) {
             return response()->json(['status' => 'not_found'], 200);
         }
 
-        // If already paid, don't re-process
+        // Already paid — idempotent
         if ($payment->status === 'paid') {
             return response()->json(['status' => 'already_paid'], 200);
         }
 
-        if ($payload['event'] === 'charge.success') {
-            // Re-verify on server to be 100% sure
-            $gatewayData = $this->paymentService->verifyTransaction($reference, $payment->gateway);
-            
-            if ($gatewayData) {
-                $payment->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'gateway_response' => $gatewayData,
+        // Validate we're handling a charge success event (Paystack: charge.success, Flutterwave: charge.completed)
+        $isSuccessEvent = in_array($event, ['charge.success', 'charge.completed'], true);
+
+        if (!$isSuccessEvent) {
+            return response()->json(['status' => 'ignored_event'], 200);
+        }
+
+        // For Flutterwave, verify the payload amount matches
+        if ($event === 'charge.completed') {
+            $fwAmount = (int) ($payload['data']['amount'] ?? 0);
+            if ($fwAmount > 0 && $fwAmount !== (int) $payment->amount) {
+                Log::warning('Webhook: amount mismatch', [
+                    'reference' => $reference,
+                    'expected' => $payment->amount,
+                    'received' => $fwAmount,
                 ]);
-
-                if ($payment->employer) {
-                    \App\Events\PaymentConfirmed::dispatch(
-                        $payment->employer,
-                        $payment->reference,
-                        (int) $payment->amount,
-                        $payment->payment_type ?? 'matching_fee'
-                    );
-                }
-
-                $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
-                $payment->preference->update(['matching_status' => $newStatus]);
-                
-                Log::info("Payment verified via webhook for reference: {$reference}");
+                return response()->json(['status' => 'amount_mismatch'], 200);
             }
         }
 
+        // Re-verify on server to be 100% sure it's not a spoofed webhook
+        $gatewayData = $this->paymentService->verifyTransaction($reference, $payment->gateway);
+
+        // For Flutterwave PWBT, also try the FlutterwavePwbtService
+        if (!$gatewayData && $payment->gateway === 'flutterwave' && $payment->tx_ref) {
+            $pwbtService = app(\App\Services\FlutterwavePwbtService::class);
+            $gatewayData = $pwbtService->verifyTransaction($payment->tx_ref);
+        }
+
+        if (!$gatewayData) {
+            Log::warning('Webhook: server-side re-verification failed', [
+                'reference' => $reference,
+                'gateway' => $payment->gateway,
+            ]);
+            return response()->json(['status' => 'verification_failed'], 200);
+        }
+
+        // Mark payment as paid
+        $payment->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+            'gateway_response' => $gatewayData,
+        ]);
+
+        // Fire PaymentConfirmed event (triggers webhooks, notifications)
+        if ($payment->employer) {
+            \App\Events\PaymentConfirmed::dispatch(
+                $payment->employer,
+                $payment->reference,
+                (int) $payment->amount,
+                $payment->payment_type ?? 'matching_fee'
+            );
+        }
+
+        // Update preference matching_status
+        if ($payment->preference) {
+            $newStatus = $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid';
+            $payment->preference->update(['matching_status' => $newStatus]);
+        }
+
+        // Update onboarding journey milestone if applicable
+        $this->updateOnboardingMilestone($payment);
+
+        Log::info("Payment verified via webhook", [
+            'reference' => $reference,
+            'payment_id' => $payment->id,
+            'gateway' => $payment->gateway,
+            'event' => $event,
+        ]);
+
         return response()->json(['status' => 'success'], 200);
+    }
+
+    /**
+     * Update onboarding journey to payment_confirmed if the user has one.
+     */
+    private function updateOnboardingMilestone(MatchingFeePayment $payment): void
+    {
+        try {
+            $journey = \App\Models\OnboardingJourney::where('user_id', $payment->employer_id)
+                ->where('status', '!=', 'completed')
+                ->first();
+
+            if ($journey) {
+                $journey->update([
+                    'current_step' => 'payment_confirmed',
+                    'completion_pct' => max($journey->completion_pct, 60),
+                    'last_activity_at' => now(),
+                ]);
+
+                Log::info('Onboarding journey updated on payment', [
+                    'user_id' => $payment->employer_id,
+                    'journey_id' => $journey->id,
+                    'step' => 'payment_confirmed',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to update onboarding milestone on payment', [
+                'user_id' => $payment->employer_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

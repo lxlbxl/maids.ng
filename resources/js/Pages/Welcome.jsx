@@ -1,195 +1,55 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
 import AmbassadorChatWidget from '@/Components/AmbassadorChatWidget';
+import SiteHeader from '@/Components/Layout/SiteHeader';
+import HeroSection, { useAudienceIntent } from '@/Components/Hero/HeroSection';
+import StickyCtaBar from '@/Components/Hero/StickyCtaBar';
+import SiteFooter from '@/Components/Layout/SiteFooter';
 
-export default function Welcome({ auth, appSettings }) {
-    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦5,000';
-    const [audience, setAudience] = useState('employer'); // 'employer' | 'worker'
+export default function Welcome({ auth, appSettings, proof }) {
+    const feeLabel = appSettings?.matchingFeeFormatted ?? '₦20,000';
+    const [intent, setIntent] = useAudienceIntent(); // 'hire' | 'work'
 
     return (
         <>
             <Head>
-                <title>Maids.ng — Find Trusted Home Help in Nigeria</title>
-                <meta name="description" content="Find verified housekeepers, nannies, cooks and drivers near you. Or register as a helper and get paid jobs in Nigeria. Safe, fast and trusted." />
+                <title>Maids.ng — Find Trusted Home Help in Nigeria | Verified Housekeepers, Nannies & Cooks</title>
+                <meta name="description" content="Find verified housekeepers, nannies, cooks and drivers near you. Or register as a helper and get paid jobs in Nigeria. Safe, fast and trusted. ID-checked helpers, 10-day free replacement." />
+                <meta name="keywords" content="maids, house help, domestic help, nanny, cook, driver, housekeeper, cleaning, childcare, Lagos, Abuja, Nigeria, verified helpers" />
+                <meta name="robots" content="index, follow" />
+                <meta name="author" content="Maids.ng" />
+                <link rel="canonical" href="https://maids.ng" />
+
+                {/* Hero photo is the LCP — preload the art-directed variants (Directive 04) */}
+                <link rel="preload" as="image" type="image/avif" imageSrcSet="/media/hero/hero-mobile-480.avif 480w, /media/hero/hero-mobile-768.avif 768w" imageSizes="100vw" media="(max-width: 767px)" fetchpriority="high" />
+                <link rel="preload" as="image" type="image/avif" imageSrcSet="/media/hero/hero-desktop-828.avif 828w, /media/hero/hero-desktop-1200.avif 1200w" imageSizes="100vw" media="(min-width: 768px)" fetchpriority="high" />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://maids.ng" />
+                <meta property="og:title" content="Maids.ng — Find Trusted Home Help in Nigeria" />
+                <meta property="og:description" content="Verified housekeepers, nannies, cooks & drivers matched to your needs. ID-checked helpers, smart matching, 10-day free replacement — 96% satisfaction rate." />
+                <meta property="og:image" content="https://maids.ng/maids-logo.png" />
+                <meta property="og:image:width" content="512" />
+                <meta property="og:image:height" content="512" />
+                <meta property="og:site_name" content="Maids.ng" />
+                <meta property="og:locale" content="en_NG" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:url" content="https://maids.ng" />
+                <meta name="twitter:title" content="Maids.ng — Find Trusted Home Help in Nigeria" />
+                <meta name="twitter:description" content="Verified housekeepers, nannies, cooks & drivers. ID-checked, smart matching, 10-day free replacement." />
+                <meta name="twitter:image" content="https://maids.ng/maids-logo.png" />
             </Head>
 
-            {/* ── Navigation ── */}
-            <nav className="fixed top-0 w-full z-50 bg-white/90 dark:bg-[#121214]/90 backdrop-blur-md border-b border-gray-200/60 dark:border-white/10 transition-theme">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8 dark:brightness-0 dark:invert transition-all" />
-                    </div>
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href="#how" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">How It Works</a>
-                        <a href="#for-workers" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">Find Work</a>
-                        <Link href="/verify-service" className="text-sm text-teal font-medium hover:text-teal-dark transition-colors">Verify a Helper</Link>
-                        <a href="#trust" className="text-sm text-gray-500 dark:text-gray-400 hover:text-teal transition-colors">Safety</a>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {auth?.user ? (
-                            <Link
-                                href={auth.user.roles?.includes('admin') ? '/admin/dashboard' : auth.user.roles?.includes('employer') ? '/employer/dashboard' : '/maid/dashboard'}
-                                className="bg-teal text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1"
-                            >
-                                My Dashboard
-                            </Link>
-                        ) : (
-                            <>
-                                <Link href="/login" className="text-sm text-teal font-medium hover:text-teal-dark transition-colors">Log In</Link>
-                                <a href="#get-started" className="bg-teal text-white px-5 py-2.5 rounded-brand-md text-sm font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-1">
-                                    Get Started
-                                </a>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </nav>
+            {/* ── Header (Directive 01) — sticky conversion surface ── */}
+            <SiteHeader auth={auth} intent={intent} />
 
-            {/* ── Hero Section ── */}
-            <section id="hero" className="min-h-screen flex items-center bg-espresso relative overflow-hidden pt-20">
-                {/* Background texture */}
-                <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, #FAF7F2 0, #FAF7F2 1px, transparent 0, transparent 50%)', backgroundSize: '28px 28px' }} />
-                <div className="absolute top-[-300px] right-[-200px] w-[800px] h-[800px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(15,85,86,0.35) 0%, transparent 65%)' }} />
+            {/* ── Hero (Directives 02–08) — photo LCP, gated video, WhatsApp-first ── */}
+            <HeroSection proof={proof} variant="A" intent={intent} onIntentChange={setIntent} />
 
-                <div className="max-w-7xl mx-auto px-6 py-20 relative z-10 w-full">
-
-                    {/* Audience toggle — the fork */}
-                    <div className="flex justify-center mb-12">
-                        <div className="inline-flex items-center gap-1 p-1 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm">
-                            <button
-                                id="toggle-hiring"
-                                onClick={() => setAudience('employer')}
-                                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                                    audience === 'employer'
-                                        ? 'bg-teal text-white shadow-lg'
-                                        : 'text-white/60 hover:text-white'
-                                }`}
-                            >
-                                👨‍👩‍👧 I Want to Hire Help
-                            </button>
-                            <button
-                                id="toggle-working"
-                                onClick={() => setAudience('worker')}
-                                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                                    audience === 'worker'
-                                        ? 'bg-copper-light text-espresso shadow-lg'
-                                        : 'text-white/60 hover:text-white'
-                                }`}
-                            >
-                                💼 I'm Looking for Work
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Employer Hero */}
-                    {audience === 'employer' && (
-                        <div className="text-center max-w-4xl mx-auto animate-fade-up">
-                            <p className="font-mono text-xs tracking-[0.16em] uppercase text-teal-light mb-5">
-                                Nigeria's Most Trusted Home Help Platform
-                            </p>
-                            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-light leading-none text-ivory mb-6">
-                                Your Home,<br />
-                                <em className="italic text-copper-light">Finally Sorted.</em>
-                            </h1>
-                            <p className="text-ivory/60 text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
-                                Get a verified, background-checked housekeeper, nanny, or cook — matched to your exact needs. If it's not a great fit in 10 days, we fix it. Free.
-                            </p>
-
-                            {/* Trust badges */}
-                            <div className="flex flex-wrap justify-center gap-3 mb-10">
-                                {[
-                                    { icon: '🆔', text: 'ID-Checked Helpers' },
-                                    { icon: '🤖', text: 'Smart Matching' },
-                                    { icon: '🔄', text: '10-Day Free Replacement' },
-                                    { icon: '⭐', text: '96% Satisfaction Rate' },
-                                ].map((badge) => (
-                                    <div key={badge.text} className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full text-sm text-ivory/80">
-                                        <span>{badge.icon}</span>
-                                        <span>{badge.text}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Link href="/onboarding" id="hero-find-helper-btn" className="bg-teal text-white px-10 py-4 rounded-brand-md text-base font-medium hover:bg-teal-dark transition-all hover:scale-[1.02] shadow-brand-2">
-                                    Find My Helper Now →
-                                </Link>
-                                <a href="#how" className="border border-white/30 text-ivory px-10 py-4 rounded-brand-md text-base font-medium hover:bg-white/[0.08] transition-all">
-                                    See How It Works
-                                </a>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-10 border-t border-white/[0.08] text-center">
-                                {[
-                                    { label: 'Verified Helpers', value: '500+' },
-                                    { label: 'Families Helped', value: '2,000+' },
-                                    { label: 'Jobs Matched', value: '3,800+' },
-                                    { label: 'Repeat Clients', value: '85%' },
-                                ].map((stat) => (
-                                    <div key={stat.label}>
-                                        <p className="font-mono text-[9px] tracking-[0.12em] uppercase text-white/30 mb-1.5">{stat.label}</p>
-                                        <p className="text-ivory font-medium text-lg">{stat.value}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Worker Hero */}
-                    {audience === 'worker' && (
-                        <div className="text-center max-w-4xl mx-auto animate-fade-up">
-                            <p className="font-mono text-xs tracking-[0.16em] uppercase text-copper-light mb-5">
-                                Find Good Work Near You
-                            </p>
-                            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-light leading-none text-ivory mb-6">
-                                Get a Job<br />
-                                <em className="italic text-copper-light">You'll Be Proud Of.</em>
-                            </h1>
-                            <p className="text-ivory/60 text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
-                                Register for free. Get matched with families near you. We protect your rights, help you get paid on time, and never take a cut from your salary.
-                            </p>
-
-                            {/* Worker benefits badges */}
-                            <div className="flex flex-wrap justify-center gap-3 mb-10">
-                                {[
-                                    { icon: '🆓', text: 'Free to Register' },
-                                    { icon: '💰', text: 'No Salary Cuts' },
-                                    { icon: '🛡️', text: 'We Protect Your Rights' },
-                                    { icon: '📍', text: 'Jobs Close to You' },
-                                ].map((badge) => (
-                                    <div key={badge.text} className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full text-sm text-ivory/80">
-                                        <span>{badge.icon}</span>
-                                        <span>{badge.text}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Link href="/register/maid" id="hero-register-worker-btn" className="bg-copper-light text-espresso px-10 py-4 rounded-brand-md text-base font-medium hover:opacity-90 transition-all hover:scale-[1.02] shadow-brand-2">
-                                    Register for Free →
-                                </Link>
-                                <a href="#for-workers" className="border border-white/30 text-ivory px-10 py-4 rounded-brand-md text-base font-medium hover:bg-white/[0.08] transition-all">
-                                    Learn More
-                                </a>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-10 border-t border-white/[0.08] text-center">
-                                {[
-                                    { label: 'Helpers Placed', value: '500+' },
-                                    { label: 'Avg. Monthly Pay', value: '₦35k+' },
-                                    { label: 'Job Success Rate', value: '94%' },
-                                    { label: 'Days to First Match', value: '< 7' },
-                                ].map((stat) => (
-                                    <div key={stat.label}>
-                                        <p className="font-mono text-[9px] tracking-[0.12em] uppercase text-white/30 mb-1.5">{stat.label}</p>
-                                        <p className="text-ivory font-medium text-lg">{stat.value}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </section>
+            {/* ── Sticky mobile CTA bar (Directive 10) ── */}
+            <StickyCtaBar intent={intent} />
 
             {/* ── Choose Your Path ── */}
             <section id="get-started" className="py-20 px-6 bg-white dark:bg-[#0f0f10] transition-theme scroll-mt-16">
@@ -450,8 +310,8 @@ export default function Welcome({ auth, appSettings }) {
                             icon: '🆔',
                         },
                         {
-                            title: 'We Do Background Checks',
-                            desc: 'We also run a background check to look for any criminal history. Helpers with serious records are not allowed on the platform.',
+                            title: 'Guarantor-Backed Profiles',
+                            desc: 'Every helper provides a guarantor we can contact before they join the platform — so there is always a real, reachable person who vouches for them.',
                             icon: '🔍',
                         },
                         {
@@ -541,46 +401,8 @@ export default function Welcome({ auth, appSettings }) {
                 </div>
             </section>
 
-            {/* ── Footer ── */}
-            <footer className="bg-espresso text-ivory/60 py-16 px-6">
-                <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-10 text-sm">
-                    <div className="md:col-span-2">
-                        <img src="/maids-logo.png" alt="Maids.ng" className="h-8 mb-4 brightness-0 invert" />
-                        <p className="text-xs leading-relaxed max-w-xs">
-                            Nigeria's most trusted platform connecting families with verified, background-checked domestic helpers.
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-ivory mb-3">Platform</h4>
-                        <div className="space-y-2">
-                            <a href="/onboarding" className="block hover:text-teal-light transition-colors">Find a Helper</a>
-                            <a href="/register/maid" className="block hover:text-teal-light transition-colors">Register as Helper</a>
-                            <a href="/maids" className="block hover:text-teal-light transition-colors">Browse Helpers</a>
-                            <Link href="/verify-service" className="block hover:text-teal-light transition-colors">Verify a Helper</Link>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-ivory mb-3">Company</h4>
-                        <div className="space-y-2">
-                            <Link href="/about" className="block hover:text-teal-light transition-colors">About Us</Link>
-                            <Link href="/contact" className="block hover:text-teal-light transition-colors">Contact</Link>
-                            <Link href="/blog" className="block hover:text-teal-light transition-colors">Blog</Link>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-ivory mb-3">Help & Legal</h4>
-                        <div className="space-y-2">
-                            <Link href="/terms" className="block hover:text-teal-light transition-colors">Terms of Service</Link>
-                            <Link href="/privacy" className="block hover:text-teal-light transition-colors">Privacy Policy</Link>
-                            <p className="mt-4">📞 08012345678</p>
-                            <p>✉️ hello@maids.ng</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="max-w-5xl mx-auto mt-12 pt-8 border-t border-white/10 text-xs text-center text-ivory/30">
-                    © {new Date().getFullYear()} Maids.ng. All rights reserved. · Nigeria's Most Trusted Home Help Platform
-                </div>
-            </footer>
+            {/* ── Footer (shared) ── */}
+            <SiteFooter intent={intent} />
 
             <style>{`
                 @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
