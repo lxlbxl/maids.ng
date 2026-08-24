@@ -1,8 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function Register() {
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title="Join Maids.ng" />
             <div className="min-h-screen bg-ivory dark:bg-[#0f0f10] flex items-center justify-center px-6 py-12 relative overflow-hidden transition-theme">
                 {/* Decorative background elements */}
@@ -61,6 +62,6 @@ export default function Register() {
                     </p>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

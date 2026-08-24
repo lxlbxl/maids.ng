@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import PublicLayout from '@/Layouts/PublicLayout';
 import { useState, useEffect } from 'react';
 
 export default function VerificationReport({ verification, showProcessing }) {
@@ -47,7 +48,7 @@ export default function VerificationReport({ verification, showProcessing }) {
     };
 
     return (
-        <>
+        <PublicLayout footer={false} stickyCta={false}>
             <Head title={`Verification Report - ${verification.maid_first_name} ${verification.maid_last_name}`} />
             <div className="min-h-screen bg-ivory py-12 px-6 print:p-0 print:bg-white">
                 <div className="max-w-3xl mx-auto">
@@ -227,6 +228,6 @@ export default function VerificationReport({ verification, showProcessing }) {
                     </div>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }

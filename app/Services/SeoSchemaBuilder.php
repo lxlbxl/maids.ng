@@ -184,7 +184,7 @@ class SeoSchemaBuilder
     {
         $service  = $page->service?->name ?? 'domestic staff';
         $location = $page->location?->full_name ?? 'Nigeria';
-        $matchingFee = number_format((int) \App\Models\Setting::get('matching_fee_amount', 5000));
+        $matchingFee = number_format((int) \App\Models\Setting::get('matching_fee_amount', 20000));
 
         return [
             '@context'    => 'https://schema.org',

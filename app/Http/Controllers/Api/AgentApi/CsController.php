@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class CsController extends ApiController
 {
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
         try {
             $case = CsCase::with(['employer', 'maid', 'tickets'])->findOrFail($id);
@@ -24,7 +24,7 @@ class CsController extends ApiController
         }
     }
 
-    public function byEmployer(int $userId): JsonResponse
+    public function byEmployer($userId): JsonResponse
     {
         try {
             $case = CsCase::where('employer_id', $userId)
@@ -89,7 +89,7 @@ class CsController extends ApiController
         }
     }
 
-    public function updateHealth(Request $request, int $id): JsonResponse
+    public function updateHealth(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'health_status' => 'required|string|in:healthy,at_risk,critical,resolved',
@@ -105,7 +105,7 @@ class CsController extends ApiController
         }
     }
 
-    public function storeAppraisal(Request $request, int $id): JsonResponse
+    public function storeAppraisal(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'satisfaction_score' => 'required|integer|min:1|max:5',
@@ -126,7 +126,7 @@ class CsController extends ApiController
         }
     }
 
-    public function storeNote(Request $request, int $id): JsonResponse
+    public function storeNote(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'note'         => 'required|string|max:5000',
@@ -177,7 +177,7 @@ class CsController extends ApiController
         }
     }
 
-    public function showTicket(int $id): JsonResponse
+    public function showTicket($id): JsonResponse
     {
         try {
             $ticket = SupportTicket::with('user:id,name,phone,email')->findOrFail($id);
@@ -252,7 +252,7 @@ class CsController extends ApiController
         }
     }
 
-    public function updateTicket(Request $request, int $id): JsonResponse
+    public function updateTicket(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'subject'    => 'nullable|string|max:255',
@@ -272,7 +272,7 @@ class CsController extends ApiController
         }
     }
 
-    public function resolveTicket(Request $request, int $id): JsonResponse
+    public function resolveTicket(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'resolution_notes' => 'nullable|string|max:5000',
@@ -292,7 +292,7 @@ class CsController extends ApiController
         }
     }
 
-    public function escalateTicket(Request $request, int $id): JsonResponse
+    public function escalateTicket(Request $request, $id): JsonResponse
     {
         $validated = $request->validate([
             'notes' => 'nullable|string|max:5000',

@@ -79,14 +79,14 @@ class ConversationController extends ApiController
         ], 'Message stored');
     }
 
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
         $conversation = AgentConversation::with(['identity', 'messages' => fn($q) => $q->latest()->limit(50)])->findOrFail($id);
 
         return $this->success($conversation);
     }
 
-    public function messages(int $id): JsonResponse
+    public function messages($id): JsonResponse
     {
         $messages = AgentMessage::where('conversation_id', $id)
             ->latest()

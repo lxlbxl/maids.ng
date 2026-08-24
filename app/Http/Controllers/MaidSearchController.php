@@ -20,23 +20,51 @@ class MaidSearchController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'ilike', "%{$search}%"));
+                  ->orWhereHas('maidProfile', fn($mp) => $mp->where('location', 'ilike', "%{$search}%"))
+                  ->orWhereHas('maidProfile', fn($mp) => $mp->whereJsonContains('skills', strtolower($search)))
+                  ->orWhereHas('maidProfile', fn($mp) => $mp->whereJsonContains('help_types', strtolower($search)));
             });
         }
 
         if ($request->filled('location')) {
             $location = $request->input('location');
-            $query->whereHas('maidProfile', function ($mp) use ($location) {
-                $mp->where(function ($q) use ($location) {
+            $locLower = strtolower(trim($location));
+            $query->whereHas('maidProfile', function ($mp) use ($location, $locLower) {
+                $mp->where(function ($q) use ($location, $locLower) {
                     $q->where('location', 'ilike', "%{$location}%")
                       ->orWhere('state', 'ilike', "%{$location}%")
-                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower])
-                      ->orWhereJsonContains('willing_states', 'anywhere');
+                      ->orWhereRaw("EXISTS (SELECT 1 FROM json_array_elements_text(willing_states) WHERE LOWER(value) = ?)", [$locLower]);
                 });
             });
         }
 
-        $maids = $query->paginate(12)->withQueryString();
+        if ($request->filled('type')) {
+            $type = strtolower($request->input('type'));
+            $query->whereHas('maidProfile', fn($mp) => $mp->whereJsonContains('help_types', $type));
+        }
+
+        if ($request->filled('schedule')) {
+            $query->whereHas('maidProfile', fn($mp) => $mp->where('schedule_preference', $request->input('schedule')));
+        }
+
+        if ($request->filled('gender')) {
+            $query->whereHas('maidProfile', fn($mp) => $mp->where('gender', $request->input('gender')));
+        }
+
+        // Sort: random (default), rating, newest, salary
+        $sort = $request->input('sort', 'random');
+        match ($sort) {
+            'rating' => $query->leftJoin('maid_profiles', 'users.id', '=', 'maid_profiles.user_id')
+                             ->orderBy('maid_profiles.rating', 'desc')->select('users.*'),
+            'newest' => $query->orderBy('created_at', 'desc'),
+            'salary_asc' => $query->leftJoin('maid_profiles', 'users.id', '=', 'maid_profiles.user_id')
+                                 ->orderBy('maid_profiles.expected_salary', 'asc')->select('users.*'),
+            'salary_desc' => $query->leftJoin('maid_profiles', 'users.id', '=', 'maid_profiles.user_id')
+                                  ->orderBy('maid_profiles.expected_salary', 'desc')->select('users.*'),
+            default => $query->inRandomOrder(),
+        };
+
+        $maids = $query->paginate(24)->withQueryString();
 
         $maidData = $maids->through(function ($maid) {
             $p = $maid->maidProfile;
@@ -62,7 +90,8 @@ class MaidSearchController extends Controller
 
         return Inertia::render('Maids/Search', [
             'maids' => $maidData,
-            'filters' => $request->only(['search', 'location', 'type', 'schedule']),
+            'filters' => array_merge(['search' => null, 'location' => null, 'type' => null, 'schedule' => null, 'gender' => null, 'sort' => null], $request->only(['search', 'location', 'type', 'schedule', 'gender', 'sort'])),
+            'total' => User::role('maid')->where('status', 'active')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true))->count(),
         ]);
     }
 
@@ -95,6 +124,9 @@ class MaidSearchController extends Controller
 
     public function show($id)
     {
+        if (!is_numeric($id)) {
+            abort(404);
+        }
         $maid = User::role('maid')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true))->with('maidProfile', 'reviewsReceived.employer')->findOrFail($id);
         $p = $maid->maidProfile;
 
@@ -161,6 +193,9 @@ class MaidSearchController extends Controller
 
     public function showJson($id)
     {
+        if (!is_numeric($id)) {
+            return response()->json(['message' => 'Invalid ID. Use a numeric maid ID, e.g. /api/maids/13'], 400);
+        }
         $maid = User::role('maid')->whereHas('maidProfile', fn($q) => $q->where('nin_verified', true))->with('maidProfile')->findOrFail($id);
         $p = $maid->maidProfile;
         return response()->json([

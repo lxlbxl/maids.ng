@@ -13,6 +13,9 @@ use App\Events\WithdrawalRequested;
 use App\Events\WithdrawalRejected;
 use App\Events\BookingCreated;
 use App\Events\PaymentConfirmed;
+use App\Listeners\DispatchWebhook;
+use App\Listeners\QueueAiMatchingOnPayment;
+use App\Listeners\SendPaymentNotification;
 use App\Listeners\CreateAssignmentFromMatch;
 use App\Listeners\CreateSalarySchedule;
 use App\Listeners\EscalateOverdueToAdmin;
@@ -32,7 +35,6 @@ use App\Listeners\TriggerReplacementSearch;
 use App\Listeners\UpdateMaidAvailabilityOnAccept;
 use App\Listeners\UpdateMaidAvailabilityOnComplete;
 use App\Listeners\UpdateScheduleAfterPayment;
-use App\Listeners\DispatchWebhook;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -105,6 +107,8 @@ class EventServiceProvider extends ServiceProvider
 
         PaymentConfirmed::class => [
             DispatchWebhook::class,
+            QueueAiMatchingOnPayment::class,
+            SendPaymentNotification::class,
         ],
 
         WithdrawalRejected::class => [

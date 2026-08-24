@@ -8,13 +8,16 @@ use App\Models\EmployerPreference;
 use App\Models\EmployerWallet;
 use App\Models\MaidAssignment;
 use App\Models\MatchingFeePayment;
+use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\FlutterwavePwbtService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AgentPaymentsController extends ApiController
 {
-    public function status(int $userId): JsonResponse
+    public function status($userId): JsonResponse
     {
         try {
             $payment = MatchingFeePayment::where('employer_id', $userId)
@@ -46,6 +49,48 @@ class AgentPaymentsController extends ApiController
             'currency'           => 'NGN',
             'callback_url'       => $callbackUrl,
         ], 'Payment link generated');
+    }
+
+    /**
+     * Generate a Flutterwave Pay with Bank Transfer (PWBT) virtual account.
+     *
+     * Called by the Paperclip agent when a WhatsApp user wants to pay the
+     * matching fee in-chat. Returns bank details formatted for WhatsApp display.
+     * No BVN/NIN required — works for unverified users.
+     */
+    public function generatePwbt(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'amount'  => 'nullable|integer|min:1000|max:500000',
+        ]);
+
+        try {
+            $user = User::findOrFail($validated['user_id']);
+            $amount = $validated['amount'] ?? (int) (config('settings.matching_fee_amount', 20000));
+
+            $pwbtService = app(FlutterwavePwbtService::class);
+            $result = $pwbtService->generateForUser($user, $amount);
+
+            return $this->success([
+                'payment_id'         => $result['payment_id'],
+                'tx_ref'             => $result['tx_ref'],
+                'amount'             => $result['amount'],
+                'currency'           => $result['currency'],
+                'account_number'     => $result['account_number'],
+                'account_bank'       => $result['account_bank'],
+                'account_name'       => $result['account_name'],
+                'expires_at'         => $result['expires_at'],
+                'expires_in_minutes' => $result['expires_in_minutes'],
+                'whatsapp_text'      => $result['whatsapp_text'],
+            ], 'PWBT account generated');
+        } catch (\RuntimeException $e) {
+            Log::error('PWBT generation failed', [
+                'user_id' => $validated['user_id'] ?? '?',
+                'error' => $e->getMessage(),
+            ]);
+            return $this->error('Failed to generate payment account: ' . $e->getMessage(), 500);
+        }
     }
 
     public function scanPending72h(): JsonResponse

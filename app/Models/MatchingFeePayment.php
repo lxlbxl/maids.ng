@@ -12,6 +12,12 @@ class MatchingFeePayment extends Model
         'amount',
         'reference',
         'gateway',
+        'tx_ref',
+        'account_number',
+        'account_bank',
+        'account_name',
+        'expires_at',
+        'flutterwave_tx_id',
         'status',
         'payment_type',
         'paid_at',
@@ -25,6 +31,7 @@ class MatchingFeePayment extends Model
             'amount' => 'integer',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
+            'expires_at' => 'datetime',
             'gateway_response' => 'array',
         ];
     }
