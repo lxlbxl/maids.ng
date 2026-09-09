@@ -1,3 +1,5 @@
+import { withAttribution } from '@/lib/attribution';
+
 /**
  * Directive 09 (MNG-HERO-01) — the one reusable WhatsApp CTA.
  * Header, drawer, hero, sticky bar and footer all consume this component:
@@ -30,16 +32,29 @@ export default function WhatsAppCTA({
     className = '',
     glyphClass = 'w-5 h-5',
 }) {
-    const href = `/wa/${source}?intent=${intent}`;
+    // Server records a wa_clicks row from these params and carries only its code.
+    const buildHref = () => {
+        const base = `/wa/${source}?intent=${intent}`;
+        try {
+            return withAttribution(base);
+        } catch {
+            return base;
+        }
+    };
 
-    const handleClick = () => {
-        // Client-side capture is best-effort; the /wa redirect logs server-side regardless.
+    const handleClick = (e) => {
+        // Recompute the href at click time so late-loading first-touch / posthog id is included.
+        try {
+            e.currentTarget.setAttribute('href', buildHref());
+        } catch {
+            /* ignore */
+        }
         window.posthog?.capture?.('whatsapp_cta_tapped', { source, intent });
     };
 
     const button = (
         <a
-            href={href}
+            href={buildHref()}
             onClick={handleClick}
             rel="nofollow"
             className={`inline-flex items-center justify-center font-semibold text-white rounded-full transition-all hover:scale-[1.02] active:scale-[0.99] shadow-brand-2 ${SIZES[size]} ${className}`}

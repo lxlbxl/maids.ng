@@ -105,3 +105,6 @@ Schedule::call(function () {
     \App\Http\Controllers\AdminAuditLogController::purgeOldLogs();
 })->dailyAt('03:00')->name('purge-audit-logs');
 
+// Prune stale attribution rows daily
+Schedule::command('attribution:prune')->dailyAt('04:10')->withoutOverlapping();
+

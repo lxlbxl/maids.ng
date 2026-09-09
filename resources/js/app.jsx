@@ -3,8 +3,12 @@ import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ThemeProvider } from '@/Components/ThemeProvider';
+import { captureFirstTouch } from '@/lib/attribution';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Maids.ng';
+
+// Snapshot first-touch attribution before anything else touches the URL.
+captureFirstTouch();
 
 createInertiaApp({
     title: (title) => title ? `${title} — ${appName}` : appName,

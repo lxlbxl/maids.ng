@@ -23,6 +23,7 @@ class MatchingFeePayment extends Model
         'paid_at',
         'refunded_at',
         'gateway_response',
+        'attribution',
     ];
 
     protected function casts(): array
@@ -33,6 +34,7 @@ class MatchingFeePayment extends Model
             'refunded_at' => 'datetime',
             'expires_at' => 'datetime',
             'gateway_response' => 'array',
+            'attribution' => 'array',
         ];
     }
 

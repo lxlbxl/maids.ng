@@ -36,6 +36,14 @@ class RegisterController extends Controller
 
         $user->assignRole($validated['role']);
 
+        // Attribution — pull first-touch from the cookie set by attribution.js
+        try {
+            $ft = json_decode($request->cookie('mng_ft') ?: '[]', true) ?: [];
+            if ($ft) {
+                app(\App\Services\Attribution\AttributionService::class)->attachToUser($user, null, $ft);
+            }
+        } catch (\Throwable $e) { /* attribution is best-effort */ }
+
         // Meta CAPI — server-side CompleteRegistration (dedupe with browser via event_id).
         app(\App\Services\MetaCapi::class)->completeRegistration(
             $user,
@@ -116,6 +124,14 @@ class RegisterController extends Controller
         $user->assignRole('maid');
 
         \Log::info('Maid role assigned', ['user_id' => $user->id]);
+
+        // Attribution — pull first-touch from the cookie set by attribution.js
+        try {
+            $ft = json_decode($request->cookie('mng_ft') ?: '[]', true) ?: [];
+            if ($ft) {
+                app(\App\Services\Attribution\AttributionService::class)->attachToUser($user, null, $ft);
+            }
+        } catch (\Throwable $e) { /* attribution is best-effort */ }
 
         // Create profile
         $user->maidProfile()->create([

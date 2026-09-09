@@ -12,6 +12,7 @@
         "laravel/pail": "^1.2",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "posthog/posthog-php": "^4.13",
         "sentry/sentry-laravel": "^4.0",
         "spatie/laravel-permission": "^6.0",
         "symfony/polyfill-php84": "^1.31",

@@ -247,6 +247,7 @@ Route::prefix('agent/webhook')->group(function () {
     Route::post('/ctwa-clid', CtwaClidController::class);
     Route::post('/in-call-request', InCallRequestController::class);
     Route::post('/outbound-call', OutboundCallController::class);
+    Route::post('/attribution', [\App\Http\Controllers\Api\AttributionController::class, 'ingest']);
 
     // Zernio social media webhook → AmbassadorAgent (new controller)
     Route::post('/zernio', [ZernioWebhookController::class, 'handle']);

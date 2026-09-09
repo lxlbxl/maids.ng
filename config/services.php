@@ -168,4 +168,14 @@ return [
         'ctwa_secret'    => env('META_CTWA_SECRET'),
     ],
 
+    'posthog' => [
+        'key'  => env('POSTHOG_KEY'),
+        'host' => env('POSTHOG_HOST', 'https://us.posthog.com'),
+        'dashboard_embed_url' => env('POSTHOG_DASHBOARD_EMBED_URL'),
+    ],
+
+    'attribution' => [
+        'bridge_secret' => env('ATTRIBUTION_BRIDGE_SECRET'),
+    ],
+
 ];

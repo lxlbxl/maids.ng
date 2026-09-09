@@ -197,6 +197,32 @@ class UserController extends ApiController
             'chat',
         );
 
+        // Attribution — pull the source we stashed against this phone when they
+        // first messaged, freeze it onto the user, resolve the click.
+        try {
+            $attribution = app(\App\Services\Attribution\AttributionService::class)
+                ->attributionForPhone($validated['phone']);
+            $ua = app(\App\Services\Attribution\AttributionService::class)
+                ->attachToUser($user, $attribution);
+
+            app(\App\Services\PostHog::class)->capture(
+                \App\Services\PostHog::distinctIdForUser($user, $attribution['posthog_distinct_id'] ?? null),
+                'lead_created',
+                [
+                    'lead_type' => $validated['role'],
+                    'channel'   => $ua?->channel ?? 'unknown',
+                    'campaign'  => $ua?->campaign,
+                    'source'    => $ua?->source,
+                ],
+                $ua?->first_touch ? [
+                    'first_touch_channel'  => $ua->channel,
+                    'first_touch_campaign' => $ua->campaign,
+                ] : [],
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('attribution attach failed: ' . $e->getMessage());
+        }
+
         return $this->success(['user_id' => $user->id, 'existed' => false], 'User created', [], 201);
     }
 

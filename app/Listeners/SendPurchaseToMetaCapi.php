@@ -40,6 +40,33 @@ class SendPurchaseToMetaCapi
             custom: $custom,
         );
 
+        // Freeze the payer's attribution onto the payment row + fire PostHog.
+        try {
+            $payment = \App\Models\MatchingFeePayment::where('reference', $event->reference)->first();
+            if ($payment && $payment->attribution === null) {
+                $snap = app(\App\Services\Attribution\AttributionService::class)
+                    ->snapshotForPayment($event->user);
+                if ($snap) {
+                    $payment->update(['attribution' => $snap]);
+                }
+                app(\App\Services\PostHog::class)->capture(
+                    \App\Services\PostHog::distinctIdForUser($event->user),
+                    'matching_fee_paid',
+                    [
+                        'value'    => $event->amount,
+                        'currency' => 'NGN',
+                        'type'     => $event->type,
+                        'channel'  => $snap['channel'] ?? 'unknown',
+                        'campaign' => $snap['campaign'] ?? null,
+                        'source'   => $snap['source'] ?? null,
+                        'reference'=> $event->reference,
+                    ],
+                );
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('attribution payment stamp failed: ' . $e->getMessage());
+        }
+
         // Click-to-WhatsApp attribution: if this customer reached us by tapping
         // a WhatsApp ad (the bridge stored their ctwa_clid keyed by phone), send
         // an additional business_messaging Purchase so the CTWA campaign gets
