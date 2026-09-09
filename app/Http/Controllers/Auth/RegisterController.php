@@ -36,6 +36,14 @@ class RegisterController extends Controller
 
         $user->assignRole($validated['role']);
 
+        // Meta CAPI — server-side CompleteRegistration (dedupe with browser via event_id).
+        app(\App\Services\MetaCapi::class)->completeRegistration(
+            $user,
+            $request->input('_fb_event_id') ?: ('register_' . $user->id),
+            ['content_name' => $validated['role'] === 'maid' ? 'Helper Signup' : 'Employer Signup', 'status' => $validated['role']],
+            $request,
+        );
+
         Auth::login($user);
 
         // If registering as employer with preference data, redirect to matching payment
@@ -128,6 +136,14 @@ class RegisterController extends Controller
         ]);
 
         \Log::info('Maid profile created', ['user_id' => $user->id]);
+
+        // Meta CAPI — server-side CompleteRegistration (dedupe with browser via event_id).
+        app(\App\Services\MetaCapi::class)->completeRegistration(
+            $user,
+            $request->input('_fb_event_id') ?: ('register_' . $user->id),
+            ['content_name' => 'Helper Signup', 'status' => 'maid'],
+            $request,
+        );
 
         // Create a nin_verifications tracking record
         if (!empty($validated['nin'])) {

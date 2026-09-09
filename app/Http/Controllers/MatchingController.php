@@ -89,6 +89,19 @@ class MatchingController extends Controller
         // Auto-login the user so subsequent routes (matching, payment) work
         Auth::loginUsingId($user->id);
 
+        // Meta CAPI — the employer completed the onboarding quiz: real name +
+        // email + phone + a stated need. That's both a registration and a
+        // qualified lead. Same event_ids the browser will use for dedup.
+        if ($isNewAccount) {
+            $capi = app(\App\Services\MetaCapi::class);
+            $capi->completeRegistration($user, 'register_' . $user->id, ['status' => 'employer'], $request);
+            $capi->lead($user, 'lead_' . $user->id, [
+                'content_name'     => 'Employer Lead',
+                'content_category' => 'domestic_staff_matching',
+                'lead_type'        => 'employer',
+            ], $request);
+        }
+
         return response()->json([
             'user_id' => $user->id,
             'is_new' => $isNewAccount,

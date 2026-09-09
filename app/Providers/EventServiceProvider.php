@@ -109,6 +109,7 @@ class EventServiceProvider extends ServiceProvider
             DispatchWebhook::class,
             QueueAiMatchingOnPayment::class,
             SendPaymentNotification::class,
+            \App\Listeners\SendPurchaseToMetaCapi::class,
         ],
 
         WithdrawalRejected::class => [

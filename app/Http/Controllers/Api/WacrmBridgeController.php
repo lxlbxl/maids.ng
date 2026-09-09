@@ -2,311 +2,216 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\AgentApiKey;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
-/**
- * WacrmBridgeController — receives WACRM outbound webhooks and routes them
- * to Paperclip AI as Issues (one per WhatsApp conversation).
- *
- * Flow:
- *   1. WACRM fires "message.received" → this endpoint
- *   2. Search Paperclip for an existing open Issue tagged with the conversation_id
- *   3. Found  → add a comment to the existing issue (agent wakes with full context)
- *   4. Not found → create a new issue, assign to Onboarding-CS agent, add first comment
- *   5. Return 200 immediately — Meta/WACRM needs fast ack
- */
-class WacrmBridgeController extends ApiController
+class WacrmBridgeController
 {
-    /** Paperclip company UUID for Maids.ng */
-    private const PAPERCLIP_COMPANY_ID = 'ada987c3-793e-4e0c-92fd-db3acc1a2f74';
-
-    /** Paperclip agent UUID for Onboarding & Customer Success */
-    private const ONBOARDING_CS_AGENT_ID = '369293e5-88da-4469-a44e-4397624aa3d5';
-
-    /** Paperclip internal API base URL (trusted mode, no auth on localhost) */
+    private const PAPERCLIP_DB = 'paperclip';
     private const PAPERCLIP_API_URL = 'http://localhost:3100/api';
+    private const PAPERCLIP_API_KEY = 'pk_live_wacrm_bridge_bc8415553d84d18cfe19a1addc6ff888d1b76a8609c5b467';
 
-    public function __invoke(Request $request): JsonResponse
+    private const INSTANCE_COMPANY_MAP = [
+        'Maids' => 'ada987c3-793e-4e0c-92fd-db3acc1a2f74',
+        'ojg' => 'c074fd34-d020-48b3-9801-fc64ae755925',
+        'Digital20' => '499fdbd4-b660-4972-b627-af17ac65f2e6',
+        'Digital20 Ltd' => '499fdbd4-b660-4972-b627-af17ac65f2e6',
+    ];
+
+    private const DEFAULT_AGENT_ID = '369293e5-88da-4469-a44e-4397624aa3d5';
+
+    public function __invoke(Request $request)
     {
-        $payload = $request->all();
+        // Handle Meta webhook verification (GET request)
+        if ($request->isMethod('GET')) {
+            // PHP converts dots to underscores in query params
+            $mode = $request->input('hub_mode');
+            $token = $request->input('hub_verify_token');
+            $challenge = $request->input('hub_challenge');
+            
+            Log::info('Webhook verification', [
+                'mode' => $mode,
+                'token' => $token,
+                'challenge' => $challenge,
+            ]);
+            
+            if ($mode === 'subscribe' && $token === 'evolution') {
+                return response($challenge, 200);
+            }
+            
+            return response('Verification failed', 403);
+        }
 
-        Log::info('WACRM bridge webhook received', [
-            'conversation_id' => $payload['data']['conversation_id'] ?? 'unknown',
+        // Handle POST webhook events
+        $payload = $request->all();
+        $instanceName = $payload['instance'] ?? $payload['source'] ?? 'unknown';
+        
+        Log::info('Bridge webhook received', [
+            'instance' => $instanceName,
             'event' => $payload['event'] ?? 'unknown',
         ]);
 
-        $event = $payload['event'] ?? null;
-        if ($event !== 'message.received') {
-            return $this->success(null, 'Event acknowledged but not processed (non-message event).');
+        if (isset($payload['event']) && str_contains($payload['event'], 'messages')) {
+            return $this->handleEvolutionMessage($payload, $instanceName);
         }
 
-        $data = $payload['data'] ?? [];
-        $conversationId = $data['conversation_id'] ?? null;
-        $contactId = $data['contact_id'] ?? null;
-        $whatsappMessageId = $data['whatsapp_message_id'] ?? null;
-        $contentType = $data['content_type'] ?? 'text';
-        $text = $data['text'] ?? '';
-        $mediaUrl = $data['media_url'] ?? null;
-        $caption = $data['caption'] ?? null;
-        $filename = $data['filename'] ?? null;
-        $mimeType = $data['mime_type'] ?? null;
-        $deliveryId = $payload['id'] ?? uniqid('bridge_', true);
+        return response()->json([
+            'success' => true,
+            'message' => 'Event acknowledged but not processed.',
+            'data' => null,
+            'meta' => ['timestamp' => now()->toIso8601String()]
+        ]);
+    }
 
-        if (!$conversationId || !$contactId) {
-            Log::warning('WACRM bridge: missing conversation_id or contact_id', $payload);
-            return $this->error('Missing required fields: conversation_id, contact_id.', Response::HTTP_BAD_REQUEST);
+    private function handleEvolutionMessage(array $payload, string $instanceName): array
+    {
+        $messages = $payload['messages'] ?? [];
+        if (empty($messages)) {
+            return ['success' => true, 'message' => 'No messages in payload.', 'data' => null];
         }
+
+        $companyId = self::INSTANCE_COMPANY_MAP[$instanceName] ?? null;
+        if (!$companyId) {
+            Log::warning('Bridge: no company mapped for instance', ['instance' => $instanceName]);
+            return ['success' => false, 'message' => 'Unknown instance: ' . $instanceName, 'data' => null];
+        }
+
+        $count = 0;
+        foreach ($messages as $msg) {
+            $from = $msg['from'] ?? '';
+            $text = $msg['message']['body'] ?? $msg['message']['conversation'] ?? '';
+            $msgId = $msg['id'] ?? uniqid('evo_');
+            $conversationId = $instanceName . '-' . preg_replace('/[^0-9]/', '', $from);
+
+            $this->routeToPaperclip($companyId, [
+                'conversation_id' => $conversationId,
+                'contact_id' => $from,
+                'whatsapp_message_id' => $msgId,
+                'content_type' => 'text',
+                'text' => $text,
+                'instance_name' => $instanceName,
+            ]);
+            $count++;
+        }
+
+        return ['success' => true, 'message' => 'Messages routed.', 'data' => ['count' => $count]];
+    }
+
+    private function routeToPaperclip(string $companyId, array $data): void
+    {
+        $conversationId = $data['conversation_id'];
+        $contactId = $data['contact_id'];
+        $instanceName = $data['instance_name'];
+        $agentId = self::DEFAULT_AGENT_ID;
 
         try {
-            $existingIssueId = $this->findExistingIssue($conversationId);
-
+            $existingIssueId = $this->findExistingIssue($companyId, $conversationId);
             if ($existingIssueId) {
-                Log::info('WACRM bridge: adding comment to existing issue', [
-                    'issue_id' => $existingIssueId,
-                    'conversation_id' => $conversationId,
-                ]);
-                $this->reopenIssueIfDone($existingIssueId, $conversationId);
-                $this->addCommentToIssue($existingIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $mediaUrl, $caption, $filename, $mimeType, $deliveryId);
+                $this->reopenIssueIfDone($existingIssueId);
+                $this->addCommentToIssue($existingIssueId, $data);
             } else {
-                Log::info('WACRM bridge: creating new issue for conversation', [
-                    'conversation_id' => $conversationId,
-                ]);
-                $newIssueId = $this->createIssueForConversation($conversationId);
-                $this->addCommentToIssue($newIssueId, $contactId, $conversationId, $whatsappMessageId, $contentType, $text, $mediaUrl, $caption, $filename, $mimeType, $deliveryId);
+                $newIssueId = $this->createIssueForConversation($companyId, $conversationId, $contactId, $instanceName, $agentId);
+                $this->addCommentToIssue($newIssueId, $data);
             }
         } catch (\Throwable $e) {
-            Log::error('WACRM bridge failed', [
-                'conversation_id' => $conversationId,
-                'error' => $e->getMessage(),
-            ]);
-            return $this->error('Bridge processing failed: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            Log::error('Bridge failed', ['error' => $e->getMessage(), 'instance' => $instanceName]);
         }
-
-        return $this->success(['delivery_id' => $deliveryId], 'Message routed to Paperclip.');
     }
 
-    /**
-     * Search Paperclip for an issue tied to this WhatsApp conversation.
-     *
-     * Returns the issue ID regardless of status — even if `done`, because
-     * a new message re-opens the conversation. The bridge will re-open
-     * done issues to `in_progress` after adding the comment.
-     */
-    private function findExistingIssue(string $conversationId): ?string
+    private function findExistingIssue(string $companyId, string $conversationId): ?string
     {
-        $response = Http::get(self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/search', [
-            'q' => $conversationId,
-            'limit' => 5,
-        ]);
+        try {
+            $issue = DB::connection(self::PAPERCLIP_DB)
+                ->table('issues')
+                ->where('company_id', $companyId)
+                ->where('title', 'like', "%{$conversationId}%")
+                ->orderBy('created_at', 'desc')
+                ->first();
 
-        if (!$response->successful()) {
-            Log::warning('WACRM bridge: Paperclip search failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+            return $issue ? $issue->id : null;
+        } catch (\Throwable $e) {
+            Log::error('Bridge find-issue failed', ['error' => $e->getMessage()]);
             return null;
         }
-
-        $body = $response->json();
-
-        foreach ($body['results'] ?? [] as $result) {
-            if (($result['type'] ?? '') !== 'issue') continue;
-
-            $issueTitle = $result['issue']['title'] ?? $result['title'] ?? '';
-            if (str_contains($issueTitle, $conversationId)) {
-                return $result['issue']['id'];
-            }
-        }
-
-        return null;
     }
 
-    /**
-     * Create a new Paperclip issue for a WhatsApp conversation.
-     */
-    private function createIssueForConversation(string $conversationId): string
+    private function createIssueForConversation(string $companyId, string $conversationId, string $contactId, string $instanceName, string $agentId): string
     {
-        $response = Http::post(
-            self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/issues',
-            [
-                'title' => 'WA: conversation ' . $conversationId,
+        try {
+            $id = (string) \Ramsey\Uuid\Uuid::uuid4();
+            DB::connection(self::PAPERCLIP_DB)->table('issues')->insert([
+                'id' => $id,
+                'company_id' => $companyId,
+                'title' => '[' . strtoupper($instanceName) . '] WA: ' . $conversationId,
                 'description' => json_encode([
                     'kind' => 'whatsapp_conversation',
                     'conversation_id' => $conversationId,
+                    'contact_id' => $contactId,
+                    'instance_name' => $instanceName,
                 ]),
                 'status' => 'todo',
                 'priority' => 'medium',
-                'assigneeAgentId' => self::ONBOARDING_CS_AGENT_ID,
-            ]
-        );
-
-        if (!$response->successful()) {
-            throw new \RuntimeException(
-                'Paperclip create-issue failed: HTTP ' . $response->status() . ' — ' . $response->body()
-            );
+                'assignee_agent_id' => $agentId,
+                'origin_kind' => 'whatsapp_inbound',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return $id;
+        } catch (\Throwable $e) {
+            Log::error('Bridge create-issue failed', ['error' => $e->getMessage()]);
+            throw new \RuntimeException('Paperclip create-issue failed: ' . $e->getMessage());
         }
-
-        $issue = $response->json();
-        $issueId = $issue['id'] ?? null;
-
-        if (!$issueId) {
-            throw new \RuntimeException('Paperclip create-issue response missing id: ' . $response->body());
-        }
-
-        Log::info('WACRM bridge: created Paperclip issue', [
-            'issue_id' => $issueId,
-            'issue_identifier' => $issue['identifier'] ?? '?',
-            'conversation_id' => $conversationId,
-        ]);
-
-        return $issueId;
     }
 
-    /**
-     * If the existing issue is marked as done, re-open it to in_progress
-     * so the agent wakes and processes the new incoming message.
-     */
-    private function reopenIssueIfDone(string $issueId, string $conversationId): void
+    private function reopenIssueIfDone(string $issueId): void
     {
-        $response = Http::patch(
-            self::PAPERCLIP_API_URL . '/issues/' . $issueId,
-            ['status' => 'in_progress']
-        );
-
-        if ($response->successful()) {
-            Log::info('WACRM bridge: re-opened issue for new message', [
-                'issue_id' => $issueId,
-                'conversation_id' => $conversationId,
-            ]);
-        } else {
-            Log::warning('WACRM bridge: re-open issue failed (may already be open)', [
-                'issue_id' => $issueId,
-                'status' => $response->status(),
-            ]);
+        try {
+            DB::connection(self::PAPERCLIP_DB)
+                ->table('issues')
+                ->where('id', $issueId)
+                ->update(['status' => 'in_progress', 'updated_at' => now()]);
+        } catch (\Throwable $e) {
+            Log::error('Bridge reopen-issue failed', ['error' => $e->getMessage()]);
         }
     }
 
-    /**
-     * Add a comment to a Paperclip issue representing the inbound WhatsApp message.
-     *
-     * Formats the comment body based on content_type so the Paperclip agent gets
-     * the right context for text, voice notes, images, documents, and locations.
-     */
-    private function addCommentToIssue(
-        string $issueId,
-        string $contactId,
-        string $conversationId,
-        ?string $whatsappMessageId,
-        string $contentType,
-        string $text,
-        ?string $mediaUrl,
-        ?string $caption,
-        ?string $filename,
-        ?string $mimeType,
-        string $deliveryId
-    ): void {
-        $mediaUrlFull = $mediaUrl ? 'https://wa.maids.ng' . $mediaUrl : null;
+    private function addCommentToIssue(string $issueId, array $data): void
+    {
+        try {
+            $instanceName = $data['instance_name'] ?? 'unknown';
+            $whatsappMessageId = $data['whatsapp_message_id'] ?? 'N/A';
+            $contentType = $data['content_type'] ?? 'text';
+            $text = $data['text'] ?? '';
 
-        $body = "---\n**WhatsApp incoming message**\n";
-        $body .= "delivery_id: `{$deliveryId}`\n";
-        $body .= "conversation_id: `{$conversationId}`\n";
-        $body .= "contact_id: `{$contactId}`\n";
-        $body .= "whatsapp_message_id: `" . ($whatsappMessageId ?? 'N/A') . "`\n";
-        $body .= "content_type: `{$contentType}`\n";
+            $body = "---\n**WhatsApp incoming message [{$instanceName}]**\n";
+            $body .= "conversation_id: `{$data['conversation_id']}`\n";
+            $body .= "contact_id: `{$data['contact_id']}`\n";
+            $body .= "whatsapp_message_id: `{$whatsappMessageId}`\n";
+            $body .= "content_type: `{$contentType}`\n";
+            $body .= "instance: `{$instanceName}`\n\n";
+            $body .= "> {$text}\n";
 
-        if ($caption) {
-            $body .= "caption: `{$caption}`\n";
+            // Get company_id from the issue
+            $issue = DB::connection(self::PAPERCLIP_DB)
+                ->table('issues')
+                ->where('id', $issueId)
+                ->value('company_id');
+
+            if ($issue) {
+                $commentId = (string) \Ramsey\Uuid\Uuid::uuid4();
+                DB::connection(self::PAPERCLIP_DB)->table('issue_comments')->insert([
+                    'id' => $commentId,
+                    'issue_id' => $issueId,
+                    'company_id' => $issue,
+                    'body' => $body,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Bridge add-comment failed', ['error' => $e->getMessage()]);
         }
-        if ($filename) {
-            $body .= "filename: `{$filename}`\n";
-        }
-        if ($mimeType) {
-            $body .= "mime_type: `{$mimeType}`\n";
-        }
-
-        $body .= "\n";
-
-        // Format body based on content type
-        switch ($contentType) {
-            case 'audio':
-            case 'voice':
-                $body .= "🎤 **Voice note received**\n";
-                if ($mediaUrlFull) {
-                    $body .= "Listen: {$mediaUrlFull}\n";
-                }
-                $body .= "_The agent should transcribe this audio to extract the user's message._\n";
-                break;
-
-            case 'image':
-                $body .= "🖼️ **Image received**\n";
-                if ($caption) {
-                    $body .= "> {$caption}\n";
-                }
-                if ($mediaUrlFull) {
-                    $body .= "View: {$mediaUrlFull}\n";
-                }
-                break;
-
-            case 'video':
-                $body .= "🎬 **Video received**\n";
-                if ($caption) {
-                    $body .= "> {$caption}\n";
-                }
-                if ($mediaUrlFull) {
-                    $body .= "View: {$mediaUrlFull}\n";
-                }
-                break;
-
-            case 'document':
-                $body .= "📎 **Document received**";
-                if ($filename) {
-                    $body .= ": {$filename}";
-                }
-                $body .= "\n";
-                if ($caption) {
-                    $body .= "> {$caption}\n";
-                }
-                if ($mediaUrlFull) {
-                    $body .= "Download: {$mediaUrlFull}\n";
-                }
-                break;
-
-            case 'location':
-                $body .= "📍 **Location shared**\n";
-                $body .= "> {$text}\n";
-                break;
-
-            default:
-                // text or fallback
-                $body .= "> {$text}\n";
-                break;
-        }
-
-        Log::info('WACRM bridge: sending comment to Paperclip', [
-            'issue_id' => $issueId,
-            'content_type' => $contentType,
-            'has_media' => (bool) $mediaUrl,
-        ]);
-
-        $response = Http::post(
-            self::PAPERCLIP_API_URL . '/issues/' . $issueId . '/comments',
-            ['body' => $body]
-        );
-
-        if (!$response->successful()) {
-            throw new \RuntimeException(
-                'Paperclip add-comment failed: HTTP ' . $response->status() . ' — ' . $response->body()
-            );
-        }
-
-        Log::info('WACRM bridge: comment added', [
-            'issue_id' => $issueId,
-            'conversation_id' => $conversationId,
-        ]);
     }
 }

@@ -227,7 +227,7 @@ class MetaDMChannel
     /**
      * Send a message back to the user via Meta Messenger API.
      */
-    private function sendMetaMessage(string $recipientId, string $text): bool
+    public function sendMetaMessage(string $recipientId, string $text): bool
     {
         $accessToken = $this->getMetaConfig('page_access_token');
 

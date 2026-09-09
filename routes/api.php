@@ -28,6 +28,9 @@ use App\Http\Controllers\Api\CliAgentController;
 use App\Http\Controllers\Api\WacrmBridgeController;
 use App\Http\Controllers\Api\WacrmMediaController;
 use App\Http\Controllers\Api\CallSummaryController;
+use App\Http\Controllers\Api\CtwaClidController;
+use App\Http\Controllers\Api\ZernioBridgeController;
+use App\Http\Controllers\Api\ZernioWebhookController;
 use App\Http\Controllers\Api\InCallRequestController;
 use App\Http\Controllers\Api\OutboundCallController;
 
@@ -238,11 +241,17 @@ Route::prefix('agent/webhook')->group(function () {
     Route::get('/facebook/verify', [AgentChannelWebhookController::class, 'facebookVerify']);
 
     // WACRM outbound webhook bridge → Paperclip AI
-    Route::post('/wacrm-bridge', WacrmBridgeController::class);
+    Route::match(['get', 'post'], '/wacrm-bridge', WacrmBridgeController::class);
     Route::get('/wacrm-media/{mediaId}', WacrmMediaController::class);
     Route::post('/call-summary', CallSummaryController::class);
+    Route::post('/ctwa-clid', CtwaClidController::class);
     Route::post('/in-call-request', InCallRequestController::class);
     Route::post('/outbound-call', OutboundCallController::class);
+
+    // Zernio social media webhook → AmbassadorAgent (new controller)
+    Route::post('/zernio', [ZernioWebhookController::class, 'handle']);
+    // Old Paperclip-bound bridge — kept for reference, can be removed
+    Route::post('/zernio-bridge', ZernioBridgeController::class);
 });
 
 /*
@@ -260,6 +269,8 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::post('/users', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'store']);
     Route::get('/users/{id}/summary', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'summary'])->whereNumber('id');
     Route::patch('/users/{id}', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'update'])->whereNumber('id');
+    Route::post('/users/{id}/nin', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'submitNin'])->whereNumber('id');
+    Route::post('/users/{id}/nin/verify', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'verifyNin'])->whereNumber('id');
     Route::get('/users/{id}/conversation-history', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'conversationHistory'])->whereNumber('id');
     Route::get('/users/scan/inactive', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanInactive']);
     Route::get('/users/scan/incomplete-maids', [\App\Http\Controllers\Api\AgentApi\UserController::class, 'scanIncompleteMaids']);
@@ -355,9 +366,11 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/payments/status/{userId}', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'status'])->whereNumber('userId');
     Route::get('/payments/generate-link', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generateLink']);
     Route::post('/payments/generate-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generatePwbt']);
+    Route::post('/payments/verify-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'verifyPwbt']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
+    Route::post('/payments/record', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'recordPayment']);
 
     // ── Matching & Assignments ──
     Route::post('/matching/run', [\App\Http\Controllers\Api\AgentApi\AgentMatchingController::class, 'run']);
@@ -379,4 +392,12 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/campaigns', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'index']);
     Route::get('/campaigns/{id}/logs', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'logs'])->whereNumber('id');
     Route::post('/campaigns/{id}/dispatch', [\App\Http\Controllers\Api\AgentApi\CampaignsController::class, 'dispatch'])->whereNumber('id');
+
+    // ── Admin / Operations ──
+    // MAI-1163: HTTP wrapper around `php artisan ai:verify-pending-nins` so
+    // the Onboarding agent (Peace) can re-run the QoreID sweep from a
+    // Paperclip heartbeat without SSH access or waiting for the every-30-min
+    // scheduler. Scoped via `admin` — issue the relevant API key with
+    // scopes=['admin'] (or ['*']) in the AgentApiKey table.
+    Route::post('/admin/nin/sweep', [\App\Http\Controllers\Api\AgentApi\NinSweepController::class, 'sweep'])->middleware('agent.auth:admin');
 });

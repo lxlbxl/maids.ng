@@ -128,6 +128,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Zernio Social Media Bridge
+    |--------------------------------------------------------------------------
+    */
+    'zernio' => [
+        'bridge_key' => env('ZERNIO_BRIDGE_KEY'),
+        'api_key'    => env('ZERNIO_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Instagram Graph API
     |--------------------------------------------------------------------------
     */
@@ -136,6 +146,26 @@ return [
         'app_secret' => env('INSTAGRAM_APP_SECRET'),
         'ig_access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
         'ig_business_id' => env('INSTAGRAM_BUSINESS_ID'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Meta Pixel + Conversions API (server-side)
+    |--------------------------------------------------------------------------
+    | pixel_id = "Maids.ng Pixel" (Maids.ng Business Manager). capi_token is a
+    | System User token with events access. capi_test_code (optional) routes
+    | events to Events Manager > Test Events instead of production.
+    */
+    'meta' => [
+        'pixel_id'       => env('META_PIXEL_ID', '1533038361829535'),
+        'capi_token'     => env('META_CAPI_TOKEN'),
+        'capi_test_code' => env('META_CAPI_TEST_CODE'),
+        'graph_version'  => env('META_GRAPH_VERSION', 'v21.0'),
+        // Click-to-WhatsApp attribution: business_messaging events must carry
+        // the WhatsApp page / WABA that owns the number Peace answers on.
+        'page_id'        => env('META_PAGE_ID', '776632412198520'),
+        'waba_id'        => env('META_WABA_ID', '2164452014330344'),
+        'ctwa_secret'    => env('META_CTWA_SECRET'),
     ],
 
 ];

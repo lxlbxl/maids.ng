@@ -42,6 +42,15 @@ Schedule::command('ai:verify-pending-nins')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/ai-nin-verifications.log'));
 
+// Backstop reconciliation for Flutterwave PWBT payments — the FLW account is
+// shared across Digital20 brands and its single webhook may not reach us, so we
+// poll pending transfers straight from the FLW API. (In-chat payments are also
+// pulled live by the CS agent via /payments/verify-pwbt.)
+Schedule::command('payments:reconcile-pwbt --hours=48')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/pwbt-reconcile.log'));
+
 // Daily cleanup of old logs (keep last 30 days)
 Schedule::command('log:clear-old')
     ->dailyAt('02:00')

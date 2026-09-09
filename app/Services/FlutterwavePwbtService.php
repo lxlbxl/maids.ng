@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\MatchingFeePayment;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,22 +22,63 @@ class FlutterwavePwbtService
 
     public function __construct()
     {
-        $this->secretKey = config('services.flutterwave.secret_key');
         $this->baseUrl = config('services.flutterwave.base_url', 'https://api.flutterwave.com/v3');
+        $this->secretKey = $this->resolveSecretKey();
+    }
 
-        // Fallback: if config is still returning encrypted legacy data, use raw env
-        if (empty($this->secretKey) || strlen($this->secretKey) > 100) {
-            $this->secretKey = env('FLUTTERWAVE_SECRET_KEY', '');
+    /**
+     * Resolve the Flutterwave secret key from the layered stores, tolerating the
+     * historically corrupted values (DB settings / .env hold Laravel-encrypted
+     * blobs, some of them encrypted more than once under APP_KEYs that are now
+     * gone). We try, in order: the DB setting, then config/env, and for each we
+     * peel up to 2 Crypt layers. A real key looks like "FLWSECK-..." /
+     * "FLWSECK_TEST-...". Anything else is treated as "not configured" so the
+     * caller fails loudly instead of sending ciphertext to Flutterwave (401).
+     */
+    private function resolveSecretKey(): string
+    {
+        $candidates = [
+            Setting::get('flutterwave_secret_key', null),
+            config('services.flutterwave.secret_key'),
+            env('FLUTTERWAVE_SECRET_KEY'),
+        ];
+
+        foreach ($candidates as $raw) {
+            $key = $this->unwrap((string) $raw);
+            if ($this->looksLikeFlwKey($key)) {
+                return $key;
+            }
         }
 
-        // Detect placeholder / masked keys
-        if (str_contains($this->secretKey, 'xxxx') || strlen($this->secretKey) < 20) {
-            Log::warning('Flutterwave secret key appears to be a placeholder or invalid', [
-                'length' => strlen($this->secretKey),
-            ]);
-        }
+        Log::warning('Flutterwave secret key could not be resolved to a real key — '
+            . 'PWBT is disabled until FLUTTERWAVE_SECRET_KEY is set to a valid FLWSECK- key '
+            . '(the stored value is an unrecoverable multi-encrypted blob).');
 
-        $this->baseUrl = config('services.flutterwave.base_url', 'https://api.flutterwave.com/v3');
+        return '';
+    }
+
+    /** Peel up to 2 Laravel-Crypt layers off a value; return the first plaintext-ish result. */
+    private function unwrap(string $value): string
+    {
+        $value = trim($value);
+        for ($i = 0; $i < 2; $i++) {
+            if ($this->looksLikeFlwKey($value) || $value === '') {
+                return $value;
+            }
+            try {
+                $value = trim(Crypt::decryptString($value));
+            } catch (\Throwable $e) {
+                break;
+            }
+        }
+        return $value;
+    }
+
+    private function looksLikeFlwKey(string $v): bool
+    {
+        return $v !== ''
+            && ! str_contains($v, 'xxxx')
+            && preg_match('/^FLWSECK[_-]/', $v) === 1;
     }
 
     /**
@@ -45,7 +87,8 @@ class FlutterwavePwbtService
     public function generateForUser(User $user, int $amount = 20000): array
     {
         if (empty($this->secretKey)) {
-            throw new \RuntimeException('Flutterwave secret key is not configured.');
+            throw new \RuntimeException('PWBT_UNAVAILABLE: Flutterwave secret key is not configured. '
+                . 'Do not retry — use the manual payment fallback and alert the team.');
         }
 
         $preference = $user->latestPreference;
@@ -231,6 +274,88 @@ class FlutterwavePwbtService
         }
 
         return null;
+    }
+
+    /**
+     * Pull a pending PWBT payment's status straight from Flutterwave and, if it
+     * has been paid for real, settle it (mark paid + preference status +
+     * PaymentConfirmed event). Idempotent. This is the source of truth — we do
+     * not depend on the Flutterwave webhook because the same Flutterwave account
+     * serves several Digital20 brands and its single webhook URL may not point
+     * at Maids.ng.
+     *
+     * Isolation is by tx_ref: only Maids.ng mints "MNG-<userId>-..." refs, so a
+     * sibling brand's transaction never resolves to a row here.
+     *
+     * @return array{status:string, paid:bool, paid_amount?:int, expected_amount?:int}
+     *   status ∈ already|paid|pending|amount_mismatch|ref_mismatch|gateway_error
+     */
+    public function reconcile(MatchingFeePayment $payment): array
+    {
+        if (in_array($payment->status, ['paid', 'completed'], true)) {
+            return ['status' => 'already', 'paid' => true];
+        }
+        if (empty($payment->tx_ref)) {
+            return ['status' => 'gateway_error', 'paid' => false];
+        }
+
+        try {
+            $tx = $this->verifyTransaction($payment->tx_ref);
+        } catch (\Throwable $e) {
+            Log::warning('PWBT reconcile: gateway call failed', ['tx_ref' => $payment->tx_ref, 'error' => $e->getMessage()]);
+            return ['status' => 'gateway_error', 'paid' => false];
+        }
+
+        if (!$tx) {
+            return ['status' => 'pending', 'paid' => false];
+        }
+
+        $paidAmount = (int) round((float) ($tx['amount'] ?? 0));
+        $currency   = strtoupper((string) ($tx['currency'] ?? 'NGN'));
+        $txRef      = (string) ($tx['tx_ref'] ?? '');
+
+        if ($txRef !== '' && $txRef !== $payment->tx_ref) {
+            Log::warning('PWBT reconcile: tx_ref mismatch', ['expected' => $payment->tx_ref, 'got' => $txRef]);
+            return ['status' => 'ref_mismatch', 'paid' => false];
+        }
+        if ($currency !== 'NGN' || $paidAmount < (int) $payment->amount) {
+            Log::warning('PWBT reconcile: amount/currency mismatch', [
+                'tx_ref' => $payment->tx_ref, 'expected' => $payment->amount,
+                'paid' => $paidAmount, 'currency' => $currency,
+            ]);
+            return [
+                'status' => 'amount_mismatch', 'paid' => false,
+                'paid_amount' => $paidAmount, 'expected_amount' => (int) $payment->amount,
+            ];
+        }
+
+        $payment->update([
+            'status'            => 'paid',
+            'paid_at'           => now(),
+            'gateway_response'  => $tx,
+            'flutterwave_tx_id' => (string) ($tx['id'] ?? $payment->flutterwave_tx_id ?? ''),
+        ]);
+
+        if ($payment->preference) {
+            $payment->preference->update([
+                'matching_status' => $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid',
+            ]);
+        }
+
+        if ($payment->employer) {
+            \App\Events\PaymentConfirmed::dispatch(
+                $payment->employer,
+                $payment->reference ?? $payment->tx_ref,
+                (int) $payment->amount,
+                $payment->payment_type ?? 'matching_fee',
+            );
+        }
+
+        Log::info('PWBT reconcile: payment confirmed', [
+            'payment_id' => $payment->id, 'tx_ref' => $payment->tx_ref, 'user_id' => $payment->employer_id,
+        ]);
+
+        return ['status' => 'paid', 'paid' => true];
     }
 
     private function generateTxRef(int $userId): string

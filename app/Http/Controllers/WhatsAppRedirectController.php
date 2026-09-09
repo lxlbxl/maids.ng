@@ -31,6 +31,18 @@ class WhatsAppRedirectController extends Controller
             'referer' => $request->headers->get('referer'),
         ]);
 
+        // Meta CAPI — "Contact": someone tapped a WhatsApp CTA. This is an
+        // intent-to-reach-out signal, NOT a Lead (we have no name/purpose yet).
+        // The qualified Lead fires later, server-side, when the agent creates a
+        // user from the conversation.
+        app(\App\Services\MetaCapi::class)->contact(
+            'contact_wa_' . substr(md5($request->ip() . $request->userAgent() . now()->format('YmdH')), 0, 16),
+            [],
+            ['content_name' => 'WhatsApp CTA', 'source' => $source, 'intent' => $intent],
+            $request,
+            'chat',
+        );
+
         $number = config('services.whatsapp.number');
 
         if (! $number) {

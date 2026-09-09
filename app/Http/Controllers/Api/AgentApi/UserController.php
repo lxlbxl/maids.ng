@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api\AgentApi;
 use App\Http\Controllers\Api\ApiController;
 use App\Models\User;
 use App\Models\MaidProfile;
+use App\Models\NinVerification;
+use App\Models\AgentNote;
 use App\Models\EmployerPreference;
 use App\Models\AgentConversation;
 use App\Models\AgentMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends ApiController
 {
@@ -19,7 +22,7 @@ class UserController extends ApiController
      * Nigerian numbers commonly appear as:
      *   - 08012345678  (local, with leading 0)
      *   - 2348012345678 (international, 13 digits)
-     *   - +2348012345678 (with + prefix)
+     *   - +234****5678 (with + prefix)
      *
      * This normalizes the input and returns all variants so we can
      * match regardless of how the user (or WACRM) formatted the number.
@@ -174,6 +177,26 @@ class UserController extends ApiController
             'status'   => 'active',
         ]);
 
+        // Sync Spatie role so admin panel and permission checks work
+        if ($validated['role']) {
+            $user->syncRoles([$validated['role']]);
+        }
+
+        // Meta CAPI — a *qualified* Lead: the agent (Peace) created this person from
+        // a conversation, so we have a real name + phone + stated role. A bare
+        // WhatsApp-CTA tap is NOT a lead; this is.
+        app(\App\Services\MetaCapi::class)->lead(
+            $user,
+            'lead_' . $user->id,
+            [
+                'content_name'     => $validated['role'] === 'maid' ? 'Helper Lead' : 'Employer Lead',
+                'content_category' => 'domestic_staff_matching',
+                'lead_type'        => $validated['role'],
+            ],
+            $request,
+            'chat',
+        );
+
         return $this->success(['user_id' => $user->id, 'existed' => false], 'User created', [], 201);
     }
 
@@ -183,14 +206,259 @@ class UserController extends ApiController
 
         $validated = $request->validate([
             'name'  => 'nullable|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'last_name'  => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'status' => 'nullable|in:active,suspended,pending',
+            'role'   => 'nullable|in:admin,maid,employer',
+
+            // MaidProfile fields — written to user->maidProfile when present.
+            // Verification flags (nin_verified, background_verified) are deliberately
+            // excluded; they flip only via the verification flow (POST /nin/verify).
+            'nin'             => 'nullable|string|size:11',
+            'gender'          => 'nullable|string|max:32',
+            'bio'             => 'nullable|string|max:2000',
+            'skills'          => 'nullable|array',
+            'languages'       => 'nullable|array',
+            'experience_years'=> 'nullable|integer|min:0|max:60',
+            'help_types'      => 'nullable|array',
+            'schedule_preference' => 'nullable|string|max:64',
+            'expected_salary' => 'nullable|integer|min:0',
+            'location'        => 'nullable|string|max:255',
+            'state'           => 'nullable|string|max:64',
+            'lga'             => 'nullable|string|max:128',
+            'willing_states'  => 'nullable|array',
+            'bank_name'       => 'nullable|string|max:128',
+            'account_number'  => 'nullable|string|max:32',
+            'account_name'    => 'nullable|string|max:255',
+            'is_foreigner'    => 'nullable|boolean',
         ]);
 
-        $user->update($validated);
+        // Fields that go on the User row itself
+        $userFields = array_intersect_key($validated, array_flip([
+            'name', 'first_name', 'last_name', 'phone', 'email', 'status', 'role',
+        ]));
+        if (! empty($userFields)) {
+            $user->update($userFields);
+        }
 
-        return $this->success($user->fresh(), 'User updated');
+        // Sync Spatie role if role was changed
+        if (isset($validated['role'])) {
+            $user->syncRoles([$validated['role']]);
+        }
+
+        // Fields that go on maidProfile (auto-create if missing so this works
+        // for maids who never logged in to the web form).
+        $profileFields = array_intersect_key($validated, array_flip([
+            'first_name', 'last_name', 'nin', 'gender', 'bio', 'skills',
+            'languages', 'experience_years', 'help_types', 'schedule_preference',
+            'expected_salary', 'location', 'state', 'lga', 'willing_states',
+            'bank_name', 'account_number', 'account_name', 'is_foreigner',
+        ]));
+        $profileResult = null;
+
+        if (! empty($profileFields)) {
+            $profile = $user->maidProfile;
+            if (! $profile) {
+                $profile = $user->maidProfile()->create([
+                    'location' => $user->location ?? ($profileFields['location'] ?? ''),
+                    'skills' => [],
+                    'help_types' => [],
+                ]);
+            }
+
+            // If NIN is changing, refuse once profile is already verified
+            if (array_key_exists('nin', $profileFields) && $profile->nin_verified && $profile->nin !== $profileFields['nin']) {
+                return $this->error('Identity already verified. NIN cannot be changed.', 409);
+            }
+
+            $profile->update($profileFields);
+            $profileResult = $profile->fresh();
+
+            // When NIN is set/changed, queue QoreID via NinVerification tracking row
+            if (array_key_exists('nin', $profileFields) && ! empty($profileFields['nin'])) {
+                NinVerification::where('user_id', $user->id)
+                    ->where('status', 'failed')
+                    ->update(['status' => 'pending', 'reviewed_at' => null]);
+
+                NinVerification::firstOrCreate(
+                    ['user_id' => $user->id, 'status' => 'pending'],
+                    ['submitted_at' => now()]
+                );
+            }
+        }
+
+        return $this->success([
+            'user' => $user->fresh(),
+            'maid_profile' => $profileResult,
+        ], 'User updated');
+    }
+
+    /**
+     * POST /api/agent-api/v1/users/{id}/nin
+     *
+     * Dedicated NIN-write endpoint for the agent. Mirrors the semantics of
+     * MaidVerificationController::submitNin (web form) so the agent can record
+     * NINs collected over WhatsApp without sending the applicant to the web UI.
+     *
+     * Auto-creates the MaidProfile if it doesn't exist yet (e.g. user was
+     * created via store() and never logged in to the web form).
+     *
+     * After writing NIN, queues QoreID via the NinVerification tracking table
+     * (same pattern RegisterController uses). Use POST .../nin/verify to run
+     * QoreID immediately, or wait for the artisan ai:verify-pending-nins sweep.
+     */
+    public function submitNin(Request $request, $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'nin'         => 'required|string|size:11',
+            'first_name'  => 'nullable|string|max:255',
+            'last_name'   => 'nullable|string|max:255',
+            'auto_verify' => 'nullable|boolean',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'maid') {
+            return $this->error('NIN submission is only for users with role=maid.', 422);
+        }
+
+        $profile = $user->maidProfile;
+        if (! $profile) {
+            $profile = $user->maidProfile()->create([
+                'location'    => $user->location ?? '',
+                'skills'      => [],
+                'help_types'  => [],
+            ]);
+        }
+
+        // Prevent NIN change if already verified
+        if ($profile->nin_verified && $profile->nin !== $validated['nin']) {
+            return $this->error('Identity already verified. NIN cannot be changed.', 409);
+        }
+
+        // Apply name updates if provided
+        $profileFields = [];
+        if (! empty($validated['first_name'])) {
+            $profileFields['first_name'] = $validated['first_name'];
+        }
+        if (! empty($validated['last_name'])) {
+            $profileFields['last_name'] = $validated['last_name'];
+        }
+        $profileFields['nin'] = $validated['nin'];
+
+        // Uniqueness across all maid profiles (NIN is global per NIMC)
+        $collision = MaidProfile::where('nin', $validated['nin'])
+            ->where('id', '!=', $profile->id)
+            ->first();
+        if ($collision) {
+            return $this->error('This NIN is already on file for another maid profile.', 409);
+        }
+
+        $profile->update($profileFields);
+
+        // Reset failed verifications so the sweep retries with the new NIN
+        NinVerification::where('user_id', $user->id)
+            ->where('status', 'failed')
+            ->update(['status' => 'pending', 'reviewed_at' => null]);
+
+        // Create a pending NinVerification so ai:verify-pending-nins picks it up
+        $verification = NinVerification::firstOrCreate(
+            ['user_id' => $user->id, 'status' => 'pending'],
+            ['submitted_at' => now()]
+        );
+
+        // Log the action for the operations audit trail
+        try {
+            AgentNote::create([
+                'entity_type'  => 'user',
+                'entity_id'    => $user->id,
+                'note'         => 'NIN submitted via agent-api',
+                'action_taken' => 'submit_nin',
+                'outcome'      => 'pending',
+                'agent_type'   => optional($request->agent_api_key)->agent_type,
+                'agent_user_id'=> null,
+                'metadata'     => [
+                    'source' => 'agent_api',
+                    'endpoint' => 'POST /users/{id}/nin',
+                    'nin_last4' => substr($validated['nin'], -4),
+                    'auto_verify' => (bool) ($validated['auto_verify'] ?? false),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('AgentNote create failed during submitNin: ' . $e->getMessage());
+        }
+
+        $response = [
+            'user_id'       => $user->id,
+            'maid_profile'  => $profile->fresh(),
+            'verification'  => [
+                'status'        => $verification->status,
+                'submitted_at'  => $verification->submitted_at,
+            ],
+        ];
+
+        // Optionally kick QoreID right away
+        if (! empty($validated['auto_verify'])) {
+            try {
+                $gatekeeper = app(\App\Services\Agents\GatekeeperAgent::class);
+                $result = $gatekeeper->verifyIdentity($profile->fresh(), $validated['nin']);
+                $response['verification_result'] = $result;
+                $response['verification']['status'] = $result['status'] ?? 'pending';
+            } catch (\Throwable $e) {
+                Log::warning('submitNin auto_verify failed for user ' . $user->id . ': ' . $e->getMessage());
+                $response['verification_result'] = [
+                    'success' => false,
+                    'status'  => 'pending',
+                    'reason'  => 'Auto-verify call failed; sweep will retry. ' . $e->getMessage(),
+                ];
+            }
+        }
+
+        return $this->success($response, 'NIN submitted', [], 200);
+    }
+
+    /**
+     * POST /api/agent-api/v1/users/{id}/nin/verify
+     *
+     * Runs the Gatekeeper (QoreID) verification against an already-submitted
+     * NIN. Mirrors MaidVerificationController::verifyNin. Useful when an agent
+     * wants to trigger QoreID immediately after submitNin instead of waiting
+     * for the artisan sweep.
+     */
+    public function verifyNin(Request $request, $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+        $profile = $user->maidProfile;
+
+        if (! $profile || ! $profile->nin) {
+            return $this->error('Maid profile or NIN missing. Submit NIN first.', 422);
+        }
+
+        try {
+            $gatekeeper = app(\App\Services\Agents\GatekeeperAgent::class);
+            $result = $gatekeeper->verifyIdentity($profile, $profile->nin);
+
+            // Ensure a tracking row exists for the agent's view
+            $verification = NinVerification::where('user_id', $user->id)
+                ->latest()
+                ->first();
+
+            return $this->success([
+                'user_id'      => $user->id,
+                'result'       => $result,
+                'maid_profile' => $profile->fresh(),
+                'verification' => $verification ? [
+                    'status'          => $verification->status,
+                    'confidence_score'=> $verification->confidence_score,
+                    'reviewed_at'     => $verification->reviewed_at,
+                ] : null,
+            ], $result['success'] ? 'Verified' : 'Verification returned non-success');
+        } catch (\Throwable $e) {
+            Log::warning('verifyNin failed for user ' . $user->id . ': ' . $e->getMessage());
+            return $this->error('Verification service error: ' . $e->getMessage(), 500);
+        }
     }
 
     public function scanInactive(): JsonResponse

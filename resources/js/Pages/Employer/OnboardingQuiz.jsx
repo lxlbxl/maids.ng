@@ -154,6 +154,15 @@ export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
             setUserId(data.user_id);
             setAccountCreated(true);
             setAccountMessage(data.message);
+
+            // Meta Pixel — new employer completed the quiz: a registration and a
+            // qualified lead. Same event_ids the server-side CAPI uses -> deduped.
+            if (data.is_new && data.user_id && typeof window !== 'undefined' && window.fbq) {
+                try {
+                    window.fbq('track', 'CompleteRegistration', { content_name: 'Employer Signup', status: 'employer' }, { eventID: 'register_' + data.user_id });
+                    window.fbq('track', 'Lead', { content_name: 'Employer Lead', content_category: 'domestic_staff_matching' }, { eventID: 'lead_' + data.user_id });
+                } catch (e) {}
+            }
             return data.user_id;
         } catch (err) {
             console.warn('Account creation failed:', err);

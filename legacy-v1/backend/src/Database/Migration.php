@@ -376,7 +376,7 @@ class Migration
         // Insert default settings
         $defaults = [
             ['service_fee', '{"amount": 10000, "currency": "NGN"}', 'payments'],
-            ['contact', '{"phone": "+234-XXX-XXX-XXXX", "whatsapp": "+234-XXX-XXX-XXXX", "email": "support@maids.ng"}', 'general'],
+            ['contact', '{"phone": "+234-XXX-XXX-XXXX", "whatsapp": "+234-XXX-XXX-XXXX", "email": "contact@maids.ng"}', 'general'],
             ['locations', '["Lagos Mainland", "Lagos Island", "Ikeja", "Victoria Island", "Lekki", "Ajah", "Ikoyi", "Surulere", "Yaba", "Abuja"]', 'general'],
             ['work_types', '["Fulltime Maid", "Cleaner", "Cook", "Nanny", "Housekeeper", "Driver", "Gardener"]', 'general'],
             ['skills', '["Cooking", "Cleaning", "Childcare", "Laundry", "Ironing", "Driving", "Gardening", "Pet Care", "Elderly Care"]', 'general'],

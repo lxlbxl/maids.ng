@@ -4,8 +4,8 @@ import { useState } from 'react';
 export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000, paystackKey, defaultGateway }) {
     const [loading, setLoading] = useState(false);
 
-    const trackPixel = (event, params = {}) => {
-        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params); } catch(e) {}
+    const trackPixel = (event, params = {}, opts) => {
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params, opts); } catch(e) {}
     };
 
     const handlePayment = async () => {
@@ -58,7 +58,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                             phone_number: data.phone,
                         },
                         callback: function (response) {
-                            trackPixel('Lead', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match' });
+                            trackPixel('Purchase', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match', content_category: 'domestic_staff_matching' }, { eventID: 'purchase_' + data.reference });
                             window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
                         },
                         onclose: function() {
@@ -78,7 +78,7 @@ export default function GuaranteeMatchPayment({ preference, guaranteeFee = 5000,
                         amount: data.amount * 100, // Paystack requires kobo
                         ref: data.reference,
                         callback: function(response) {
-                            trackPixel('Lead', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match' });
+                            trackPixel('Purchase', { value: guaranteeFee, currency: 'NGN', content_name: 'Guarantee Match', content_category: 'domestic_staff_matching' }, { eventID: 'purchase_' + response.reference });
                             window.location.href = `/employer/matching-fee/verify?reference=${response.reference}`;
                         },
                         onClose: function() {

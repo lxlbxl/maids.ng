@@ -96,7 +96,21 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => 'prefer',
+        ],
+
+        'paperclip' => [
+            'driver' => 'pgsql',
+            'host' => '127.0.0.1',
+            'port' => '5432',
+            'database' => 'paperclip',
+            'username' => 'paperclip',
+            'password' => 'paperclip',
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'disable',
         ],
 
         'sqlsrv' => [

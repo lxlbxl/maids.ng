@@ -174,7 +174,10 @@ export default function MaidRegister() {
         password: '',
         password_confirmation: '',
         avatar: null,
-        role: 'maid'
+        role: 'maid',
+        // Shared id so the browser CompleteRegistration and the server-side
+        // Conversions API event are deduped by Meta.
+        _fb_event_id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('reg_' + Date.now()),
     });
 
     const step = STEPS[currentStep];
@@ -229,7 +232,7 @@ export default function MaidRegister() {
     };
 
     const submit = () => {
-        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'CompleteRegistration', { content_name: 'Helper Signup' }); } catch(e) {}
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'CompleteRegistration', { content_name: 'Helper Signup' }, { eventID: data._fb_event_id }); } catch(e) {}
         post('/register/maid');
     };
 

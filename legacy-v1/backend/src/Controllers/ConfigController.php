@@ -45,7 +45,7 @@ class ConfigController
         $contact = $result ? json_decode($result['value'], true) : [
             'phone' => '+234-XXX-XXX-XXXX',
             'whatsapp' => '+234-XXX-XXX-XXXX',
-            'email' => 'support@maids.ng'
+            'email' => 'contact@maids.ng'
         ];
 
         return $this->jsonResponse($response, $contact);

@@ -32,7 +32,7 @@ export default function Contact() {
                                 <div className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1">
                                     <h3 className="font-semibold text-teal mb-2">Email</h3>
                                     <p className="text-muted">hello@maids.ng</p>
-                                    <p className="text-muted">support@maids.ng</p>
+                                    <p className="text-muted">contact@maids.ng</p>
                                 </div>
                                 <div className="bg-white rounded-brand-xl p-6 border border-gray-200 shadow-brand-1">
                                     <h3 className="font-semibold text-teal mb-2">Phone</h3>

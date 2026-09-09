@@ -13,7 +13,7 @@ class OutboundCallController extends ApiController
 {
     private const VAPI_API_KEY = '82e5e922-a162-4d08-a744-212ba81b58a7';
     private const OUTBOUND_ASSISTANT_ID = '60138e5b-bd99-476d-97b6-ca9fcef4b7a6';
-    private const OUTBOUND_PHONE_ID = '8918b70b-a3e6-43bd-96bb-460c9d4c921d';
+    private const OUTBOUND_PHONE_ID = 'a005b4a7-3242-48a8-870b-9029429c5f9e';
     private const PAPERCLIP_API_URL = 'http://localhost:3100/api';
     private const PAPERCLIP_COMPANY_ID = 'ada987c3-793e-4e0c-92fd-db3acc1a2f74';
 
@@ -54,7 +54,7 @@ class OutboundCallController extends ApiController
         ], $customVars);
 
         $payload = [
-            'name' => $validated['call_purpose'],
+            'name' => mb_substr($validated['call_purpose'], 0, 40),
             'assistantId' => self::OUTBOUND_ASSISTANT_ID,
             'phoneNumberId' => self::OUTBOUND_PHONE_ID,
             'customer' => ['number' => $phone],

@@ -4,8 +4,8 @@ import { useState } from 'react';
 export default function MatchingPayment({ preference, maid, matchingFee = 5000, paystackKey }) {
     const [loading, setLoading] = useState(false);
 
-    const trackPixel = (event, params = {}) => {
-        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params); } catch(e) {}
+    const trackPixel = (event, params = {}, opts) => {
+        try { if (typeof window !== 'undefined' && window.fbq) window.fbq('track', event, params, opts); } catch(e) {}
     };
 
     const handlePayment = async () => {
@@ -33,7 +33,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                             phone_number: data.phone,
                         },
                         callback: function (response) {
-                            trackPixel('Lead', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee' });
+                            trackPixel('Purchase', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee', content_category: 'domestic_staff_matching' }, { eventID: 'purchase_' + data.reference });
                             window.location.href = `/employer/matching-fee/verify?reference=${data.reference}`;
                         },
                         onclose: function() {
@@ -47,7 +47,7 @@ export default function MatchingPayment({ preference, maid, matchingFee = 5000, 
                         amount: data.amount * 100,
                         ref: data.reference,
                         callback: function(response) {
-                            trackPixel('Lead', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee' });
+                            trackPixel('Purchase', { value: matchingFee, currency: 'NGN', content_name: 'Matching Fee', content_category: 'domestic_staff_matching' }, { eventID: 'purchase_' + response.reference });
                             window.location.href = `/employer/matching-fee/verify?reference=${response.reference}`;
                         },
                         onClose: function() {
