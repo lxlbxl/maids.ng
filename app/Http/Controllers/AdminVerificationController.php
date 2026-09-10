@@ -39,6 +39,8 @@ class AdminVerificationController extends Controller
 
         $profile->update(['nin_verified' => true]);
 
+        app(\App\Services\MaidProfileService::class)->recalculate($user);
+
         if ($user->ninVerification) {
             $user->ninVerification->update(['status' => 'approved', 'reviewed_at' => now()]);
         }

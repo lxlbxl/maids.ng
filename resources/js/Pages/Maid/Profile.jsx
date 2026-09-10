@@ -1,7 +1,10 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import MaidLayout from '@/Layouts/MaidLayout';
 
 export default function Profile({ auth, user, profile }) {
+    const { flash } = usePage().props;
+
     const { data, setData, post, processing, errors } = useForm({
         name: user?.name || '',
         phone: user?.phone || '',
@@ -16,17 +19,37 @@ export default function Profile({ auth, user, profile }) {
     });
 
     const availableSkills = ['cleaning', 'cooking', 'laundry', 'childcare', 'elderly-care', 'gardening', 'ironing', 'shopping', 'tutoring', 'pet-care', 'deep-cleaning', 'organizing', 'baking', 'meal-planning', 'first-aid', 'companionship'];
-    const currentSkills = profile?.skills || [];
+    const [selectedSkills, setSelectedSkills] = useState(profile?.skills || []);
+    const [savingSkills, setSavingSkills] = useState(false);
+
+    // Keep local selection in sync when the server sends a fresh profile.
+    useEffect(() => {
+        setSelectedSkills(profile?.skills || []);
+    }, [profile?.skills]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('maid.profile.update'));
+        post(route('maid.profile.update'), { preserveScroll: true });
     };
 
     const handleBankSubmit = (e) => {
         e.preventDefault();
         post(route('maid.profile.bank'), {
             data: { bank_name: data.bank_name, account_number: data.account_number, account_name: data.account_name },
+            preserveScroll: true,
+        });
+    };
+
+    const toggleSkill = (skill) => {
+        const next = selectedSkills.includes(skill)
+            ? selectedSkills.filter((s) => s !== skill)
+            : [...selectedSkills, skill];
+        setSelectedSkills(next);
+        setSavingSkills(true);
+        post(route('maid.profile.skills'), {
+            data: { skills: next },
+            preserveScroll: true,
+            onFinish: () => setSavingSkills(false),
         });
     };
 
@@ -50,6 +73,22 @@ export default function Profile({ auth, user, profile }) {
                 <h1 className="font-display text-3xl font-light text-espresso">My Profile</h1>
                 <p className="text-muted mt-2">Update your details, skills, and bank account for receiving payment.</p>
             </div>
+
+            {flash?.success && (
+                <div className="mb-6 rounded-brand-md border border-success/20 bg-success/10 px-4 py-3 text-sm text-success" role="status">
+                    {flash.success}
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mb-6 rounded-brand-md border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+                    {flash.error}
+                </div>
+            )}
+            {flash?.message && !flash?.success && !flash?.error && (
+                <div className="mb-6 rounded-brand-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-muted" role="status">
+                    {flash.message}
+                </div>
+            )}
 
             {/* Name & Status Card */}
             <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-1 p-6 mb-6">
@@ -125,12 +164,19 @@ export default function Profile({ auth, user, profile }) {
             {/* Skills */}
             <div className="bg-white rounded-brand-lg border border-gray-200 shadow-brand-1 p-6 mb-6">
                 <h3 className="font-display text-lg text-espresso mb-1 border-b border-gray-100 pb-3">What Can I Do? (My Skills)</h3>
-                <p className="text-xs text-muted mb-4">Tap on the skills that match what you can do. The ones in green are already selected.</p>
+                <p className="text-xs text-muted mb-4">Tap on the skills that match what you can do. The ones in green are already selected.{savingSkills ? ' Saving…' : ''}</p>
                 <div className="flex flex-wrap gap-2">
                     {availableSkills.map(skill => (
-                        <span key={skill} className={`px-4 py-2 rounded-full text-sm cursor-pointer transition-all ${currentSkills.includes(skill) ? 'bg-teal text-white shadow-brand-1' : 'bg-gray-100 text-muted hover:bg-gray-200'}`}>
+                        <button
+                            type="button"
+                            key={skill}
+                            onClick={() => toggleSkill(skill)}
+                            disabled={savingSkills}
+                            aria-pressed={selectedSkills.includes(skill)}
+                            className={`px-4 py-2 rounded-full text-sm cursor-pointer transition-all disabled:opacity-60 ${selectedSkills.includes(skill) ? 'bg-teal text-white shadow-brand-1' : 'bg-gray-100 text-muted hover:bg-gray-200'}`}
+                        >
                             {skill}
-                        </span>
+                        </button>
                     ))}
                 </div>
                 <p className="text-xs text-muted mt-4">Tap a skill to select or remove it.</p>

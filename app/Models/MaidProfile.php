@@ -35,6 +35,8 @@ class MaidProfile extends Model
         'nin_report',
         'languages',
         'is_foreigner',
+        'is_profile_complete',
+        'profile_completed_at',
     ];
 
     protected function casts(): array
@@ -47,6 +49,8 @@ class MaidProfile extends Model
             'nin_verified' => 'boolean',
             'background_verified' => 'boolean',
             'is_foreigner' => 'boolean',
+            'is_profile_complete' => 'boolean',
+            'profile_completed_at' => 'datetime',
             'expected_salary' => 'integer',
             'experience_years' => 'integer',
             'rating' => 'float',

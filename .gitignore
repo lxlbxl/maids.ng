@@ -33,3 +33,5 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 bootstrap/cache/
+
+.env.harness

@@ -25,16 +25,32 @@ class MaidProfileController extends Controller
     {
         $user = Auth::user();
 
-        // Block name changes if NIN has been verified
-        if ($user->maidProfile && $user->maidProfile->nin_verified && $request->has('name')) {
+        // Block name changes if NIN has been verified. Compare values, not mere
+        // presence: the profile form always submits the current name, so
+        // `has('name')` used to reject every save for a verified maid — silently
+        // dropping the bio and all other profile fields.
+        $nameChanged = $request->filled('name') && $request->input('name') !== $user->name;
+        if ($user->maidProfile && $user->maidProfile->nin_verified && $nameChanged) {
             return back()->with('error', 'Your name cannot be changed after NIN verification. Contact support if you need assistance.');
         }
 
         $user->update($request->only('name', 'phone', 'location'));
 
-        // Update middle_name on profile if provided
-        if ($request->has('middle_name') && $user->maidProfile) {
-            $user->maidProfile->update(['middle_name' => $request->middle_name]);
+        // Persist the profile fields collected by the web form. These live on
+        // maid_profiles (not the users table) and were previously discarded.
+        if ($user->maidProfile) {
+            $profileData = array_filter(
+                $request->only(['bio', 'expected_salary', 'experience_years', 'schedule_preference']),
+                fn ($value) => $value !== null
+            );
+
+            if ($request->has('middle_name')) {
+                $profileData['middle_name'] = $request->input('middle_name');
+            }
+
+            if (! empty($profileData)) {
+                $user->maidProfile->update($profileData);
+            }
         }
 
         // Recalculate profile completeness after update

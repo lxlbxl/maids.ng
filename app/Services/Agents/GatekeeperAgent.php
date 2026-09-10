@@ -69,6 +69,10 @@ class GatekeeperAgent extends AgentService
                 $maid->nin_report = json_encode(['verified_at' => now()->toDateTimeString(), 'method' => 'QoreID NIN Premium', 'qoreid_response' => $qoreData]);
                 $maid->save();
 
+                // NIN adds 20 completeness points; recalculate so the score and
+                // is_profile_complete flag reflect verification in the same request.
+                app(\App\Services\MaidProfileService::class)->recalculate($maid->user);
+
                 $this->updateNinTrackingRecord($maid->user_id, 'verified', 100, null, $qoreData);
                 $this->sendVerificationNotification($maid->user, 'approved');
 

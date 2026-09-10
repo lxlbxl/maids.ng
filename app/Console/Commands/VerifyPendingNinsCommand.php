@@ -70,6 +70,7 @@ class VerifyPendingNinsCommand extends Command
                     'status' => 'verified',
                     'reviewed_at' => now()
                 ]);
+                app(\App\Services\MaidProfileService::class)->recalculate($user);
                 $this->info("User #{$user->id} already verified on profile. Updated tracking record.");
                 continue;
             }
