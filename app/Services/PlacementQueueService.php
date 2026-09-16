@@ -26,6 +26,79 @@ class PlacementQueueService
     private const HOLD_HOURS = 48;
 
     /**
+     * A claim older than this is not hot any more — she has probably taken
+     * other work and needs asking again before we put her in front of a family.
+     */
+    private const CLAIM_STALE_DAYS = 10;
+
+    /**
+     * How warm a group volunteer is, highest first.
+     *
+     * Volunteering is the only unprompted signal we get, so it is the base of
+     * the score — but it decays. Someone who replied two hours ago is looking
+     * for work right now; someone who replied nine days ago may already be
+     * placed, and offering her wastes the family's time and ours.
+     *
+     * Composed of:
+     *   recency of the claim     — the dominant term, and the only one we have
+     *                              reliable data for today
+     *   recency of any reply     — from the contact thread. Sparse until the
+     *                              unified threads accumulate inbound history,
+     *                              so it adds to the score rather than gating it
+     *   NIN verified             — a family will not take an unverified helper
+     *   profile completeness     — a thin profile is hard to present
+     *
+     * @param object $claim  row from group_job_claims
+     */
+    public function heatScore(object $claim): array
+    {
+        $ageDays = $claim->claimed_at
+            ? abs(now()->diffInHours(\Carbon\Carbon::parse($claim->claimed_at)) / 24)
+            : 999;
+
+        // Steep early decay: the first two days carry most of the signal.
+        $recency = match (true) {
+            $ageDays <= 1  => 100,
+            $ageDays <= 2  => 85,
+            $ageDays <= 4  => 65,
+            $ageDays <= 7  => 40,
+            $ageDays <= 10 => 20,
+            default        => 5,
+        };
+
+        // Did she actually reply to us recently, on any subject?
+        $replied = 0;
+        $u = User::find($claim->maid_user_id);
+        $tail = substr(preg_replace('/\D+/', '', (string) ($u->phone ?? '')), -10);
+        if ($tail !== '') {
+            $t = DB::table('wa_contact_issues')->where('wa_id', 'like', "%{$tail}")->first();
+            if ($t && $t->last_inbound_at) {
+                $h = abs(now()->diffInHours(\Carbon\Carbon::parse($t->last_inbound_at)));
+                $replied = match (true) {
+                    $h <= 24  => 40,
+                    $h <= 72  => 25,
+                    $h <= 168 => 10,
+                    default   => 0,
+                };
+            }
+        }
+
+        $profile = DB::table('maid_profiles')->where('user_id', $claim->maid_user_id)->first();
+
+        $nin        = ($claim->nin_verified || ($profile->nin_verified ?? false)) ? 25 : 0;
+        $complete   = (int) round(((int) ($profile->profile_completeness ?? 0)) / 10);   // 0-10
+
+        return [
+            'score'          => $recency + $replied + $nin + $complete,
+            'age_days'       => round($ageDays, 1),
+            'stale'          => $ageDays > self::CLAIM_STALE_DAYS,
+            'recency'        => $recency,
+            'replied_recently' => $replied,
+            'nin'            => $nin > 0,
+        ];
+    }
+
+    /**
      * users.id of every maid who must not be offered right now, with why.
      *
      * @return array<int, string>  maid_user_id => reason
@@ -93,26 +166,72 @@ class PlacementQueueService
 
         $picks = [];
 
-        // 1. Helpers who volunteered for this opening in the group.
+        // 1. Helpers who volunteered for THIS opening, hottest first.
+        //
+        // Ordered by heat, not by who claimed first. Claiming order is fair but
+        // it is not useful: a helper who replied two hours ago is looking for
+        // work right now, while a nine-day-old claim has probably already found
+        // some. Ranking oldest-first was putting the coldest volunteer in front
+        // of the family.
         if ($jobCode) {
             $claims = DB::table('group_job_claims')
                 ->where('job_code', $jobCode)
                 ->whereIn('status', ['claimed', 'shortlisted'])
-                ->orderByDesc('nin_verified')
-                ->orderBy('claimed_at')
                 ->get();
 
-            foreach ($claims as $c) {
+            $scored = $claims->map(fn ($c) => ['claim' => $c, 'heat' => $this->heatScore($c)])
+                             ->sortByDesc(fn ($r) => $r['heat']['score'])
+                             ->values();
+
+            foreach ($scored as $r) {
                 if (count($picks) >= $size) { break; }
+                $c  = $r['claim'];
                 $id = (int) $c->maid_user_id;
                 if (in_array($id, $existing, true)) { continue; }
                 if (isset($blocked[$id])) { $skipped[$id] = $blocked[$id]; continue; }
-                $picks[] = ['maid_user_id' => $id, 'source' => 'group_claim'];
+
+                $picks[] = [
+                    'maid_user_id' => $id,
+                    'source'       => 'group_claim',
+                    'heat'         => $r['heat'],
+                ];
             }
         }
 
-        // 2. Top up from the general pool, best first, never re-offering someone
-        //    who is committed or held.
+        // 2. Helpers active in the group on OTHER openings.
+        //
+        // She did not ask for this specific job, but she answered a group post
+        // recently — which is more than anyone the matcher surfaces has done.
+        // Worth putting ahead of a cold profile, behind a direct volunteer.
+        if (count($picks) < $size) {
+            $others = DB::table('group_job_claims')
+                ->when($jobCode, fn ($q) => $q->where('job_code', '!=', $jobCode))
+                ->whereIn('status', ['claimed', 'shortlisted'])
+                ->where('claimed_at', '>=', now()->subDays(self::CLAIM_STALE_DAYS))
+                ->get()
+                ->unique('maid_user_id');
+
+            $scoredOthers = $others->map(fn ($c) => ['claim' => $c, 'heat' => $this->heatScore($c)])
+                                   ->sortByDesc(fn ($r) => $r['heat']['score'])
+                                   ->values();
+
+            foreach ($scoredOthers as $r) {
+                if (count($picks) >= $size) { break; }
+                $id = (int) $r['claim']->maid_user_id;
+                if (in_array($id, $existing, true)) { continue; }
+                if (isset($blocked[$id])) { $skipped[$id] = $blocked[$id]; continue; }
+                if (in_array($id, array_column($picks, 'maid_user_id'), true)) { continue; }
+
+                $picks[] = [
+                    'maid_user_id' => $id,
+                    'source'       => 'group_active',
+                    'heat'         => $r['heat'],
+                ];
+            }
+        }
+
+        // 3. Cold pool. Nobody here has expressed interest in anything — last
+        //    resort, and only to fill remaining slots.
         if (count($picks) < $size) {
             $pool = DB::table('maid_profiles')
                 ->where('availability_status', 'available')
@@ -152,11 +271,16 @@ class PlacementQueueService
             ]);
             $u = User::find($p['maid_user_id']);
             $written[] = [
-                'rank'   => $nextRank,
+                'rank'         => $nextRank,
                 'maid_user_id' => $p['maid_user_id'],
-                'name'   => $u->name ?? null,
-                'phone'  => $u->phone ?? null,
-                'source' => $p['source'],
+                'name'         => $u->name ?? null,
+                'phone'        => $u->phone ?? null,
+                'source'       => $p['source'],
+                'heat'         => $p['heat']['score'] ?? null,
+                'claimed_days_ago' => $p['heat']['age_days'] ?? null,
+                // A stale claim is still worth approaching, but ask whether she
+                // is still free before naming her to the family.
+                'needs_reconfirm'  => $p['heat']['stale'] ?? false,
             ];
         }
 

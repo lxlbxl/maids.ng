@@ -132,12 +132,18 @@ class GroupJobController extends ApiController
      */
     public function shortlist(string $jobCode): JsonResponse
     {
+        // Ordered by heat, matching the placement queue. Claim order is fair but
+        // not useful — a helper who replied two hours ago is job-hunting now,
+        // while a nine-day-old claim has often already found work.
+        $queue = app(\App\Services\PlacementQueueService::class);
+
         $claims = DB::table('group_job_claims')
             ->where('job_code', $jobCode)
             ->where('status', '!=', 'rejected')
-            ->orderByDesc('nin_verified')
-            ->orderBy('claimed_at')
-            ->get();
+            ->get()
+            ->map(fn ($c) => tap($c, fn ($x) => $x->heat = $queue->heatScore($x)))
+            ->sortByDesc(fn ($c) => $c->heat['score'])
+            ->values();
 
         $out = $claims->map(function ($c) {
             $u = User::find($c->maid_user_id);
@@ -153,6 +159,11 @@ class GroupJobController extends ApiController
                 'completeness'  => $p->profile_completeness ?? null,
                 'claimed_at'    => $c->claimed_at,
                 'status'        => $c->status,
+                'heat'          => $c->heat['score'],
+                'claimed_days_ago' => $c->heat['age_days'],
+                // Still worth approaching, but ask whether she is free before
+                // naming her to a family.
+                'needs_reconfirm'  => $c->heat['stale'],
             ];
         });
 
