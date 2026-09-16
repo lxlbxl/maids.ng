@@ -15,13 +15,38 @@ class FulfillmentController extends ApiController
     {
         $validated = $request->validate([
             'employer_id'        => 'required|integer|exists:users,id',
-            'maid_id'            => 'nullable|integer|exists:users,id',
+            // Same id-space trap as matching/assign: users.id, and it must be
+            // a maid. See AgentMatchingController::assign.
+            'maid_id'            => ['nullable','integer', \Illuminate\Validation\Rule::exists('users','id')->where('role','maid')],
             'preference_id'      => 'nullable|integer|exists:employer_preferences,id',
             'assignment_id'      => 'nullable|integer|exists:maid_assignments,id',
             'notes'              => 'nullable|string|max:5000',
         ]);
 
         try {
+            // One live case per employer. Employer 450 accumulated four
+            // (#3 failed, #4 active, #5 failed, #6 active) and employer 373 two,
+            // because every retry opened another. A re-open of an active case is
+            // almost always the agent repeating a step, not a second placement.
+            $open = FulfillmentCase::where('employer_id', $validated['employer_id'])
+                ->where('status', 'active')
+                ->latest()
+                ->first();
+
+            if ($open && !$request->boolean('force_new')) {
+                return $this->success([
+                    'fulfillment_id' => $open->id,
+                    'employer_id'    => $open->employer_id,
+                    'maid_id'        => $open->maid_id,
+                    'stage'          => $open->stage,
+                    'status'         => $open->status,
+                    'duplicate'      => true,
+                    'hint'           => 'This employer already has an active fulfillment case. '
+                                      . 'Continue on it, or resend with force_new=true if this is '
+                                      . 'genuinely a second placement.',
+                ], 'Fulfillment case already open — existing case returned');
+            }
+
             $case = FulfillmentCase::create(array_merge($validated, [
                 'status'         => 'active',
                 'stage'          => 'salary_agreed',

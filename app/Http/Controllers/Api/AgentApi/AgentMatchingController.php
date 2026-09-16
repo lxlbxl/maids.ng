@@ -7,6 +7,7 @@ use App\Models\MaidAssignment;
 use App\Models\EmployerPreference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AgentMatchingController extends ApiController
 {
@@ -34,7 +35,13 @@ class AgentMatchingController extends ApiController
     {
         $validated = $request->validate([
             'employer_id'   => 'required|integer|exists:users,id',
-            'maid_id'       => 'required|integer|exists:users,id',
+            // Must be a user whose role is 'maid', not merely a user that exists.
+            // Assignment #44 was created with maid_id=23 — a maid_profiles.id,
+            // whose users.id is 43. users.id 23 is an *employer* ("Adeayo"), so
+            // `exists:users,id` passed and an employer was assigned as a
+            // housemaid. Ops read this as a join bug; the FK is correct, the
+            // check was just too weak to catch the wrong id space.
+            'maid_id'       => ['required','integer', \Illuminate\Validation\Rule::exists('users','id')->where('role','maid')],
             'preference_id' => 'required|integer|exists:employer_preferences,id',
             'assignment_type' => 'nullable|string|in:manual,auto,direct_selection,guarantee_match',
             'notes'         => 'nullable|string|max:5000',
@@ -44,6 +51,40 @@ class AgentMatchingController extends ApiController
             // assigned_by must be an integer user ID (not a string like 'agent')
             // Use 1 as system/agent user ID
             $agentUserId = 1;
+            // An open assignment for this employer + preference is the same
+            // placement, not a new one. Without this guard employer 460 ended up
+            // with two *accepted* assignments for different maids (#44 and #45)
+            // and employer 450 with two for the same maid.
+            $existing = MaidAssignment::where('employer_id', $validated['employer_id'])
+                ->where('preference_id', $validated['preference_id'])
+                ->whereIn('status', ['pending_acceptance', 'accepted'])
+                ->latest()
+                ->first();
+
+            if ($existing && !$request->boolean('replace_existing')) {
+                $sameMaid = (int) $existing->maid_id === (int) $validated['maid_id'];
+                return $this->success([
+                    'assignment_id' => $existing->id,
+                    'employer_id'   => $existing->employer_id,
+                    'maid_id'       => $existing->maid_id,
+                    'status'        => $existing->status,
+                    'duplicate'     => true,
+                    'hint'          => $sameMaid
+                        ? 'This maid is already assigned to this employer.'
+                        : 'This employer already has an open assignment for maid '
+                          . $existing->maid_id . '. To swap maids, cancel that one first '
+                          . 'or resend with replace_existing=true.',
+                ], 'Assignment already exists — existing record returned');
+            }
+
+            if ($existing && $request->boolean('replace_existing')) {
+                $existing->update(['status' => 'cancelled']);
+                Log::info('Assignment superseded on request', [
+                    'cancelled_id' => $existing->id,
+                    'employer_id'  => $validated['employer_id'],
+                ]);
+            }
+
             $assignment = MaidAssignment::create([
                 'employer_id'    => $validated['employer_id'],
                 'maid_id'        => $validated['maid_id'],

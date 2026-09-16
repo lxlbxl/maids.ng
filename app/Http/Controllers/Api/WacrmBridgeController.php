@@ -107,6 +107,35 @@ class WacrmBridgeController
         $agentId = self::DEFAULT_AGENT_ID;
 
         try {
+            // Route by the contact's phone number, not the conversation id.
+            //
+            // conversation_id is per-thread and formatted differently by each
+            // writer, so the old `title LIKE %conversation_id%` lookup could not
+            // see issues opened by agents ("WA: <name> — <phone>") and vice
+            // versa — one person ended up with several threads. The phone number
+            // is the person, so it is what identity should hang on.
+            $phone = $this->extractPhone($data);
+
+            if ($phone !== '') {
+                app(\App\Services\WaContactIssueService::class)->logInbound(
+                    $phone,
+                    (string) ($data['text'] ?? ''),
+                    [
+                        'name'                => $data['contact_name'] ?? null,
+                        'instance'            => $instanceName,
+                        'whatsapp_message_id' => $data['whatsapp_message_id'] ?? null,
+                        'content_type'        => $data['content_type'] ?? 'text',
+                        'wa_id'               => $phone,
+                    ]
+                );
+                return;
+            }
+
+            // No usable number (rare: group events, system notices). Fall back to
+            // the legacy conversation-keyed path so nothing is dropped.
+            Log::warning('Bridge: no phone on inbound, using conversation fallback', [
+                'conversation_id' => $conversationId,
+            ]);
             $existingIssueId = $this->findExistingIssue($companyId, $conversationId);
             if ($existingIssueId) {
                 $this->reopenIssueIfDone($existingIssueId);
@@ -118,6 +147,27 @@ class WacrmBridgeController
         } catch (\Throwable $e) {
             Log::error('Bridge failed', ['error' => $e->getMessage(), 'instance' => $instanceName]);
         }
+    }
+
+    /**
+     * Pull the contact's phone number out of an inbound payload.
+     *
+     * WACRM puts it in different fields depending on the instance and event, and
+     * contact_id is frequently "<number>@s.whatsapp.net" or a bare number.
+     */
+    private function extractPhone(array $data): string
+    {
+        foreach (['wa_id', 'phone', 'from', 'contact_phone', 'contact_id', 'conversation_id'] as $k) {
+            $v = (string) ($data[$k] ?? '');
+            if ($v === '') {
+                continue;
+            }
+            // Take the first run of 10+ digits — strips @s.whatsapp.net, :12, etc.
+            if (preg_match('/(\d{10,15})/', $v, $m)) {
+                return $m[1];
+            }
+        }
+        return '';
     }
 
     private function findExistingIssue(string $companyId, string $conversationId): ?string

@@ -371,6 +371,18 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     // Confirm a payment from the evidence on the customer's own bank receipt
     // (session id, or sender name + bank) when amount and timing are not enough.
     Route::post('/payments/claim-transfer', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'claimTransfer']);
+
+    // One thread per WhatsApp contact — inbound and outbound both land here, so
+    // opening an issue shows the whole relationship instead of half of one episode.
+    Route::post('/wa/thread', [\App\Http\Controllers\Api\AgentApi\WaThreadController::class, 'resolve']);
+    Route::post('/wa/thread/outbound', [\App\Http\Controllers\Api\AgentApi\WaThreadController::class, 'logOutbound']);
+    Route::get('/wa/thread/{phone}', [\App\Http\Controllers\Api\AgentApi\WaThreadController::class, 'show']);
+
+    // Helper-group openings: who volunteered for what, so the matcher can put
+    // real volunteers ahead of a generic availability search.
+    Route::post('/group-jobs/claim', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'claim']);
+    Route::get('/group-jobs/{jobCode}/shortlist', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'shortlist']);
+    Route::post('/group-jobs/{jobCode}/close', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'close']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
