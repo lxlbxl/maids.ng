@@ -155,10 +155,21 @@ class PlacementQueueService
      *
      * @return array{queued:int, candidates:array<int,array<string,mixed>>, skipped:array<int,string>}
      */
-    public function build(int $employerId, ?int $preferenceId, ?string $jobCode, int $size = 3): array
+    public function build(int $employerId, ?int $preferenceId, ?string $jobCode, int $size = 3, ?string $area = null): array
     {
         $blocked  = $this->unavailableMaids($employerId);
         $skipped  = [];
+
+        // Fall back to whatever the request or opening says the area is.
+        if (!$area) {
+            $area = DB::table('hire_requests')
+                ->where('employer_id', $employerId)
+                ->whereIn('status', ['open', 'paid', 'matching', 'matched'])
+                ->value('area');
+        }
+        if (!$area && $jobCode) {
+            $area = DB::table('group_job_claims')->where('job_code', $jobCode)->value('area');
+        }
 
         $existing = DB::table('placement_candidates')
             ->where('employer_id', $employerId)
@@ -190,6 +201,8 @@ class PlacementQueueService
                 $id = (int) $c->maid_user_id;
                 if (in_array($id, $existing, true)) { continue; }
                 if (isset($blocked[$id])) { $skipped[$id] = $blocked[$id]; continue; }
+                if (!$this->canWorkHere($id, $area)) { $skipped[$id] = 'not available in ' . $area; continue; }
+                if ($why = $this->failedHereBefore($id, $employerId)) { $skipped[$id] = $why; continue; }
 
                 $picks[] = [
                     'maid_user_id' => $id,
@@ -222,6 +235,8 @@ class PlacementQueueService
                 if (in_array($id, $existing, true)) { continue; }
                 if (isset($blocked[$id])) { $skipped[$id] = $blocked[$id]; continue; }
                 if (in_array($id, array_column($picks, 'maid_user_id'), true)) { continue; }
+                if (!$this->canWorkHere($id, $area)) { $skipped[$id] = 'not available in ' . $area; continue; }
+                if ($why = $this->failedHereBefore($id, $employerId)) { $skipped[$id] = $why; continue; }
 
                 $picks[] = [
                     'maid_user_id' => $id,
@@ -239,12 +254,26 @@ class PlacementQueueService
                 ->whereNotNull('user_id')
                 ->orderByDesc('nin_verified')
                 ->orderByDesc('profile_completeness')
-                ->limit(200)
-                ->get(['user_id', 'nin_verified']);
+                ->limit(400)
+                ->get(['user_id', 'nin_verified', 'location', 'willing_states']);
 
             foreach ($pool as $p) {
                 if (count($picks) >= $size) { break; }
                 $id = (int) $p->user_id;
+
+                // Geography is not a preference, it is a hard constraint. A
+                // helper in Lagos is no use to a family in Abuja, and offering
+                // one wastes everybody's time — this is exactly how Onyinyechi
+                // (Isheri Lagos, willing_states ["Lagos"]) came to be assigned
+                // to a household in Lugbe, Abuja.
+                if ($area && !$this->servesArea($p, $area)) {
+                    $skipped[$id] = 'not available in ' . $area;
+                    continue;
+                }
+                if ($why = $this->failedHereBefore($id, $employerId)) {
+                    $skipped[$id] = $why;
+                    continue;
+                }
                 if (in_array($id, $existing, true)) { continue; }
                 if (isset($blocked[$id])) { $skipped[$id] = $blocked[$id]; continue; }
                 if (in_array($id, array_column($picks, 'maid_user_id'), true)) { continue; }
@@ -366,5 +395,96 @@ class PlacementQueueService
         }
 
         return ['candidate' => (array) $c, 'next' => null];
+    }
+
+    /**
+     * Can this helper work in the requested area?
+     *
+     * Checks her stated location and, more importantly, willing_states — a
+     * helper who lists only Lagos will not relocate to Abuja for a housekeeping
+     * role, however good the match looks on paper. This is exactly how
+     * Onyinyechi (Isheri Oshun, Lagos; willing_states ["Lagos"]) came to be
+     * assigned to a household in Lugbe, Abuja.
+     */
+    private function servesArea(object $profile, string $area): bool
+    {
+        $want = $this->stateOf($area);
+        if ($want === null) {
+            return true;   // area we cannot place — never exclude on a guess
+        }
+
+        $willing = $profile->willing_states ?? null;
+        if (is_string($willing)) {
+            $willing = json_decode($willing, true);
+        }
+        if (is_array($willing) && $willing) {
+            foreach ($willing as $w) {
+                if ($this->stateOf((string) $w) === $want) {
+                    return true;
+                }
+            }
+            return false;   // she named her states and this is not one of them
+        }
+
+        $loc = $this->stateOf((string) ($profile->location ?? ''));
+
+        return $loc === null || $loc === $want;
+    }
+
+    /** Coarse Nigerian state extraction; Abuja and FCT are the same place. */
+    private function stateOf(string $text): ?string
+    {
+        $t = strtolower($text);
+        foreach (['lagos','abuja','fct','ogun','oyo','rivers','kano','kaduna','enugu','delta',
+                  'edo','anambra','imo','akwa','cross river','plateau','benue','niger','kwara',
+                  'osun','ondo','ekiti'] as $st) {
+            if (str_contains($t, $st)) {
+                return $st === 'fct' ? 'abuja' : $st;
+            }
+        }
+        return null;
+    }
+
+    /** Area check by user id, for the tiers that work from claims not profiles. */
+    private function canWorkHere(int $maidUserId, ?string $area): bool
+    {
+        if (!$area) {
+            return true;
+        }
+        $p = DB::table('maid_profiles')->where('user_id', $maidUserId)
+            ->first(['location', 'willing_states']);
+
+        return $p ? $this->servesArea($p, $area) : true;
+    }
+
+    /**
+     * Has this helper already failed with this household?
+     *
+     * Re-offering the helper who did not show up is worse than offering nobody:
+     * it tells the family we are not paying attention. Tafa's replacement search
+     * started precisely because Damilola never arrived, and a naive queue put her
+     * back at rank 1.
+     *
+     * @return string|null  reason to skip, or null if she is fine
+     */
+    private function failedHereBefore(int $maidUserId, int $employerId): ?string
+    {
+        $failedCase = DB::table('fulfillment_cases')
+            ->where('employer_id', $employerId)
+            ->where('maid_id', $maidUserId)
+            ->where('status', 'failed')
+            ->exists();
+
+        if ($failedCase) {
+            return 'a previous placement with this employer failed';
+        }
+
+        $badOutcome = DB::table('placement_candidates')
+            ->where('employer_id', $employerId)
+            ->where('maid_user_id', $maidUserId)
+            ->whereIn('status', ['declined', 'unreachable'])
+            ->value('status');
+
+        return $badOutcome ? "previously {$badOutcome} for this employer" : null;
     }
 }
