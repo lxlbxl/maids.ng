@@ -316,6 +316,18 @@ class FulfillmentController extends ApiController
                 'actor_type'          => 'agent',
             ]);
 
+            // She actually started. This is the announcement worth making —
+            // "matched" is a promise, "started work today" is the proof.
+            if ($case->maid_id) {
+                $jobCode = \Illuminate\Support\Facades\DB::table('placement_candidates')
+                    ->where('employer_id', $case->employer_id)
+                    ->where('maid_user_id', $case->maid_id)
+                    ->value('job_code');
+
+                app(\App\Services\GroupAnnouncementService::class)
+                    ->queue('started', $jobCode, (int) $case->maid_id);
+            }
+
             return $this->success($case->fresh(), 'Arrival confirmed');
         } catch (\Throwable $e) {
             return $this->error('Failed to confirm arrival: ' . $e->getMessage(), 500);

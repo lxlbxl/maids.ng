@@ -391,6 +391,11 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::post('/placements/{candidateId}/offer', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'offer']);
     Route::post('/placements/{candidateId}/outcome', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'outcome']);
     Route::get('/placements/unavailable', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'unavailable']);
+
+    // Results posted back to the helper group — social proof that answering a
+    // posting leads to work. Drained by the group-announce-drain cron.
+    Route::get('/group-announcements/pending', [\App\Http\Controllers\Api\AgentApi\GroupAnnouncementController::class, 'pending']);
+    Route::post('/group-announcements/{id}/result', [\App\Http\Controllers\Api\AgentApi\GroupAnnouncementController::class, 'result']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);

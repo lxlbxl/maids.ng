@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MaidAssignment;
 use App\Models\User;
+use App\Services\GroupAnnouncementService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -313,6 +314,18 @@ class PlacementQueueService
             'responded_at'   => now(),
             'updated_at'     => now(),
         ]);
+
+        // Tell the group. A helper who sees one of their own named as placed
+        // learns that answering a posting actually leads to work — which no
+        // amount of instruction in the posting itself achieves.
+        if (in_array($status, ['accepted', 'placed'], true)) {
+            app(GroupAnnouncementService::class)->queue(
+                $status === 'placed' ? 'started' : 'matched',
+                $c->job_code,
+                (int) $c->maid_user_id,
+                ['role' => $c->job_code ? null : null]
+            );
+        }
 
         // She took it: everyone else on this opening is done.
         if (in_array($status, ['accepted', 'placed'], true)) {
