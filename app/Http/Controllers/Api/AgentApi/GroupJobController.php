@@ -60,9 +60,20 @@ class GroupJobController extends ApiController
         $status = 'claimed';
         $reason = null;
 
+        // willing_states is the helper's own declaration of where she will work,
+        // so it outranks where she happens to live. Faith Olasunkanmi (Ikorodu)
+        // and EJIGA Charity (Agege) both answered ["Lagos"] and then claimed a
+        // Lugbe, Abuja role — a claim neither could take. Checking only the city
+        // let those through, because "Ikorodu" carries no state name to compare.
+        $queue   = app(\App\Services\PlacementQueueService::class);
+        $willing = $profile && !empty($v['area']) ? $queue->canServeArea($profile, $v['area']) : true;
+
         if ($availability && $availability !== 'available') {
             $status = 'rejected';
             $reason = "helper is marked {$availability}";
+        } elseif (!$willing) {
+            $status = 'rejected';
+            $reason = "helper does not work in {$v['area']}";
         } elseif ($city && !empty($v['area']) && !$this->sameState($city, $v['area'])) {
             $status = 'rejected';
             $reason = "helper is in {$city}, job is in {$v['area']}";

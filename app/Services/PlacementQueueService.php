@@ -266,7 +266,7 @@ class PlacementQueueService
                 // one wastes everybody's time — this is exactly how Onyinyechi
                 // (Isheri Lagos, willing_states ["Lagos"]) came to be assigned
                 // to a household in Lugbe, Abuja.
-                if ($area && !$this->servesArea($p, $area)) {
+                if ($area && !$this->canServeArea($p, $area)) {
                     $skipped[$id] = 'not available in ' . $area;
                     continue;
                 }
@@ -406,7 +406,7 @@ class PlacementQueueService
      * Onyinyechi (Isheri Oshun, Lagos; willing_states ["Lagos"]) came to be
      * assigned to a household in Lugbe, Abuja.
      */
-    private function servesArea(object $profile, string $area): bool
+    public function canServeArea(object $profile, string $area): bool
     {
         $want = $this->stateOf($area);
         if ($want === null) {
@@ -417,13 +417,36 @@ class PlacementQueueService
         if (is_string($willing)) {
             $willing = json_decode($willing, true);
         }
+
         if (is_array($willing) && $willing) {
+            $namedAState = false;
+
             foreach ($willing as $w) {
-                if ($this->stateOf((string) $w) === $want) {
+                $w = strtolower(trim((string) $w));
+
+                // "anywhere" is a yes, not an unparseable string. Chioma
+                // Elizabeth Akaenyi lives in Abuja and answered ["anywhere"];
+                // reading that as "no known state" excluded the one helper who
+                // both lives in the right city and volunteered for the role.
+                if (in_array($w, ['anywhere', 'any', 'any state', 'all', 'all states', 'nationwide', 'any location'], true)) {
                     return true;
                 }
+
+                $state = $this->stateOf($w);
+                if ($state !== null) {
+                    $namedAState = true;
+                    if ($state === $want) {
+                        return true;
+                    }
+                }
             }
-            return false;   // she named her states and this is not one of them
+
+            // She named real states and this is not one of them — a genuine no.
+            if ($namedAState) {
+                return false;
+            }
+            // Nothing in the list resolved to a state we recognise. Fall through
+            // to her location rather than excluding her on a parsing failure.
         }
 
         $loc = $this->stateOf((string) ($profile->location ?? ''));
@@ -454,7 +477,7 @@ class PlacementQueueService
         $p = DB::table('maid_profiles')->where('user_id', $maidUserId)
             ->first(['location', 'willing_states']);
 
-        return $p ? $this->servesArea($p, $area) : true;
+        return $p ? $this->canServeArea($p, $area) : true;
     }
 
     /**
