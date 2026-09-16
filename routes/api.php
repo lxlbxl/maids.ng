@@ -383,6 +383,14 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::post('/group-jobs/claim', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'claim']);
     Route::get('/group-jobs/{jobCode}/shortlist', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'shortlist']);
     Route::post('/group-jobs/{jobCode}/close', [\App\Http\Controllers\Api\AgentApi\GroupJobController::class, 'close']);
+
+    // Ranked candidate queue per opening: a primary plus screened backups, and
+    // a hold so the same helper is not offered to several families at once.
+    Route::post('/placements/queue', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'build']);
+    Route::get('/placements/employer/{employerId}', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'show']);
+    Route::post('/placements/{candidateId}/offer', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'offer']);
+    Route::post('/placements/{candidateId}/outcome', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'outcome']);
+    Route::get('/placements/unavailable', [\App\Http\Controllers\Api\AgentApi\PlacementQueueController::class, 'unavailable']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
