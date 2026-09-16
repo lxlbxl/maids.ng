@@ -47,6 +47,35 @@ class FulfillmentController extends ApiController
                 ], 'Fulfillment case already open — existing case returned');
             }
 
+            // The assignment must actually be this employer's, and for this maid.
+            //
+            // Case 8 carried maid_id=43 while pointing at assignment 44, whose
+            // maid_id was 23 — an employer. Nothing objected, so the case-level
+            // and assignment-level views of the same placement disagreed for a
+            // day and Ops read it as a join bug. A pointer that contradicts its
+            // own row is worse than a missing one.
+            if (!empty($validated['assignment_id'])) {
+                $assignment = \App\Models\MaidAssignment::find($validated['assignment_id']);
+
+                if ((int) $assignment->employer_id !== (int) $validated['employer_id']) {
+                    return $this->error(
+                        "Assignment {$assignment->id} belongs to employer {$assignment->employer_id}, "
+                        . "not {$validated['employer_id']}.", 422);
+                }
+
+                if (!empty($validated['maid_id']) && (int) $assignment->maid_id !== (int) $validated['maid_id']) {
+                    return $this->error(
+                        "Assignment {$assignment->id} is for maid {$assignment->maid_id}, but this case says "
+                        . "maid {$validated['maid_id']}. Check you are passing users.id (the 'use this for "
+                        . "assign' number from maid-match), not maid_profiles.id.", 422);
+                }
+
+                if (in_array($assignment->status, ['cancelled', 'rejected'], true)) {
+                    return $this->error(
+                        "Assignment {$assignment->id} is {$assignment->status} — create a live assignment first.", 422);
+                }
+            }
+
             $case = FulfillmentCase::create(array_merge($validated, [
                 'status'         => 'active',
                 'stage'          => 'salary_agreed',

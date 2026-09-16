@@ -51,6 +51,15 @@ Schedule::command('payments:reconcile-pwbt --hours=48')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pwbt-reconcile.log'));
 
+// Placement integrity backstop. The write-path guards stop these being created
+// through the agent API, but not a direct DB edit or an older code path. The
+// Fatima case (an employer recorded as a placed maid) sat wrong for a day
+// because nothing was looking. Silent when clean.
+Schedule::command('placements:audit --quiet-ok')
+    ->dailyAt('07:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/placements-audit.log'));
+
 // Daily cleanup of old logs (keep last 30 days)
 Schedule::command('log:clear-old')
     ->dailyAt('02:00')
