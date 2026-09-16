@@ -41,11 +41,14 @@ class AgentMatchingController extends ApiController
         ]);
 
         try {
+            // assigned_by must be an integer user ID (not a string like 'agent')
+            // Use 1 as system/agent user ID
+            $agentUserId = 1;
             $assignment = MaidAssignment::create([
                 'employer_id'    => $validated['employer_id'],
                 'maid_id'        => $validated['maid_id'],
                 'preference_id'  => $validated['preference_id'],
-                'assigned_by'    => null,
+                'assigned_by'    => $agentUserId,
                 'assigned_by_type' => 'agent',
                 'assignment_type'  => $validated['assignment_type'] ?? 'manual',
                 'status'         => 'pending_acceptance',

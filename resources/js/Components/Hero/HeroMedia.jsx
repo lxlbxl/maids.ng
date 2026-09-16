@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
  * Directive 05 + 06 (MNG-HERO-01) — photo base layer + conditional video
  * enhancement. The photo is ALWAYS the LCP; no video markup exists in the
  * initial HTML. Video injects only after window load + idle, and only when
- * every gate passes. Cross-fade fires on `canplaythrough`, aborts at 4s.
+ * every gate passes. Cross-fade fires once playback actually starts, aborts at 4s.
  *
  * Layer stack (z-index): 0 photo · 1 video · scrim and text live above,
  * owned by HeroSection.
@@ -106,7 +106,7 @@ export default function HeroMedia({ intent = 'hire' }) {
         };
     }, []);
 
-    // Steps 3–5: inject, cross-fade on canplaythrough, abort at 4s,
+    // Steps 3–5: inject, cross-fade when playback starts, abort at 4s,
     // pause on hidden / scroll-out.
     useEffect(() => {
         if (!videoAllowed) return;
@@ -127,16 +127,22 @@ export default function HeroMedia({ intent = 'hire' }) {
 
         const onReady = () => {
             if (done) return;
-            done = true;
-            clearTimeout(abortTimer);
-            setVideoVisible(true);
-            video.play?.().catch(() => {});
-            window.posthog?.capture?.('hero_video_played', {
-                connection: navigator.connection?.effectiveType ?? 'unknown',
-                viewport: window.innerWidth,
+            const playback = video.play?.();
+            if (!playback) return;
+            playback.then(() => {
+                if (done) return;
+                done = true;
+                clearTimeout(abortTimer);
+                setVideoVisible(true);
+                window.posthog?.capture?.('hero_video_played', {
+                    connection: navigator.connection?.effectiveType ?? 'unknown',
+                    viewport: window.innerWidth,
+                });
+            }).catch(() => {
+                // Keep the photo visible when autoplay or decoding is rejected.
             });
         };
-        video.addEventListener('canplaythrough', onReady, { once: true });
+        video.addEventListener('canplay', onReady, { once: true });
         video.load();
 
         const onVisibility = () => {
@@ -153,7 +159,7 @@ export default function HeroMedia({ intent = 'hire' }) {
 
         return () => {
             clearTimeout(abortTimer);
-            video.removeEventListener('canplaythrough', onReady);
+            video.removeEventListener('canplay', onReady);
             document.removeEventListener('visibilitychange', onVisibility);
             io.disconnect();
         };
@@ -186,16 +192,16 @@ export default function HeroMedia({ intent = 'hire' }) {
                     muted
                     loop
                     playsInline
-                    preload="none"
+                    preload="auto"
                     poster={media.desktop.fallback}
                     aria-hidden="true"
                     className="absolute inset-0 w-full h-full object-cover object-[70%_20%] md:object-[right_top] transition-opacity duration-[600ms] ease-linear"
                     style={{ opacity: videoVisible ? 1 : 0 }}
                 >
-                    <source src="/media/hero/hero-480.webm" type='video/webm; codecs="av01.0.05M.08"' media="(max-width: 1023px)" />
-                    <source src="/media/hero/hero-720.webm" type='video/webm; codecs="av01.0.05M.08"' />
                     <source src="/media/hero/hero-480.mp4" type="video/mp4" media="(max-width: 1023px)" />
                     <source src="/media/hero/hero-720.mp4" type="video/mp4" />
+                    <source src="/media/hero/hero-480.webm" type='video/webm; codecs="av01.0.05M.08"' media="(max-width: 1023px)" />
+                    <source src="/media/hero/hero-720.webm" type='video/webm; codecs="av01.0.05M.08"' />
                 </video>
             )}
         </div>
