@@ -18,6 +18,12 @@ class MatchingFeePayment extends Model
         'account_name',
         'expires_at',
         'flutterwave_tx_id',
+        // Flutterwave's own reference for the transfer — the NIBSS session id,
+        // the same string the payer sees on their receipt. Must be fillable or
+        // mass-assignment drops it silently and the unique index that prevents
+        // double-recording a transfer never gets anything to work with.
+        'flw_ref',
+        'cancelled_reason',
         'status',
         'payment_type',
         'paid_at',

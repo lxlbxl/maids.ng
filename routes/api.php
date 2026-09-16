@@ -368,6 +368,9 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/payments/generate-link', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generateLink']);
     Route::post('/payments/generate-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'generatePwbt']);
     Route::post('/payments/verify-pwbt', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'verifyPwbt']);
+    // Confirm a payment from the evidence on the customer's own bank receipt
+    // (session id, or sender name + bank) when amount and timing are not enough.
+    Route::post('/payments/claim-transfer', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'claimTransfer']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
