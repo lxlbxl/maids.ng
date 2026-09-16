@@ -70,6 +70,11 @@ class AgentPaymentsController extends ApiController
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'amount'  => 'nullable|integer|min:1000|max:500000',
+            // Set when the employer is hiring an ADDITIONAL helper rather than
+            // paying again for the same one. The matching fee is per helper —
+            // one household commonly wants two or three (MAI-1209 wants three
+            // housekeepers; MNG-7 is two nannies for two elderly parents).
+            'new_request' => 'nullable|boolean',
         ]);
 
         try {
@@ -77,7 +82,7 @@ class AgentPaymentsController extends ApiController
             $amount = $validated['amount'] ?? (int) (config('settings.matching_fee_amount', 20000));
 
             $pwbtService = app(FlutterwavePwbtService::class);
-            $result = $pwbtService->generateForUser($user, $amount);
+            $result = $pwbtService->generateForUser($user, $amount, $request->boolean('new_request'));
 
             return $this->success([
                 'payment_id'         => $result['payment_id'],
@@ -480,9 +485,14 @@ class AgentPaymentsController extends ApiController
             // Second, this employer may already be settled for this fee. Repeat
             // business is real (a second match later on), so this is not a hard
             // block — but it must be deliberate, via confirm_additional.
+            // Scoped to the request, not the employer: a household hiring a
+            // second helper owes a second fee, and blocking that would lose real
+            // revenue. confirm_additional remains for a genuinely separate
+            // payment against the SAME request.
             if (!$request->boolean('confirm_additional')) {
                 $settled = MatchingFeePayment::where('employer_id', $validated['employer_id'])
                     ->where('payment_type', $paymentType)
+                    ->where('preference_id', $preference->id)
                     ->whereIn('status', ['paid', 'completed'])
                     ->latest()
                     ->first();
@@ -500,8 +510,10 @@ class AgentPaymentsController extends ApiController
                         'reference'   => $settled->reference,
                         'paid_at'     => $settled->paid_at,
                         'duplicate'   => true,
-                        'hint'        => 'This employer is already marked paid for ' . $paymentType
-                                       . '. If this is a genuinely separate payment, resend with confirm_additional=true.',
+                        'hint'        => 'This request is already marked paid for ' . $paymentType
+                                       . '. If the employer is hiring an ADDITIONAL helper, that is a separate '
+                                       . 'request and a separate fee — open it with new_request=true on '
+                                       . 'generate-pwbt rather than recording against this one.',
                     ], 'Payment already recorded — existing record returned');
                 }
             }

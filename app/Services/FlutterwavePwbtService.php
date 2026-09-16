@@ -129,7 +129,15 @@ class FlutterwavePwbtService
     /**
      * Generate a PWBT virtual account for a user's matching fee payment.
      */
-    public function generateForUser(User $user, int $amount = 20000): array
+    /**
+     * @param bool $newRequest  This is a SEPARATE hire, not a repeat of one
+     *                          already paid for. Employers routinely want more
+     *                          than one helper — MAI-1209 is three housekeepers
+     *                          for one household, MNG-7 is two nannies — and the
+     *                          matching fee is charged per helper, per request.
+     *                          Without this the second hire is free.
+     */
+    public function generateForUser(User $user, int $amount = 20000, bool $newRequest = false): array
     {
         if (empty($this->secretKey)) {
             throw new \RuntimeException('PWBT_UNAVAILABLE: Flutterwave secret key is not configured. '
@@ -145,6 +153,12 @@ class FlutterwavePwbtService
         $preference = \App\Models\EmployerPreference::where('employer_id', $user->id)
             ->latest('id')
             ->first();
+
+        // A separate hire gets its own preference: it is a distinct request, with
+        // its own fee, its own match and its own fulfillment case.
+        if ($newRequest) {
+            $preference = null;
+        }
 
         // Auto-create a minimal preference if the user genuinely has none.
         if (!$preference) {
@@ -166,7 +180,14 @@ class FlutterwavePwbtService
         // (and eight different account numbers) in one evening because every
         // agent retry created a fresh row. With a fixed account there is
         // nothing to re-issue, so hand the same row back.
-        $existing = MatchingFeePayment::where('employer_id', $user->id)
+        // A second helper is a second fee — but "already paid" stays scoped to
+        // the employer, not the preference. Fatima's fee sits on preference 378
+        // while her latest is 379 (duplicates created before the preference bug
+        // was fixed), so a preference-scoped check would miss a real payment and
+        // bill her twice for the same hire. $newRequest is what distinguishes an
+        // additional helper from a repeat of the same one, and that is a
+        // decision only the agent talking to her can make.
+        $existing = $newRequest ? null : MatchingFeePayment::where('employer_id', $user->id)
             ->where('payment_type', 'matching_fee')
             ->whereIn('status', ['paid', 'completed'])
             ->first();
@@ -178,7 +199,7 @@ class FlutterwavePwbtService
             return $this->presentAccount($existing, $user, (int) $existing->amount, true);
         }
 
-        $payment = MatchingFeePayment::where('employer_id', $user->id)
+        $payment = $newRequest ? null : MatchingFeePayment::where('employer_id', $user->id)
             ->where('payment_type', 'matching_fee')
             ->where('status', 'pending')
             ->where('account_number', self::STATIC_ACCOUNT_NUMBER)

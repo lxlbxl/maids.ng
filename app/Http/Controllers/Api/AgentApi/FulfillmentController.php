@@ -28,8 +28,17 @@ class FulfillmentController extends ApiController
             // (#3 failed, #4 active, #5 failed, #6 active) and employer 373 two,
             // because every retry opened another. A re-open of an active case is
             // almost always the agent repeating a step, not a second placement.
+            // One live case per REQUEST, not per employer. A household hiring a
+            // nanny and a cook has two placements running at once, and both are
+            // legitimate — MNG-7 is one family needing two nannies for two
+            // elderly parents. Scoping this to the employer would have blocked
+            // the second placement outright.
             $open = FulfillmentCase::where('employer_id', $validated['employer_id'])
                 ->where('status', 'active')
+                ->when(!empty($validated['preference_id']),
+                    fn ($q) => $q->where('preference_id', $validated['preference_id']))
+                ->when(!empty($validated['maid_id']),
+                    fn ($q) => $q->where('maid_id', $validated['maid_id']))
                 ->latest()
                 ->first();
 
@@ -41,9 +50,10 @@ class FulfillmentController extends ApiController
                     'stage'          => $open->stage,
                     'status'         => $open->status,
                     'duplicate'      => true,
-                    'hint'           => 'This employer already has an active fulfillment case. '
-                                      . 'Continue on it, or resend with force_new=true if this is '
-                                      . 'genuinely a second placement.',
+                    'hint'           => 'There is already an active case for this request/helper. '
+                                      . 'Continue on it. If the employer is hiring an ADDITIONAL helper, '
+                                      . 'pass that helper\'s maid_id and their own preference_id — a second '
+                                      . 'helper is a separate placement and a separate fee.',
                 ], 'Fulfillment case already open — existing case returned');
             }
 
