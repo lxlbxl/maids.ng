@@ -20,6 +20,15 @@ class AgentMatchingController extends ApiController
         try {
             $preference = EmployerPreference::findOrFail($validated['preference_id']);
 
+            if ($hireRequest) {
+                $hireRequest->update([
+                    'status'        => 'matched',
+                    'matched_at'    => now(),
+                    'assignment_id' => $assignment->id,
+                    'maid_user_id'  => $validated['maid_id'],
+                ]);
+            }
+
             return $this->success([
                 'preference_id' => $preference->id,
                 'status'        => 'queued',
@@ -51,6 +60,32 @@ class AgentMatchingController extends ApiController
             // assigned_by must be an integer user ID (not a string like 'agent')
             // Use 1 as system/agent user ID
             $agentUserId = 1;
+            // Is this helper already committed to someone else?
+            //
+            // maid-match hides committed helpers, but nothing stopped an agent
+            // assigning one directly — and on 2026-09-16 at 19:52 that is
+            // exactly what happened: Onyinyechi was assigned to a second family
+            // while already accepted with the first and due to start there on
+            // the 22nd. Two households were promised the same person.
+            $committedElsewhere = MaidAssignment::where('maid_id', $validated['maid_id'])
+                ->where('employer_id', '!=', $validated['employer_id'])
+                ->whereIn('status', ['pending_acceptance', 'accepted'])
+                ->latest()
+                ->first();
+
+            if ($committedElsewhere && !$request->boolean('override_commitment')) {
+                $maid = \App\Models\User::find($validated['maid_id']);
+                return $this->error(
+                    ($maid->name ?? "Maid {$validated['maid_id']}")
+                    . " is already committed to employer {$committedElsewhere->employer_id}"
+                    . " (assignment #{$committedElsewhere->id}, {$committedElsewhere->status})."
+                    . ' A helper can only take one placement at a time. Choose another candidate —'
+                    . ' POST /placements/queue gives you a screened queue. If that placement has'
+                    . ' genuinely fallen through, cancel it first.',
+                    409
+                );
+            }
+
             // An open assignment for this employer + preference is the same
             // placement, not a new one. Without this guard employer 460 ended up
             // with two *accepted* assignments for different maids (#44 and #45)
@@ -85,6 +120,13 @@ class AgentMatchingController extends ApiController
                 ]);
             }
 
+            // Keep the request in step, so nobody has to remember to move it.
+            $hireRequest = \App\Models\HireRequest::where('employer_id', $validated['employer_id'])
+                ->where('preference_id', $validated['preference_id'])
+                ->whereIn('status', \App\Models\HireRequest::OPEN_STATUSES)
+                ->latest()
+                ->first();
+
             $assignment = MaidAssignment::create([
                 'employer_id'    => $validated['employer_id'],
                 'maid_id'        => $validated['maid_id'],
@@ -93,6 +135,7 @@ class AgentMatchingController extends ApiController
                 'assigned_by_type' => 'agent',
                 'assignment_type'  => $validated['assignment_type'] ?? 'manual',
                 'status'         => 'pending_acceptance',
+                'hire_request_id' => $hireRequest->id ?? null,
                 'matching_fee_paid' => false,
                 'notes'          => $validated['notes'] ?? null,
             ]);

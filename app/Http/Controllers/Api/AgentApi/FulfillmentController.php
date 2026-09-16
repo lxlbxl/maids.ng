@@ -355,6 +355,16 @@ class FulfillmentController extends ApiController
                 'actor_type'          => 'agent',
             ]);
 
+            // Arrival is what completes a request. Payment and the match are
+            // promises; this is the outcome the family paid for.
+            $req = $case->hire_request_id
+                ? \App\Models\HireRequest::find($case->hire_request_id)
+                : \App\Models\HireRequest::where('fulfillment_case_id', $case->id)->first();
+
+            if ($req && $req->status !== 'fulfilled') {
+                $req->markResumed('arrival confirmed on fulfillment case ' . $case->id);
+            }
+
             // She actually started. This is the announcement worth making —
             // "matched" is a promise, "started work today" is the proof.
             if ($case->maid_id) {

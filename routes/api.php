@@ -396,6 +396,15 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     // posting leads to work. Drained by the group-announce-drain cron.
     Route::get('/group-announcements/pending', [\App\Http\Controllers\Api\AgentApi\GroupAnnouncementController::class, 'pending']);
     Route::post('/group-announcements/{id}/result', [\App\Http\Controllers\Api\AgentApi\GroupAnnouncementController::class, 'result']);
+
+    // Hire requests — one household asking for one helper. Payment, matching and
+    // fulfilment all hang off a request, and an employer may hold several.
+    Route::post('/requests', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'store']);
+    Route::get('/requests/open', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'open']);
+    Route::get('/requests/employer/{employerId}', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'forEmployer']);
+    Route::get('/requests/{reference}', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'show']);
+    Route::post('/requests/{reference}/resumed', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'resumed']);
+    Route::post('/requests/{reference}/cancel', [\App\Http\Controllers\Api\AgentApi\HireRequestController::class, 'cancel']);
     Route::get('/payments/scan/pending-72h', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanPending72h']);
     Route::get('/wallets/scan/salary-delayed', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'scanSalaryDelayed']);
     Route::post('/wallets/release-escrow', [\App\Http\Controllers\Api\AgentApi\AgentPaymentsController::class, 'releaseEscrow']);
