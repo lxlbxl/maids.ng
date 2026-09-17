@@ -51,6 +51,16 @@ Schedule::command('payments:reconcile-pwbt --hours=48')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/pwbt-reconcile.log'));
 
+// Move every live match forward one step: close the group claim window and build
+// the queue, chase a helper who has gone quiet, and promote the backup when the
+// silence has run long enough. Without this a request stalls on whoever forgot
+// to chase it — which is how one household waited on a helper who never showed.
+// Every 30 minutes; quiet-hours are enforced by the senders it hands work to.
+Schedule::command('requests:advance-matching')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/matching-cadence.log'));
+
 // Placement integrity backstop. The write-path guards stop these being created
 // through the agent API, but not a direct DB edit or an older code path. The
 // Fatima case (an employer recorded as a placed maid) sat wrong for a day

@@ -155,7 +155,7 @@ class PlacementQueueService
      *
      * @return array{queued:int, candidates:array<int,array<string,mixed>>, skipped:array<int,string>}
      */
-    public function build(int $employerId, ?int $preferenceId, ?string $jobCode, int $size = 3, ?string $area = null): array
+    public function build(int $employerId, ?int $preferenceId, ?string $jobCode, int $size = 3, ?string $area = null, ?int $hireRequestId = null): array
     {
         $blocked  = $this->unavailableMaids($employerId);
         $skipped  = [];
@@ -171,9 +171,14 @@ class PlacementQueueService
             $area = DB::table('group_job_claims')->where('job_code', $jobCode)->value('area');
         }
 
+        // Scoped to the request. A household with three open requests needs
+        // three queues, not one shared pool — employer 450 has three, and
+        // reading them as one made two of them look covered when they were not.
         $existing = DB::table('placement_candidates')
-            ->where('employer_id', $employerId)
-            ->where(fn ($q) => $q->where('preference_id', $preferenceId)->orWhereNull('preference_id'))
+            ->when($hireRequestId,
+                fn ($q) => $q->where('hire_request_id', $hireRequestId),
+                fn ($q) => $q->where('employer_id', $employerId)
+                             ->where(fn ($w) => $w->where('preference_id', $preferenceId)->orWhereNull('preference_id')))
             ->pluck('maid_user_id')->map(fn ($v) => (int) $v)->all();
 
         $picks = [];
@@ -192,7 +197,8 @@ class PlacementQueueService
                 ->get();
 
             $scored = $claims->map(fn ($c) => ['claim' => $c, 'heat' => $this->heatScore($c)])
-                             ->sortByDesc(fn ($r) => $r['heat']['score'])
+                             ->sortByDesc(fn ($r) => $r['heat']['score']
+                                 + ($this->localityBonus($r['claim']->maid_user_id, $area)))
                              ->values();
 
             foreach ($scored as $r) {
@@ -226,7 +232,8 @@ class PlacementQueueService
                 ->unique('maid_user_id');
 
             $scoredOthers = $others->map(fn ($c) => ['claim' => $c, 'heat' => $this->heatScore($c)])
-                                   ->sortByDesc(fn ($r) => $r['heat']['score'])
+                                   ->sortByDesc(fn ($r) => $r['heat']['score']
+                                       + ($this->localityBonus($r['claim']->maid_user_id, $area)))
                                    ->values();
 
             foreach ($scoredOthers as $r) {
@@ -257,6 +264,9 @@ class PlacementQueueService
                 ->limit(400)
                 ->get(['user_id', 'nin_verified', 'location', 'willing_states']);
 
+            // Locals first, then those willing to travel.
+            $pool = $pool->sortByDesc(fn ($p) => $this->isLocalTo($p, $area) ? 1 : 0)->values();
+
             foreach ($pool as $p) {
                 if (count($picks) >= $size) { break; }
                 $id = (int) $p->user_id;
@@ -282,16 +292,45 @@ class PlacementQueueService
             }
         }
 
+        // Final ordering: local candidates first, whatever tier they came from.
+        //
+        // Tier alone put an Abuja helper who is active in the group above two
+        // Ibadan helpers for an Ibadan role. Group engagement is a good signal,
+        // but it does not move somebody across the country: cross-state
+        // relocation for domestic work rarely survives contact with reality, and
+        // a local helper who has not engaged is still likelier to start and stay
+        // than an enthusiastic one 600km away.
+        if ($area) {
+            $tierWeight = ['group_claim' => 2, 'group_active' => 1, 'matcher' => 0];
+            usort($picks, function ($a, $b) use ($area, $tierWeight) {
+                $la = $this->localityBonus((int) $a['maid_user_id'], $area) > 0 ? 1 : 0;
+                $lb = $this->localityBonus((int) $b['maid_user_id'], $area) > 0 ? 1 : 0;
+                if ($la !== $lb) {
+                    return $lb <=> $la;
+                }
+                $ta = $tierWeight[$a['source']] ?? 0;
+                $tb = $tierWeight[$b['source']] ?? 0;
+                if ($ta !== $tb) {
+                    return $tb <=> $ta;
+                }
+                return (($b['heat']['score'] ?? 0) <=> ($a['heat']['score'] ?? 0));
+            });
+        }
+
         $nextRank = (int) DB::table('placement_candidates')
-            ->where('employer_id', $employerId)->max('rank');
+            ->when($hireRequestId,
+                fn ($q) => $q->where('hire_request_id', $hireRequestId),
+                fn ($q) => $q->where('employer_id', $employerId))
+            ->max('rank');
 
         $written = [];
         foreach ($picks as $p) {
             $nextRank++;
             DB::table('placement_candidates')->insert([
-                'employer_id'   => $employerId,
-                'preference_id' => $preferenceId,
-                'job_code'      => $jobCode,
+                'employer_id'     => $employerId,
+                'preference_id'   => $preferenceId,
+                'hire_request_id' => $hireRequestId,
+                'job_code'        => $jobCode,
                 'maid_user_id'  => $p['maid_user_id'],
                 'rank'          => $nextRank,
                 'status'        => 'queued',
@@ -398,6 +437,27 @@ class PlacementQueueService
     }
 
     /**
+     * Does this helper actually live in the requested area?
+     *
+     * Ranked above someone merely willing to travel, for two reasons. A local
+     * helper is far likelier to turn up and stay. And it stops a scarce helper
+     * being spent on the wrong request: Chioma Elizabeth Akaenyi lives in Abuja
+     * and will work anywhere, so a Lagos household with dozens of local options
+     * took her and left the Abuja request — where she was the only strong
+     * candidate — without her.
+     */
+    public function isLocalTo(object $profile, ?string $area): bool
+    {
+        if (!$area) {
+            return false;
+        }
+        $want = $this->stateOf($area);
+        $loc  = $this->stateOf((string) ($profile->location ?? ''));
+
+        return $want !== null && $loc === $want;
+    }
+
+    /**
      * Can this helper work in the requested area?
      *
      * Checks her stated location and, more importantly, willing_states — a
@@ -454,13 +514,42 @@ class PlacementQueueService
         return $loc === null || $loc === $want;
     }
 
-    /** Coarse Nigerian state extraction; Abuja and FCT are the same place. */
+    /**
+     * Resolve free text to a Nigerian state.
+     *
+     * Major cities are included because families and helpers write where they
+     * live, not which state it is in: "Ibadan" carries no state name, so an
+     * Ibadan request was matched against Lagos helpers because the check could
+     * not tell the two apart and correctly refused to guess.
+     */
     private function stateOf(string $text): ?string
     {
         $t = strtolower($text);
+
+        // Cities first — more specific, and "Ife" would otherwise miss.
+        $cities = [
+            'ibadan' => 'oyo', 'ogbomoso' => 'oyo',
+            'port harcourt' => 'rivers', 'portharcourt' => 'rivers',
+            'benin city' => 'edo', 'warri' => 'delta', 'asaba' => 'delta',
+            'ile-ife' => 'osun', 'ile ife' => 'osun', 'ife' => 'osun', 'osogbo' => 'osun',
+            'abeokuta' => 'ogun', 'sagamu' => 'ogun', 'ota' => 'ogun',
+            'akure' => 'ondo', 'ado-ekiti' => 'ekiti',
+            'onitsha' => 'anambra', 'awka' => 'anambra', 'nnewi' => 'anambra',
+            'owerri' => 'imo', 'uyo' => 'akwa', 'calabar' => 'cross river',
+            'jos' => 'plateau', 'makurdi' => 'benue', 'ilorin' => 'kwara',
+            'zaria' => 'kaduna', 'minna' => 'niger', 'abakaliki' => 'ebonyi',
+            'lugbe' => 'abuja', 'kubwa' => 'abuja', 'gwarinpa' => 'abuja',
+            'wuse' => 'abuja', 'garki' => 'abuja', 'maitama' => 'abuja', 'nyanya' => 'abuja',
+        ];
+        foreach ($cities as $city => $state) {
+            if (str_contains($t, $city)) {
+                return $state;
+            }
+        }
+
         foreach (['lagos','abuja','fct','ogun','oyo','rivers','kano','kaduna','enugu','delta',
                   'edo','anambra','imo','akwa','cross river','plateau','benue','niger','kwara',
-                  'osun','ondo','ekiti'] as $st) {
+                  'osun','ondo','ekiti','ebonyi','abia','bauchi','borno','sokoto','katsina'] as $st) {
             if (str_contains($t, $st)) {
                 return $st === 'fct' ? 'abuja' : $st;
             }
@@ -509,5 +598,16 @@ class PlacementQueueService
             ->value('status');
 
         return $badOutcome ? "previously {$badOutcome} for this employer" : null;
+    }
+
+    /** Enough to outrank heat differences, not enough to override a hard block. */
+    private function localityBonus(int $maidUserId, ?string $area): int
+    {
+        if (!$area) {
+            return 0;
+        }
+        $p = DB::table('maid_profiles')->where('user_id', $maidUserId)->first(['location']);
+
+        return $p && $this->isLocalTo($p, $area) ? 60 : 0;
     }
 }
