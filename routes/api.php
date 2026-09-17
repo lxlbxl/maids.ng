@@ -246,6 +246,9 @@ Route::prefix('agent/webhook')->group(function () {
     Route::post('/call-summary', CallSummaryController::class);
     Route::post('/ctwa-clid', CtwaClidController::class);
     Route::post('/in-call-request', InCallRequestController::class);
+    // Status of an action the voice assistant pushed here, so a caller ringing
+    // back can be told whether their link was actually sent.
+    Route::get('/action-status/{actionId}', [InCallRequestController::class, 'actionStatus']);
     Route::post('/outbound-call', OutboundCallController::class);
     Route::post('/attribution', [\App\Http\Controllers\Api\AttributionController::class, 'ingest']);
 

@@ -31,6 +31,55 @@ class InCallRequestController extends ApiController
      * request_paperclip_action ("never speak a link, push it through this") and
      * post_call_summary ("after every call") — failed with a 500 on every call.
      */
+    /**
+     * Status of an action the assistant pushed to Paperclip.
+     *
+     * request_paperclip_action hands back an issue id and tells the caller their
+     * request is being handled — but there was no way to check what became of
+     * it, so get_paperclip_action_status had nothing to call and answered "not
+     * connected yet" on every attempt. A caller ringing back to ask whether
+     * their link was sent could not be told.
+     */
+    public function actionStatus(Request $request, string $actionId): JsonResponse
+    {
+        // id is a uuid column: comparing it against "MAI-1347" or any other
+        // non-uuid makes Postgres throw rather than simply not match, so only
+        // reach for it when the value actually looks like one.
+        $isUuid = (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $actionId);
+
+        $issue = \Illuminate\Support\Facades\DB::connection('paperclip')
+            ->table('issues')
+            ->when($isUuid,
+                fn ($q) => $q->where('id', $actionId),
+                fn ($q) => $q->where('identifier', $actionId))
+            ->first(['id', 'identifier', 'title', 'status', 'created_at', 'completed_at']);
+
+        if (!$issue) {
+            return $this->success([
+                'action_id' => $actionId,
+                'status'    => 'unknown',
+            ], 'No such action — it may not have been created yet.');
+        }
+
+        // Paperclip statuses in plain language, because this is read to a caller.
+        $state = match ($issue->status) {
+            'done'                          => 'completed',
+            'cancelled'                     => 'cancelled',
+            'in_progress', 'in_review'      => 'in progress',
+            'blocked'                       => 'waiting on someone',
+            default                         => 'pending',
+        };
+
+        return $this->success([
+            'action_id'    => $issue->identifier ?? $issue->id,
+            'status'       => $state,
+            'raw_status'   => $issue->status,
+            'summary'      => $issue->title,
+            'created_at'   => $issue->created_at,
+            'completed_at' => $issue->completed_at,
+        ], "That request is {$state}.");
+    }
+
     private function paperclipHttp()
     {
         return \Illuminate\Support\Facades\Http::withToken(
