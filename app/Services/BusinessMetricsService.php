@@ -133,14 +133,28 @@ class BusinessMetricsService
     public function funnel(): array
     {
         // --- Web: counted per session, so the steps are comparable.
-        $sessions = (int) DB::table('user_events')->distinct()->count('session_id');
-        $quizDone = (int) DB::table('user_events')->where('event_type', 'quiz_complete')
-                        ->distinct()->count('session_id');
-        $viewed   = (int) DB::table('user_events')->where('event_type', 'matches_viewed')
-                        ->distinct()->count('session_id');
+        $distinct = fn (string $type) => (int) DB::table('user_events')
+            ->where('event_type', $type)->distinct()->count('session_id');
+
+        $visits    = $distinct('page_view');
+        $quizStart = $distinct('quiz_start');
+        $quizDone  = $distinct('quiz_complete');
+        $viewed    = $distinct('matches_viewed');
+
+        // page_view and quiz_start only began recording on 2026-09-17; before
+        // that the front end reported nothing, so a visitor was invisible unless
+        // they finished a quiz. Until enough history accumulates, fall back to
+        // all sessions and say so, rather than showing a funnel that implies
+        // almost nobody visits.
+        $backfilled = $visits < $quizDone;
+        if ($backfilled) {
+            $visits    = (int) DB::table('user_events')->distinct()->count('session_id');
+            $quizStart = max($quizStart, $quizDone);
+        }
 
         $web = [
-            ['label' => 'Sessions',       'value' => $sessions],
+            ['label' => 'Visits',         'value' => $visits],
+            ['label' => 'Quiz started',   'value' => $quizStart],
             ['label' => 'Quiz completed', 'value' => $quizDone],
             ['label' => 'Matches viewed', 'value' => $viewed],
         ];
@@ -178,8 +192,13 @@ class BusinessMetricsService
             'request'         => $request,
             'matched_unpaid'  => $matchedUnpaid,
             'note'            => 'Web steps count sessions; request steps count requests. '
-                               . 'Requests have only been tracked since September, so the two '
-                               . 'cannot be read as one chain.',
+                               . 'They cannot be read as one chain.',
+            'web_backfilled'  => $backfilled,
+            'web_note'        => $backfilled
+                ? 'Visit and quiz-start tracking began 17 Sep. Until history builds, '
+                  . '"Visits" falls back to any session that produced an event, which '
+                  . 'undercounts real traffic and hides quiz abandonment.'
+                : null,
         ];
     }
 

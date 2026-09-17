@@ -439,3 +439,9 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     // scopes=['admin'] (or ['*']) in the AgentApiKey table.
     Route::post('/admin/nin/sweep', [\App\Http\Controllers\Api\AgentApi\NinSweepController::class, 'sweep'])->middleware('agent.auth:admin');
 });
+
+// Public front-end event intake. Anonymous by design: visitors are the part of
+// the funnel we were blind to. Throttled so a loop in a browser cannot flood it.
+Route::post('/track', [\App\Http\Controllers\Api\TrackingController::class, 'store'])
+    ->middleware('throttle:60,1')
+    ->name('api.track');

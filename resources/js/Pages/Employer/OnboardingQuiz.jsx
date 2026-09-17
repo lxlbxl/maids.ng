@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
 import DirectHireModal from '@/Components/DirectHireModal';
+import { track, trackQuizStep } from '@/lib/track';
 
 const STEPS = [
     {
@@ -41,8 +42,23 @@ const STEPS = [
 
 export default function OnboardingQuiz({ guaranteeFee = 5000 }) {
     const [step, setStep] = useState(0);
+
+    // quiz_start had never fired once, so there was no denominator for
+    // abandonment: we could see 338 completions and nothing about how many
+    // people began and gave up. Recorded once per mount.
+    useEffect(() => {
+        track('quiz_start');
+    }, []);
+
     const [answers, setAnswers] = useState({ help_types: [], schedule: '', urgency: '', location: '', budget_min: 15000, budget_max: 80000, contact_name: '', contact_phone: '', contact_email: '' });
     const [matches, setMatches] = useState(null);
+
+    // Which question people stop at is the actionable part — a single
+    // "abandoned" number tells you nothing about what to fix.
+    useEffect(() => {
+        if (step > 0) trackQuizStep(step, STEPS.length);
+    }, [step]);
+
     const [preferenceId, setPreferenceId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState(null);

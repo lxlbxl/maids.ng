@@ -165,6 +165,9 @@ export default function AdminDashboard({ revenue, requests, funnel, traffic, sup
                                     On the site — per session
                                 </p>
                                 <Funnel steps={funnel.web} />
+                                {funnel.web_note && (
+                                    <p className="text-[11px] text-amber-300/70 mt-3 leading-snug">{funnel.web_note}</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-[10px] font-mono uppercase tracking-widest text-white/35 mb-3">
