@@ -423,6 +423,11 @@ Route::prefix('agent-api/v1')->middleware(['agent.auth'])->group(function () {
     Route::get('/communications/thread/by-user/{userId}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'threadByUser'])->whereNumber('userId');
     Route::post('/communications/event', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'logEvent']);
     Route::get('/calls/logs', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'callLogs']);
+    // Upsert by vapi_call_id — the voice assistant logs every call, and may
+    // call this mid-call and again at the end without creating two rows.
+    Route::post('/calls/logs', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'storeCallLog']);
+    // Callbacks the voice assistant promises on the phone, as human tasks.
+    Route::post('/calls/callbacks', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'scheduleCallback']);
     Route::get('/calls/logs/{id}', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'showCallLog'])->whereNumber('id');
     Route::patch('/calls/logs/{id}/outcome', [\App\Http\Controllers\Api\AgentApi\CommsController::class, 'updateCallOutcome'])->whereNumber('id');
 
