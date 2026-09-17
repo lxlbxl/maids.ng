@@ -14,7 +14,7 @@ class HireRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'reference', 'employer_id', 'preference_id',
+        'reference', 'employer_id', 'preference_id', 'replaces_request_id',
         'role', 'area', 'live_arrangement', 'details', 'job_code',
         'status', 'fee_amount',
         'paid_at', 'matched_at', 'resumed_at', 'closed_at', 'close_reason',
@@ -52,10 +52,45 @@ class HireRequest extends Model
         return $this->belongsTo(MaidAssignment::class, 'assignment_id');
     }
 
+    /**
+     * Has this request been paid for?
+     *
+     * A guarantee replacement inherits the original's payment: the household has
+     * already paid for a helper and did not get one that stuck, so the
+     * replacement is covered. Walks the chain in case a replacement itself had
+     * to be replaced, with a depth cap so a bad link cannot loop forever.
+     */
     public function isPaid(): bool
     {
-        return $this->paid_at !== null
-            || $this->payments()->whereIn('status', ['paid', 'completed'])->exists();
+        if ($this->paid_at !== null
+            || $this->payments()->whereIn('status', ['paid', 'completed'])->exists()) {
+            return true;
+        }
+
+        $seen = [$this->id];
+        $node = $this;
+        for ($i = 0; $i < 5 && $node->replaces_request_id; $i++) {
+            if (in_array($node->replaces_request_id, $seen, true)) {
+                break;
+            }
+            $seen[] = $node->replaces_request_id;
+            $node = static::find($node->replaces_request_id);
+            if (!$node) {
+                break;
+            }
+            if ($node->paid_at !== null
+                || $node->payments()->whereIn('status', ['paid', 'completed'])->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** The request this one replaces under the 10-day guarantee, if any. */
+    public function replaces()
+    {
+        return $this->belongsTo(self::class, 'replaces_request_id');
     }
 
     /**

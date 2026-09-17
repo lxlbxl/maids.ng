@@ -130,17 +130,35 @@ class PlacementQueueService
             $out[(int) $h->maid_user_id] ??= "accepted a placement with employer {$h->employer_id}";
         }
 
-        // Held: queued or offered to another family and still inside the window.
-        // Time-limited, so a helper who never answers is not withheld from work
-        // indefinitely.
+        // Held: queued or offered to another family — but ONLY for a request
+        // that has actually been paid for.
+        //
+        // A reservation takes a helper off the market for two days. An enquiry
+        // that has not paid has not earned that: twelve helpers were being held
+        // by four unpaid requests, any one of which could have been blocking a
+        // paying customer. Interest reserves nobody; payment does.
+        //
+        // Time-limited as well, so a helper who never answers is not withheld
+        // from work indefinitely.
+        $paidRequestIds = DB::table('hire_requests')
+            ->where(function ($q) {
+                $q->whereNotNull('paid_at')
+                  ->orWhereIn('id', DB::table('matching_fee_payments')
+                        ->whereIn('status', ['paid', 'completed'])
+                        ->whereNotNull('hire_request_id')
+                        ->pluck('hire_request_id'));
+            })
+            ->pluck('id');
+
         $held = DB::table('placement_candidates')
             ->whereIn('status', ['queued', 'offered'])
+            ->whereIn('hire_request_id', $paidRequestIds)
             ->where('updated_at', '>=', now()->subHours(self::HOLD_HOURS))
             ->when($exceptEmployerId, fn ($q) => $q->where('employer_id', '!=', $exceptEmployerId))
             ->get(['maid_user_id', 'employer_id', 'status']);
 
         foreach ($held as $h) {
-            $out[(int) $h->maid_user_id] ??= "on hold for employer {$h->employer_id} ({$h->status})";
+            $out[(int) $h->maid_user_id] ??= "on hold for paying employer {$h->employer_id} ({$h->status})";
         }
 
         return $out;

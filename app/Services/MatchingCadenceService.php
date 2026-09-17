@@ -60,6 +60,12 @@ class MatchingCadenceService
             // and because nobody was lined up behind her the search restarted
             // from nothing. Backups are cheapest to arrange before they are
             // needed.
+            // Shortlists are built for everyone — an agent needs names to show
+            // an enquiring household, and withholding them helps nobody. What an
+            // unpaid request does NOT do is reserve anyone: the hold in
+            // unavailableMaids() applies only once the fee is in, so a
+            // speculative enquiry can be shown a helper without taking her off
+            // the market ahead of a paying customer.
             if (!$req->queue_built_at && $windowClosed) {
                 $depth = DB::table('placement_candidates')
                     ->where('hire_request_id', $req->id)

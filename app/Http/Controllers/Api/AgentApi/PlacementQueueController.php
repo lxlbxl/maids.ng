@@ -59,8 +59,22 @@ class PlacementQueueController extends ApiController
 
         $active = $out->firstWhere('status', 'offered') ?? $out->firstWhere('status', 'queued');
 
+        // Whether these names are actually held for this household, or just
+        // options to show. An unpaid enquiry gets a shortlist but reserves
+        // nobody — another family can take any of them at any moment.
+        $paidRequest = \App\Models\HireRequest::where('employer_id', $employerId)
+            ->whereIn('status', \App\Models\HireRequest::OPEN_STATUSES)
+            ->get()
+            ->contains(fn ($r) => $r->isPaid());
+
         return $this->success([
-            'employer_id' => $employerId,
+            'employer_id'  => $employerId,
+            'reserved'     => $paidRequest,
+            'reservation_note' => $paidRequest
+                ? 'Fee received — these helpers are held for this household.'
+                : 'No fee yet — this is a shortlist to show, not a reservation. '
+                  . 'Any of these helpers can be taken by a paying household at any time. '
+                  . 'Do not promise a specific helper before payment.',
             'approach_now' => $active,
             'queue'        => $out,
         ], $out->count() ? 'Queue retrieved' : 'No queue built yet — call POST /placements/queue');
