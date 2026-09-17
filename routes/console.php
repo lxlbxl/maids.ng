@@ -61,6 +61,14 @@ Schedule::command('requests:advance-matching')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/matching-cadence.log'));
 
+// A metric that silently stops updating is worse than one that was never built:
+// it keeps rendering a plausible figure while people make decisions on it.
+// Daily check that every dashboard source is still being written to.
+Schedule::command('dashboard:verify')
+    ->dailyAt('07:45')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/dashboard-verify.log'));
+
 // Placement integrity backstop. The write-path guards stop these being created
 // through the agent API, but not a direct DB edit or an older code path. The
 // Fatima case (an employer recorded as a placed maid) sat wrong for a day

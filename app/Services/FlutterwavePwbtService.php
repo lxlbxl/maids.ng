@@ -219,8 +219,26 @@ class FlutterwavePwbtService
         // customer as the narration.
         $txRef = $this->generateTxRef($user->id);
 
+        // Attach the fee to its request. Revenue is reported per request, so a
+        // payment with no request is money the dashboard cannot attribute.
+        $hireRequest = \App\Models\HireRequest::where('employer_id', $user->id)
+            ->where('preference_id', $preference?->id)
+            ->whereIn('status', \App\Models\HireRequest::OPEN_STATUSES)
+            ->latest()
+            ->first();
+
+        if (!$hireRequest) {
+            $hireRequest = \App\Models\HireRequest::open([
+                'employer_id'   => $user->id,
+                'preference_id' => $preference?->id,
+                'fee_amount'    => $amount,
+                'status'        => 'open',
+            ]);
+        }
+
         $payment = MatchingFeePayment::create([
             'preference_id'   => $preference?->id,
+            'hire_request_id' => $hireRequest->id,
             'employer_id'     => $user->id,
             'amount'          => $amount,
             'reference'       => $txRef,
@@ -396,6 +414,18 @@ class FlutterwavePwbtService
             $payment->preference->update([
                 'matching_status' => $payment->payment_type === 'guarantee_match' ? 'guarantee_paid' : 'paid',
             ]);
+        }
+
+        // Advance the request the moment the fee is confirmed, so "paid" on the
+        // dashboard means money received rather than somebody remembering.
+        if ($payment->hire_request_id) {
+            $req = \App\Models\HireRequest::find($payment->hire_request_id);
+            if ($req && !$req->paid_at) {
+                $req->update([
+                    'paid_at' => now(),
+                    'status'  => in_array($req->status, ['open'], true) ? 'paid' : $req->status,
+                ]);
+            }
         }
 
         if ($payment->employer) {

@@ -254,6 +254,8 @@ Route::middleware('auth')->group(function () {
     // Admin Routes
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        // Same numbers as JSON, for polling and for anything outside Inertia.
+        Route::get('/dashboard/metrics', [AdminDashboardController::class, 'metrics'])->name('dashboard.metrics');
         Route::get('/attribution', [\App\Http\Controllers\Admin\AttributionReportController::class, 'index'])->name('attribution');
 
         // People Management

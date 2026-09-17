@@ -199,6 +199,38 @@ class MatchingController extends Controller
 
         Log::info('Matching requested for location: ' . $validated['location'] . ' (City: ' . $preference->city . ', State: ' . $preference->state . ')');
 
+        // A completed quiz IS a hire request — open one so the work has
+        // somewhere to live. Without this, requests only ever appeared through
+        // the backfill and the dashboard's request funnel would sit frozen at
+        // whatever history happened to contain.
+        if ($employerId) {
+            try {
+                $existingRequest = \App\Models\HireRequest::where('employer_id', $employerId)
+                    ->where('preference_id', $preference->id)
+                    ->first();
+
+                if (!$existingRequest) {
+                    \App\Models\HireRequest::open([
+                        'employer_id'      => $employerId,
+                        'preference_id'    => $preference->id,
+                        'role'             => is_array($validated['help_types'])
+                                                ? implode(', ', $validated['help_types'])
+                                                : $validated['help_types'],
+                        'area'             => $validated['location'],
+                        'live_arrangement' => str_contains(strtolower(json_encode($validated['help_types'])), 'live-in')
+                                                ? 'live_in' : 'live_out',
+                        'status'           => 'open',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Never fail a customer's quiz because bookkeeping failed.
+                Log::warning('Could not open hire request for completed quiz', [
+                    'employer_id' => $employerId, 'preference_id' => $preference->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         // Track quiz completion event
         UserEvent::recordQuizComplete($employerId, [
             'preference_id' => $preference->id,
