@@ -45,12 +45,19 @@ class OutboundCallController extends ApiController
         $customVars = $validated['variables'] ?? [];
         $issueId = $validated['paperclip_issue_id'] ?? null;
 
+        // Every variable the assistant prompt references must be supplied. Vapi
+        // leaves an unset one as the literal text "{{maid_name}}", which the
+        // assistant then reads aloud or passes into a tool — an unresolved
+        // {{customer_phone}} is how a lookup once returned a different
+        // customer's identity mid-call. Empty beats braces.
         $variableValues = array_merge([
-            'customer_name'   => $validated['customer_name'],
-            'customer_phone'  => $validated['customer_phone'],
-            'call_purpose'    => $validated['call_purpose'],
+            'customer_name'    => $validated['customer_name'],
+            'customer_phone'   => $validated['customer_phone'],
+            'call_purpose'     => $validated['call_purpose'],
             'expected_outcome' => $validated['expected_outcome'],
-            'user_type'       => $validated['user_type'] ?? 'employer',
+            'user_type'        => $validated['user_type'] ?? 'employer',
+            'maid_name'        => '',
+            'start_date'       => '',
         ], $customVars);
 
         $payload = [

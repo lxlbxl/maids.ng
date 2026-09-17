@@ -26,6 +26,21 @@ class CallSummaryController extends ApiController
     private const PAPERCLIP_COMPANY_ID = 'ada987c3-793e-4e0c-92fd-db3acc1a2f74';
     private const PAPERCLIP_API_URL = 'http://localhost:3100/api';
 
+    /**
+     * Paperclip requests, authenticated.
+     *
+     * These calls were being made with no Authorization header at all, so every
+     * one came back 401 and the voice assistant's two most-used tools —
+     * request_paperclip_action ("never speak a link, push it through this") and
+     * post_call_summary ("after every call") — failed with a 500 on every call.
+     */
+    private function paperclipHttp()
+    {
+        return \Illuminate\Support\Facades\Http::withToken(
+            (string) config('services.paperclip.token', env('PAPERCLIP_API_TOKEN'))
+        )->acceptJson()->timeout(20);
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         // Require agent API key auth
@@ -156,7 +171,7 @@ class CallSummaryController extends ApiController
     {
         $searchQuery = preg_replace('/[^\d]/', '', $phone);
 
-        $response = Http::get(self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/search', [
+        $response = $this->paperclipHttp()->get(self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/search', [
             'q' => $searchQuery,
             'limit' => 5,
         ]);
@@ -191,7 +206,7 @@ class CallSummaryController extends ApiController
     {
         $title = '📞 ' . ($callerName !== 'Unknown' ? "{$callerName} — " : '') . $phone;
 
-        $response = Http::post(
+        $response = $this->paperclipHttp()->post(
             self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/issues',
             [
                 'title' => $title,
@@ -224,7 +239,7 @@ class CallSummaryController extends ApiController
      */
     private function addCommentToIssue(string $issueId, string $body): void
     {
-        $response = Http::post(
+        $response = $this->paperclipHttp()->post(
             self::PAPERCLIP_API_URL . '/issues/' . $issueId . '/comments',
             ['body' => $body]
         );

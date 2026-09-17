@@ -23,6 +23,21 @@ class InCallRequestController extends ApiController
     private const PAPERCLIP_COMPANY_ID = 'ada987c3-793e-4e0c-92fd-db3acc1a2f74';
     private const PAPERCLIP_API_URL = 'http://localhost:3100/api';
 
+    /**
+     * Paperclip requests, authenticated.
+     *
+     * These calls were being made with no Authorization header at all, so every
+     * one came back 401 and the voice assistant's two most-used tools —
+     * request_paperclip_action ("never speak a link, push it through this") and
+     * post_call_summary ("after every call") — failed with a 500 on every call.
+     */
+    private function paperclipHttp()
+    {
+        return \Illuminate\Support\Facades\Http::withToken(
+            (string) config('services.paperclip.token', env('PAPERCLIP_API_TOKEN'))
+        )->acceptJson()->timeout(20);
+    }
+
     /** Allowed request types — anything else is rejected */
     private const ALLOWED_TYPES = [
         'send_link',           // Send a URL (maids.ng search, payment page, onboarding)
@@ -152,7 +167,7 @@ class InCallRequestController extends ApiController
     {
         $searchQuery = preg_replace('/[^\d]/', '', $phone);
 
-        $response = Http::get(self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/search', [
+        $response = $this->paperclipHttp()->get(self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/search', [
             'q' => $searchQuery,
             'limit' => 5,
         ]);
@@ -169,7 +184,7 @@ class InCallRequestController extends ApiController
 
         // Create new issue
         $title = '📞 ' . ($callerName !== 'Unknown' ? "{$callerName} — " : '') . $phone;
-        $createResp = Http::post(
+        $createResp = $this->paperclipHttp()->post(
             self::PAPERCLIP_API_URL . '/companies/' . self::PAPERCLIP_COMPANY_ID . '/issues',
             [
                 'title' => $title,
@@ -188,7 +203,7 @@ class InCallRequestController extends ApiController
 
     private function addCommentToIssue(string $issueId, string $body): void
     {
-        $resp = Http::post(self::PAPERCLIP_API_URL . '/issues/' . $issueId . '/comments', ['body' => $body]);
+        $resp = $this->paperclipHttp()->post(self::PAPERCLIP_API_URL . '/issues/' . $issueId . '/comments', ['body' => $body]);
         if (!$resp->successful()) {
             throw new \RuntimeException('Paperclip add-comment failed: HTTP ' . $resp->status());
         }

@@ -178,4 +178,12 @@ return [
         'bridge_secret' => env('ATTRIBUTION_BRIDGE_SECRET'),
     ],
 
+    // Token maids.ng uses to open Paperclip issues on behalf of the voice
+    // assistant and the WhatsApp bridge. Must be read through config, not env():
+    // config is cached in production and env() returns null there.
+    'paperclip' => [
+        'token' => env('PAPERCLIP_API_TOKEN'),
+        'url'   => env('PAPERCLIP_API_URL', 'http://localhost:3100/api'),
+    ],
+
 ];
