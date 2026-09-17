@@ -27,9 +27,30 @@ class UserController extends ApiController
      * This normalizes the input and returns all variants so we can
      * match regardless of how the user (or WACRM) formatted the number.
      */
+    /**
+     * Phone formats to search for, or an empty list if the input is not a phone.
+     *
+     * The empty list matters more than the variants. This used to return [''] for
+     * any input with no digits — an uninterpolated template like
+     * "{{customer_phone}}", a transcription artefact, a blank field — and the
+     * caller then built `WHERE phone LIKE '%%'`, which matches every user and
+     * returns an arbitrary one. On a live voice call that meant Jane looked up
+     * the person she was speaking to, was handed a different customer's name,
+     * email and role, and carried on as though that were the caller.
+     *
+     * A Nigerian number is at least 10 digits; anything shorter cannot identify
+     * anyone and must not be turned into a wildcard.
+     */
+    private const MIN_PHONE_DIGITS = 10;
+
     private function phoneVariants(string $raw): array
     {
-        $digits = preg_replace('/[^\d]/', '', $raw);
+        $digits = preg_replace('/[^\d]/', '', $raw) ?? '';
+
+        if (strlen($digits) < self::MIN_PHONE_DIGITS) {
+            return [];
+        }
+
         $variants = [$digits];
 
         // 13 digits starting with 234 → also try 0-prefixed local format
@@ -65,6 +86,23 @@ class UserController extends ApiController
             $user = User::find($id);
         } elseif ($phone = $validated['phone'] ?? null) {
             $variants = $this->phoneVariants($phone);
+
+            if (empty($variants)) {
+                // Say so plainly rather than returning somebody at random. The
+                // caller is a voice agent mid-conversation; a wrong identity is
+                // far worse than no identity.
+                Log::warning('User lookup received something that is not a phone number', [
+                    'received' => mb_substr($phone, 0, 40),
+                ]);
+
+                return $this->error(
+                    'That is not a usable phone number. If a template variable did not '
+                    . 'resolve, use the caller\'s actual number in international format '
+                    . '(e.g. 2348012345678).',
+                    422
+                );
+            }
+
             $user = User::where(function ($query) use ($variants) {
                 foreach ($variants as $variant) {
                     $query->orWhere('phone', 'like', '%' . $variant . '%');
@@ -145,6 +183,19 @@ class UserController extends ApiController
 
         // Find-or-create by phone first, then by email
         $variants = $this->phoneVariants($validated['phone']);
+
+        if (empty($variants)) {
+            // Same trap as lookup(), with a worse ending: an empty variant list
+            // adds no conditions to the closure, so first() returns the first
+            // user in the table and this reports "user already exists" for a
+            // stranger — then hands their id back to the caller.
+            return $this->error(
+                'That is not a usable phone number. Provide the number in international '
+                . 'format (e.g. 2348012345678).',
+                422
+            );
+        }
+
         $existing = User::where(function ($query) use ($variants) {
             foreach ($variants as $variant) {
                 $query->orWhere('phone', 'like', '%' . $variant . '%');
